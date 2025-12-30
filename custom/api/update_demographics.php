@@ -114,6 +114,9 @@ $allowedFields = [
     // Care Team Status
     'care_team_status' => 'care_team_status',
 
+    // Payment Type (stored in userlist1)
+    'payment_type' => 'userlist1',
+
     // Clinician Information
     'provider_id' => 'providerID',
     'referring_provider_id' => 'ref_providerID',
