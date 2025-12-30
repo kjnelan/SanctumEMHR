@@ -1,0 +1,29 @@
+src/
+  components/
+    layout/
+      AppShell.jsx
+      Header.jsx
+      BackgroundEffects.jsx
+      NavBar.jsx
+      NavItem.jsx
+      UserMenu.jsx
+
+    dashboard/
+      Greeting.jsx
+      StatsGrid.jsx
+      StatsCard.jsx
+      QuickActions.jsx
+      PendingNotes.jsx
+      AppointmentsList.jsx
+      AppointmentCard.jsx
+
+  hooks/
+    useAuth.js
+    useAppointments.js
+
+  utils/
+    api.js
+
+  pages/
+    Dashboard.jsx
+    Login.jsx

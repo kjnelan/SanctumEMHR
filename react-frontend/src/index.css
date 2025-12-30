@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+:root {
+  --mental-blue: #6B9AC4;
+  --mental-sage: #A8C5A5;
+  --mental-warm: #E8DCC4;
+}
+
+@keyframes gradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.bg-gradient-mental {
+  background: linear-gradient(135deg, var(--mental-blue), var(--mental-sage), var(--mental-warm));
+  background-size: 200% 200%;
+  animation: gradient 15s ease infinite;
+}
+
+.particle {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  animation: float 20s infinite;
+}
+
+.particle-1 {
+  width: 80px;
+  height: 80px;
+  left: 10%;
+  top: 20%;
+  animation-delay: 0s;
+}
+
+.particle-2 {
+  width: 60px;
+  height: 60px;
+  right: 15%;
+  top: 40%;
+  animation-delay: 3s;
+}
+
+.particle-3 {
+  width: 100px;
+  height: 100px;
+  left: 20%;
+  bottom: 20%;
+  animation-delay: 6s;
+}
+
+.particle-4 {
+  width: 70px;
+  height: 70px;
+  right: 25%;
+  bottom: 30%;
+  animation-delay: 9s;
+}
+
+.particle-5 {
+  width: 50px;
+  height: 50px;
+  left: 50%;
+  top: 10%;
+  animation-delay: 12s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-40px) translateX(-10px);
+    opacity: 0.3;
+  }
+  75% {
+    transform: translateY(-20px) translateX(10px);
+    opacity: 0.5;
+  }
+}
+
+/* Custom gradient backgrounds for stats cards */
+.bg-gradient-blue {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.bg-gradient-amber {
+  background: linear-gradient(135deg, #f59e0b, #ea580c);
+}
+
+.bg-gradient-green {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.bg-gradient-purple {
+  background: linear-gradient(135deg, #a855f7, #9333ea);
+}
+
+.bg-gradient-teal {
+  background: linear-gradient(135deg, #14b8a6, #06b6d4);
+}
+
+.bg-gradient-page {
+  background: linear-gradient(135deg, #f9fafb, #dbeafe, #f3e8ff);
+}
+
+/* Required field styling - ADA compliant (colorblind-friendly) */
+.required-field-label {
+  color: #7c3aed !important; /* Purple-700 - distinct from green/blue for colorblind users */
+  font-weight: 600 !important;
+}
+
+/* Reusable glass card styling - used throughout the app */
+.glass-card {
+  backdrop-filter: blur(48px);
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 1.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.glass-card-sm {
+  backdrop-filter: blur(48px);
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}

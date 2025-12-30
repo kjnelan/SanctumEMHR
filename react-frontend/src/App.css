@@ -1,0 +1,1042 @@
+/* Main card styling - used for all major containers */
+.card-main {
+  backdrop-filter: blur(40px);
+  background-color: rgba(255, 255, 255, 0.4);
+  border-radius: 1.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 1.5rem;
+}
+
+/* Inner card styling - used for data items within main cards */
+.card-inner {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid rgb(229, 231, 235);
+}
+
+/* Tab navigation container */
+.tab-nav {
+  backdrop-filter: blur(40px);
+  background-color: rgba(255, 255, 255, 0.4);
+  border-radius: 1.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 0.5rem;
+}
+
+/* Empty state styling */
+.empty-state {
+  color: rgb(107, 114, 128);
+  text-align: center;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+/* Main navigation menu item - active state */
+.nav-main-active {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 300ms;
+  background: linear-gradient(to right, rgb(59, 130, 246), rgb(147, 51, 234));
+  color: white;
+}
+
+/* Main navigation menu item - inactive state */
+.nav-main-inactive {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 300ms;
+  color: rgb(55, 65, 81);
+}
+
+.nav-main-inactive:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Tab navigation menu item - active state (tan to blue) */
+.nav-tab-active {
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  transition: all 300ms;
+  white-space: nowrap;
+  border-radius: 0.5rem;
+  background: linear-gradient(to right, rgb(217, 179, 140), rgb(59, 130, 246));
+  color: white;
+}
+
+/* Tab navigation menu item - inactive state */
+.nav-tab-inactive {
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  transition: all 300ms;
+  white-space: nowrap;
+  border-radius: 0.5rem;
+  color: rgb(55, 65, 81);
+}
+
+.nav-tab-inactive:hover {
+  color: rgb(17, 24, 39);
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Form field styling - for better readability in demographics and forms */
+.form-field {
+  padding: 0.75rem;
+  background-color: rgba(249, 250, 251, 0.6);
+  border-radius: 0.375rem;
+  border: 1px solid rgba(229, 231, 235, 0.5);
+  transition: all 200ms;
+}
+
+.form-field:hover {
+  background-color: rgba(249, 250, 251, 0.9);
+  border-color: rgba(209, 213, 219, 0.8);
+}
+
+.form-field-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgb(75, 85, 99);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  margin-bottom: 0.25rem;
+}
+
+.form-field-value {
+  font-size: 0.875rem;
+  color: rgb(17, 24, 39);
+  font-weight: 500;
+}
+
+/* ========================================
+   BUTTON STYLES
+   ======================================== */
+
+/* Base action button - shared styles for all gradient buttons */
+.btn-action {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  color: white;
+  font-weight: 600;
+  border-radius: 1rem;
+  transition: all 300ms;
+  transform: scale(1);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-action:hover {
+  transform: scale(1.02);
+}
+
+/* Primary button - blue gradient */
+.btn-primary {
+  background: linear-gradient(to right, rgb(59, 130, 246), rgb(37, 99, 235));
+}
+
+.btn-primary:hover {
+  background: linear-gradient(to right, rgb(37, 99, 235), rgb(29, 78, 216));
+}
+
+/* Success button - green gradient */
+.btn-success {
+  background: linear-gradient(to right, rgb(34, 197, 94), rgb(16, 185, 129));
+}
+
+.btn-success:hover {
+  background: linear-gradient(to right, rgb(22, 163, 74), rgb(5, 150, 105));
+}
+
+/* Secondary button - purple gradient */
+.btn-secondary {
+  background: linear-gradient(to right, rgb(168, 85, 247), rgb(147, 51, 234));
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(to right, rgb(147, 51, 234), rgb(126, 34, 206));
+}
+
+/* Danger button - red gradient */
+.btn-danger {
+  background: linear-gradient(to right, rgb(239, 68, 68), rgb(220, 38, 38));
+}
+
+.btn-danger:hover {
+  background: linear-gradient(to right, rgb(220, 38, 38), rgb(185, 28, 28));
+}
+
+/* Gray button for cancel actions */
+.btn-cancel {
+  background: rgb(107, 114, 128);
+}
+
+.btn-cancel:hover {
+  background: rgb(75, 85, 99);
+}
+
+/* Compact button (smaller padding) */
+.btn-compact {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+/* Small inline button (not full width) */
+.btn-sm {
+  width: auto;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Standard solid buttons (non-gradient) */
+.btn-solid {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  transition: all 200ms;
+  color: white;
+}
+
+.btn-solid-blue {
+  background-color: rgb(37, 99, 235);
+}
+
+.btn-solid-blue:hover {
+  background-color: rgb(29, 78, 216);
+}
+
+.btn-solid-green {
+  background-color: rgb(22, 163, 74);
+}
+
+.btn-solid-green:hover {
+  background-color: rgb(21, 128, 61);
+}
+
+.btn-solid-gray {
+  background-color: rgb(107, 114, 128);
+}
+
+.btn-solid-gray:hover {
+  background-color: rgb(75, 85, 99);
+}
+
+/* Icon button with text */
+.btn-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+/* ========================================
+   MODAL STYLES
+   ======================================== */
+
+/* Modal backdrop overlay */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+/* Modal container */
+.modal-container {
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Modal container - small */
+.modal-sm {
+  max-width: 32rem;
+}
+
+/* Modal container - medium */
+.modal-md {
+  max-width: 48rem;
+}
+
+/* Modal container - large */
+.modal-lg {
+  max-width: 64rem;
+}
+
+/* Modal header */
+.modal-header {
+  position: sticky;
+  top: 0;
+  background-color: white;
+  border-bottom: 1px solid rgb(229, 231, 235);
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+}
+
+/* Modal body */
+.modal-body {
+  padding: 1.5rem;
+}
+
+/* Modal footer */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgb(229, 231, 235);
+}
+
+/* ========================================
+   CLIENT CARD STYLES
+   ======================================== */
+
+/* Client/item card - clickable card with hover effect */
+.client-card {
+  background-color: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgb(229, 231, 235);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 200ms;
+  backdrop-filter: blur(4px);
+}
+
+.client-card:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: scale(1.02);
+}
+
+/* ========================================
+   STATUS BADGE STYLES
+   ======================================== */
+
+/* Base badge styling */
+.badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-active {
+  background-color: rgb(34, 197, 94);
+  color: white;
+}
+
+.badge-inactive {
+  background-color: rgb(234, 179, 8);
+  color: white;
+}
+
+.badge-discharged {
+  background-color: rgb(107, 114, 128);
+  color: white;
+}
+
+/* ========================================
+   FILTER/TAB BUTTON STYLES
+   ======================================== */
+
+/* Filter toggle button - inactive */
+.filter-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 300ms;
+  background-color: rgba(255, 255, 255, 0.6);
+  color: rgb(55, 65, 81);
+}
+
+.filter-btn:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Filter toggle button - active state */
+.filter-btn-active {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: scale(1.05);
+  color: white;
+}
+
+/* Color variants for active filter buttons */
+.filter-btn-active.filter-active {
+  background-color: rgb(34, 197, 94);
+}
+
+.filter-btn-active.filter-inactive {
+  background-color: rgb(234, 179, 8);
+}
+
+.filter-btn-active.filter-discharged {
+  background-color: rgb(107, 114, 128);
+}
+
+.filter-btn-active.filter-all {
+  background-color: rgb(59, 130, 246);
+}
+
+/* ========================================
+   INPUT STYLES
+   ======================================== */
+
+/* Standard form input */
+.input-field {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid rgb(209, 213, 219);
+  border-radius: 0.375rem;
+  outline: none;
+  transition: all 200ms;
+}
+
+.input-field:focus {
+  border-color: rgb(59, 130, 246);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Select dropdown */
+.select-field {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid rgb(209, 213, 219);
+  border-radius: 0.375rem;
+  outline: none;
+  transition: all 200ms;
+  background-color: white;
+}
+
+.select-field:focus {
+  border-color: rgb(59, 130, 246);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Error message container */
+.error-message {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background-color: rgb(254, 242, 242);
+  border: 1px solid rgb(254, 202, 202);
+  border-radius: 0.5rem;
+  color: rgb(185, 28, 28);
+}
+
+/* Success message container */
+.success-message {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background-color: rgb(240, 253, 244);
+  border: 1px solid rgb(187, 247, 208);
+  border-radius: 0.5rem;
+  color: rgb(21, 128, 61);
+}
+
+/* ========================================
+   ENHANCED FILTER BUTTON STYLES
+   ======================================== */
+
+/* Enhanced filter button variations for Clients.jsx, EncountersTab.jsx, BillingTab.jsx */
+.filter-btn-enhanced {
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 300ms;
+}
+
+/* Inactive filter button state */
+.filter-btn-inactive {
+  background-color: rgba(255, 255, 255, 0.6);
+  color: rgb(55, 65, 81);
+}
+
+.filter-btn-inactive:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Active filter button base */
+.filter-btn-active-base {
+  color: white;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: scale(1.05);
+}
+
+/* ========================================
+   ENHANCED CARD STYLES
+   ======================================== */
+
+/* Clickable item card with hover effects */
+.card-item {
+  background-color: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgb(229, 231, 235);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 200ms;
+  backdrop-filter: blur(4px);
+}
+
+.card-item:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: scale(1.02);
+}
+
+/* Statistics/summary box */
+.stat-box {
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid rgb(229, 231, 235);
+}
+
+/* Colored statistic boxes */
+.stat-box-green {
+  background-color: rgb(240, 253, 244);
+  border-color: rgb(187, 247, 208);
+}
+
+.stat-box-blue {
+  background-color: rgb(239, 246, 255);
+  border-color: rgb(191, 219, 254);
+}
+
+.stat-box-yellow {
+  background-color: rgb(254, 252, 232);
+  border-color: rgb(254, 240, 138);
+}
+
+.stat-box-red {
+  background-color: rgb(254, 242, 242);
+  border-color: rgb(254, 202, 202);
+}
+
+/* ========================================
+   ENHANCED BADGE STYLES
+   ======================================== */
+
+/* Small badge base */
+.badge-sm {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Light background badges */
+.badge-light-success {
+  background-color: rgb(220, 252, 231);
+  color: rgb(21, 128, 61);
+}
+
+.badge-light-warning {
+  background-color: rgb(254, 249, 195);
+  color: rgb(161, 98, 7);
+}
+
+.badge-light-info {
+  background-color: rgb(219, 234, 254);
+  color: rgb(30, 64, 175);
+}
+
+.badge-light-neutral {
+  background-color: rgb(243, 244, 246);
+  color: rgb(55, 65, 81);
+}
+
+.badge-light-danger {
+  background-color: rgb(254, 226, 226);
+  color: rgb(153, 27, 27);
+}
+
+/* Solid background badges (pill shaped) */
+.badge-solid-success {
+  background-color: rgb(34, 197, 94);
+  color: white;
+  border-radius: 9999px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-solid-warning {
+  background-color: rgb(234, 179, 8);
+  color: white;
+  border-radius: 9999px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-solid-danger {
+  background-color: rgb(239, 68, 68);
+  color: white;
+  border-radius: 9999px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-solid-info {
+  background-color: rgb(59, 130, 246);
+  color: white;
+  border-radius: 9999px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* ========================================
+   ENHANCED INPUT STYLES
+   ======================================== */
+
+/* Large input with backdrop blur */
+.input-lg {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgb(209, 213, 219);
+  border-radius: 0.75rem;
+  color: rgb(17, 24, 39);
+  outline: none;
+  transition: all 300ms;
+  backdrop-filter: blur(4px);
+  font-weight: 500;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.input-lg::placeholder {
+  color: rgb(156, 163, 175);
+}
+
+.input-lg:focus {
+  border-color: rgb(96, 165, 250);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Medium input (standard) */
+.input-md {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgb(209, 213, 219);
+  border-radius: 0.375rem;
+  outline: none;
+  transition: all 200ms;
+}
+
+.input-md:focus {
+  border-color: rgb(59, 130, 246);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Compact input */
+.input-sm {
+  width: 100%;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.875rem;
+  border: 1px solid rgb(209, 213, 219);
+  border-radius: 0.375rem;
+  outline: none;
+  transition: all 200ms;
+}
+
+.input-sm:focus {
+  border-color: rgb(59, 130, 246);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* ========================================
+   ENHANCED BUTTON STYLES
+   ======================================== */
+
+/* Search button */
+.btn-search {
+  padding: 0.75rem 1.5rem;
+  background-color: rgb(59, 130, 246);
+  color: white;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  transition: all 300ms;
+  border: 1px solid rgb(37, 99, 235);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-search:hover {
+  background-color: rgb(37, 99, 235);
+  transform: scale(1.02);
+}
+
+.btn-search:active {
+  transform: scale(0.98);
+}
+
+.btn-search:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Mini action button */
+.btn-mini {
+  padding: 0.25rem 0.75rem;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: rgb(55, 65, 81);
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(229, 231, 235);
+  transition: all 200ms;
+}
+
+.btn-mini:hover {
+  background-color: white;
+}
+
+/* Large button */
+.btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+}
+
+/* Outline button */
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid;
+  color: inherit;
+}
+
+.btn-outline:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Icon-only button */
+.btn-icon-only {
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  transition: all 200ms;
+}
+
+.btn-icon-only:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* ========================================
+   LOADING/SPINNER STYLES
+   ======================================== */
+
+/* Loading spinner base */
+.spinner {
+  animation: spin 1s linear infinite;
+  border-radius: 9999px;
+  border-width: 2px;
+  border-color: rgb(59, 130, 246);
+  border-top-color: transparent;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Spinner sizes */
+.spinner-sm {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.spinner-md {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.spinner-lg {
+  width: 4rem;
+  height: 4rem;
+}
+
+/* Loading skeleton pulse */
+.skeleton-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ========================================
+   EMPTY STATE STYLES
+   ======================================== */
+
+/* Empty state containers */
+.empty-state {
+  text-align: center;
+  color: rgb(107, 114, 128);
+}
+
+.empty-state-sm {
+  padding: 2rem 0;
+}
+
+.empty-state-md {
+  padding: 3rem 0;
+}
+
+.empty-state-lg {
+  padding: 4rem 0;
+}
+
+/* ========================================
+   LAYOUT UTILITIES
+   ======================================== */
+
+/* Sidebar layout */
+.layout-sidebar {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.layout-sidebar-left {
+  width: 20rem;
+  flex-shrink: 0;
+}
+
+.layout-sidebar-content {
+  flex: 1;
+}
+
+/* Responsive grids */
+.grid-2-col-responsive {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .grid-2-col-responsive {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.grid-3-col-responsive {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .grid-3-col-responsive {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-3-col-responsive {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.grid-4-col-responsive {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .grid-4-col-responsive {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Vertical spacing utilities */
+.space-y-sm > * + * {
+  margin-top: 0.75rem;
+}
+
+.space-y-md > * + * {
+  margin-top: 1.5rem;
+}
+
+.space-y-lg > * + * {
+  margin-top: 2rem;
+}
+
+/* ========================================
+   TYPOGRAPHY CLASSES
+   ======================================== */
+
+/* Card/Section headers */
+.card-header {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: rgb(31, 41, 55);
+  margin-bottom: 1rem;
+}
+
+/* Section header - small */
+.section-header {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: rgb(55, 65, 81);
+  margin-bottom: 0.75rem;
+}
+
+/* Field labels */
+.field-label {
+  color: rgb(75, 85, 99);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+/* Field values */
+.field-value {
+  color: rgb(17, 24, 39);
+  margin-top: 0.25rem;
+}
+
+/* Item title (for list items like diagnosis, medications) */
+.item-title {
+  color: rgb(17, 24, 39);
+  font-weight: 500;
+}
+
+/* Item secondary text */
+.item-secondary {
+  color: rgb(75, 85, 99);
+  font-size: 0.875rem;
+}
+
+/* Item tertiary text */
+.item-tertiary {
+  color: rgb(107, 114, 128);
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+/* Alert/Badge text */
+.alert-header {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgb(55, 65, 81);
+}
+
+.alert-text {
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Text variants for summary/detail views */
+.text-primary {
+  color: rgb(17, 24, 39);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.text-primary-medium {
+  color: rgb(17, 24, 39);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.text-secondary {
+  color: rgb(75, 85, 99);
+  font-size: 0.75rem;
+}
+
+.text-muted {
+  color: rgb(107, 114, 128);
+  font-size: 0.875rem;
+}
+
+.text-small-muted {
+  color: rgb(107, 114, 128);
+  font-size: 0.75rem;
+}
+
+.text-subtitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgb(55, 65, 81);
+}
+
+.text-caption {
+  font-size: 0.75rem;
+  color: rgb(75, 85, 99);
+  margin-top: 0.25rem;
+}
+
+/* Appointment-specific text styles */
+.appt-date {
+  color: rgb(17, 24, 39);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.appt-time {
+  color: rgb(75, 85, 99);
+  font-size: 0.75rem;
+}
+
+.appt-type {
+  color: rgb(31, 41, 55);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Alert/notification color variants */
+.text-red-800 {
+  color: rgb(153, 27, 27);
+}
+
+.text-red-700 {
+  color: rgb(185, 28, 28);
+}
+
+.text-yellow-800 {
+  color: rgb(133, 77, 14);
+}
+
+.text-gray-600 {
+  color: rgb(75, 85, 99);
+}
+
+.text-gray-700 {
+  color: rgb(55, 65, 81);
+}
+
+.text-gray-800 {
+  color: rgb(31, 41, 55);
+}
+
+.text-gray-900 {
+  color: rgb(17, 24, 39);
+}
+
+.text-blue-600 {
+  color: rgb(37, 99, 235);
+}
+
+.text-blue-700 {
+  color: rgb(29, 78, 216);
+}

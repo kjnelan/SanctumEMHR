@@ -5,14 +5,14 @@
 global $disable_utf8_flag;
 $disable_utf8_flag = false;
 
-$host   = 'localhost';
-$port   = '3306';
-$login  = 'openemr';
-$pass   = 'openemr';
-$dbase  = 'openemr';
-$db_encoding = 'utf8mb4';
+$host	= 'localhost';
+$port	= '3306';
+$login	= 'sacwansherpa';
+$pass	= '621616SacWan2010!';
+$dbase	= 'mindline_emhr';
+$db_encoding	= 'utf8mb4';
 
-$sqlconf = [];
+$sqlconf = array();
 global $sqlconf;
 $sqlconf["host"]= $host;
 $sqlconf["port"] = $port;
@@ -25,7 +25,8 @@ $sqlconf["db_encoding"] = $db_encoding;
 //////////////////////////
 //////////////////////////
 //////DO NOT TOUCH THIS///
-$config = 0; /////////////
+$config = 1; /////////////
 //////////////////////////
 //////////////////////////
 //////////////////////////
+?>
