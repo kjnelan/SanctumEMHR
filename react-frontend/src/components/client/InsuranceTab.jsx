@@ -69,9 +69,44 @@ function InsuranceTab({ data, onDataUpdate }) {
   const { patient, insurances } = data;
 
   // Get insurance by type
-  const primaryInsurance = insurances?.find(ins => ins.type === 'primary');
+  let primaryInsurance = insurances?.find(ins => ins.type === 'primary');
   const secondaryInsurance = insurances?.find(ins => ins.type === 'secondary');
   const tertiaryInsurance = insurances?.find(ins => ins.type === 'tertiary');
+
+  // Always show primary insurance section, even if no record exists
+  // Create a placeholder if needed
+  if (!primaryInsurance) {
+    primaryInsurance = {
+      id: null,
+      type: 'primary',
+      provider: '',
+      plan_name: '',
+      effective_date: '',
+      effective_date_end: '',
+      policy_number: '',
+      group_number: '',
+      subscriber_relationship: '',
+      subscriber_fname: '',
+      subscriber_mname: '',
+      subscriber_lname: '',
+      subscriber_DOB: '',
+      subscriber_sex: '',
+      subscriber_ss: '',
+      subscriber_street: '',
+      subscriber_street_line_2: '',
+      subscriber_city: '',
+      subscriber_state: '',
+      subscriber_postal_code: '',
+      subscriber_employer: '',
+      subscriber_employer_street: '',
+      subscriber_employer_street_line_2: '',
+      subscriber_employer_city: '',
+      subscriber_employer_state: '',
+      subscriber_employer_postal_code: '',
+      copay: '',
+      accept_assignment: ''
+    };
+  }
 
   // Helper function to initialize form data from insurance record
   const initializeFormData = (insurance) => {
@@ -224,8 +259,15 @@ function InsuranceTab({ data, onDataUpdate }) {
       // Validate required fields
       validateFormData(formData);
 
-      // Call API to update insurance (using insurance ID instead of UUID)
-      await updateInsurance(insurance.id, formData);
+      // If creating a new insurance (id is null), include patient_id and type
+      const dataToSave = { ...formData };
+      if (!insurance.id) {
+        dataToSave.patient_id = patient.pid;
+        dataToSave.type = insuranceType;
+      }
+
+      // Call API to update/create insurance
+      await updateInsurance(insurance.id, dataToSave);
 
       // Refresh the data
       if (onDataUpdate) {
