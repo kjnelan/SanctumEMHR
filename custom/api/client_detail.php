@@ -225,14 +225,35 @@ try {
         FROM insurance_data id
         LEFT JOIN insurance_companies ic ON id.provider = ic.id
         WHERE id.pid = ?
-        ORDER BY id.type ASC";
+        ORDER BY id.type ASC, id.date DESC";
 
         error_log("Insurance SQL: " . $insuranceSql);
         $insuranceResult = sqlStatement($insuranceSql, [$clientId]);
+
+        // Separate active and historical insurance records
+        $activeInsurances = [];
+        $historicalInsurances = [];
+        $seenTypes = []; // Track which types we've seen for active insurance
+
         while ($row = sqlFetchArray($insuranceResult)) {
-            $insurances[] = $row;
+            $type = $row['type'];
+            $endDate = $row['date_end'];
+
+            // Check if insurance is active (no end date OR end date is in the future)
+            $isActive = empty($endDate) || strtotime($endDate) >= strtotime('today');
+
+            // For active insurance, only keep the most recent one of each type
+            if ($isActive && !isset($seenTypes[$type])) {
+                $activeInsurances[] = $row;
+                $seenTypes[$type] = true;
+            } else {
+                // Everything else goes to historical
+                $historicalInsurances[] = $row;
+            }
         }
-        error_log("Found " . count($insurances) . " insurance records");
+
+        $insurances = $activeInsurances;
+        error_log("Found " . count($activeInsurances) . " active insurance records, " . count($historicalInsurances) . " historical records");
     } catch (Exception $e) {
         error_log("Insurance query failed: " . $e->getMessage());
         error_log("Insurance query error - continuing without insurance data");
@@ -440,6 +461,7 @@ try {
             'employer_industry' => $employer['industry'] ?? ''
         ],
         'insurances' => $insurances,
+        'historical_insurances' => $historicalInsurances ?? [],
         'upcomingAppointments' => $upcomingAppointments,
         'recentAppointments' => $recentAppointments,
         'problems' => $problems,
