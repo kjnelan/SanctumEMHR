@@ -62,16 +62,31 @@ if (!$data) {
     exit;
 }
 
-// Validate insurance ID
-if (!isset($data['insurance_id']) || empty($data['insurance_id'])) {
-    error_log("Update insurance: Missing insurance_id");
-    http_response_code(400);
-    echo json_encode(['error' => 'Insurance ID is required']);
-    exit;
-}
+// Check if this is a create or update operation
+$isCreate = !isset($data['insurance_id']) || empty($data['insurance_id']) || $data['insurance_id'] === null;
 
-$insuranceId = intval($data['insurance_id']);
-error_log("Update insurance: Updating insurance ID: " . $insuranceId);
+if ($isCreate) {
+    // For creating new insurance, we need patient_id and type
+    if (!isset($data['patient_id']) || empty($data['patient_id'])) {
+        error_log("Update insurance: Missing patient_id for new insurance");
+        http_response_code(400);
+        echo json_encode(['error' => 'Patient ID is required for new insurance']);
+        exit;
+    }
+    if (!isset($data['type']) || empty($data['type'])) {
+        error_log("Update insurance: Missing type for new insurance");
+        http_response_code(400);
+        echo json_encode(['error' => 'Insurance type is required for new insurance']);
+        exit;
+    }
+    $patientId = intval($data['patient_id']);
+    $insuranceType = $data['type'];
+    error_log("Update insurance: Creating new $insuranceType insurance for patient ID: " . $patientId);
+} else {
+    // For updating existing insurance
+    $insuranceId = intval($data['insurance_id']);
+    error_log("Update insurance: Updating insurance ID: " . $insuranceId);
+}
 
 // Build update query with only the fields that can be edited
 $updateFields = [];
@@ -132,61 +147,83 @@ foreach ($allowedFields as $field => $column) {
     }
 }
 
-if (empty($updateFields)) {
-    error_log("Update insurance: No valid fields to update");
-    http_response_code(400);
-    echo json_encode(['error' => 'No valid fields to update']);
-    exit;
-}
-
-// Add insurance ID to params for WHERE clause
-$params[] = $insuranceId;
-
-// Build and execute update query
+// Build and execute query
 try {
-    $sql = "UPDATE insurance_data SET " . implode(', ', $updateFields) . " WHERE id = ?";
-    error_log("Update insurance SQL: " . $sql);
+    if ($isCreate) {
+        // INSERT new insurance record
+        // Add required fields for new record
+        $updateFields[] = "pid = ?";
+        $params[] = $patientId;
+        $updateFields[] = "type = ?";
+        $params[] = $insuranceType;
+        $updateFields[] = "date = NOW()";  // Set creation date
 
-    sqlStatement($sql, $params);
+        $sql = "INSERT INTO insurance_data SET " . implode(', ', $updateFields);
+        error_log("Create insurance SQL: " . $sql);
 
-    // Get the patient ID for audit logging
-    $patientSql = "SELECT pid, type FROM insurance_data WHERE id = ?";
-    $patientResult = sqlQuery($patientSql, [$insuranceId]);
-    $patientId = $patientResult['pid'] ?? null;
-    $insuranceType = $patientResult['type'] ?? 'unknown';
+        sqlStatement($sql, $params);
 
-    if ($patientId) {
-        // Log the update in audit log
-        $auditSql = "INSERT INTO log (
-            date,
-            event,
-            user,
-            patient_id,
-            comments
-        ) VALUES (
-            NOW(),
-            'insurance',
-            ?,
-            ?,
-            ?
-        )";
+        // Get the newly created insurance ID
+        $insuranceId = sqlInsert("SELECT LAST_INSERT_ID()");
+        error_log("Created new insurance with ID: " . $insuranceId);
 
-        $changedFields = array_keys(array_intersect_key($data, $allowedFields));
-        $auditComment = ucfirst($insuranceType) . " insurance updated: " . implode(', ', $changedFields) . " by user " . $userId;
-
+        // Log the creation in audit log
+        $auditComment = ucfirst($insuranceType) . " insurance created by user " . $userId;
+        $auditSql = "INSERT INTO log (date, event, user, patient_id, comments) VALUES (NOW(), 'insurance', ?, ?, ?)";
         sqlStatement($auditSql, [$userId, $patientId, $auditComment]);
-        error_log("Update insurance: Audit trail created - " . $auditComment);
+        error_log("Create insurance: Audit trail created - " . $auditComment);
+
+        // Return success
+        http_response_code(200);
+        echo json_encode([
+            'success' => true,
+            'message' => 'Insurance created successfully',
+            'insurance_id' => $insuranceId,
+            'created_fields' => count($updateFields)
+        ]);
+
+    } else {
+        // UPDATE existing insurance record
+        if (empty($updateFields)) {
+            error_log("Update insurance: No valid fields to update");
+            http_response_code(400);
+            echo json_encode(['error' => 'No valid fields to update']);
+            exit;
+        }
+
+        // Add insurance ID to params for WHERE clause
+        $params[] = $insuranceId;
+
+        $sql = "UPDATE insurance_data SET " . implode(', ', $updateFields) . " WHERE id = ?";
+        error_log("Update insurance SQL: " . $sql);
+
+        sqlStatement($sql, $params);
+
+        // Get the patient ID for audit logging
+        $patientSql = "SELECT pid, type FROM insurance_data WHERE id = ?";
+        $patientResult = sqlQuery($patientSql, [$insuranceId]);
+        $patientId = $patientResult['pid'] ?? null;
+        $insuranceType = $patientResult['type'] ?? 'unknown';
+
+        if ($patientId) {
+            // Log the update in audit log
+            $changedFields = array_keys(array_intersect_key($data, $allowedFields));
+            $auditComment = ucfirst($insuranceType) . " insurance updated: " . implode(', ', $changedFields) . " by user " . $userId;
+            $auditSql = "INSERT INTO log (date, event, user, patient_id, comments) VALUES (NOW(), 'insurance', ?, ?, ?)";
+            sqlStatement($auditSql, [$userId, $patientId, $auditComment]);
+            error_log("Update insurance: Audit trail created - " . $auditComment);
+        }
+
+        // Return success
+        http_response_code(200);
+        echo json_encode([
+            'success' => true,
+            'message' => 'Insurance updated successfully',
+            'updated_fields' => count($updateFields)
+        ]);
+
+        error_log("Update insurance: Successfully updated insurance " . $insuranceId);
     }
-
-    // Return success
-    http_response_code(200);
-    echo json_encode([
-        'success' => true,
-        'message' => 'Insurance updated successfully',
-        'updated_fields' => count($updateFields)
-    ]);
-
-    error_log("Update insurance: Successfully updated insurance " . $insuranceId);
 
 } catch (Exception $e) {
     error_log("Update insurance: Database error - " . $e->getMessage());

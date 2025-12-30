@@ -561,14 +561,16 @@ function DemographicsTab({ data, onDataUpdate }) {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="form-field">
-                    <div className="form-field-label">Status</div>
-                    <div className="form-field-value">{patient.care_team_status || 'Not Set'}</div>
-                  </div>
-                  <div className="form-field">
-                    <div className="form-field-label">Payment Type</div>
-                    <div className="form-field-value">{patient.payment_type || 'Not Set'}</div>
-                  </div>
+                  {renderField('Status', patient.care_team_status, null, 'text',
+                    dropdownOptions.care_team_status && dropdownOptions.care_team_status.length > 0
+                      ? dropdownOptions.care_team_status
+                      : null
+                  )}
+                  {renderField('Payment Type', patient.payment_type, null, 'text',
+                    dropdownOptions.payment_type && dropdownOptions.payment_type.length > 0
+                      ? dropdownOptions.payment_type
+                      : null
+                  )}
                 </div>
               )}
             </div>
