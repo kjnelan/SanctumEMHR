@@ -97,6 +97,17 @@ function DemographicsTab({ data, onDataUpdate }) {
 
   const handleEdit = () => {
     // Initialize form data with current patient data
+    console.log('🔍 Demographics Edit - Patient values:', {
+      gender_identity: patient.gender_identity,
+      sexual_orientation: patient.sexual_orientation,
+      sex: patient.sex
+    });
+    console.log('🔍 Demographics Edit - Available options:', {
+      gender_identity: dropdownOptions.gender_identity,
+      sexual_orientation: dropdownOptions.sexual_orientation,
+      sex: dropdownOptions.sex
+    });
+
     setFormData({
       // Personal Information
       fname: patient.fname || '',
