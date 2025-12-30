@@ -258,13 +258,18 @@ function DemographicsTab({ data, onDataUpdate }) {
     }
   };
 
-  const renderField = (label, value, fieldName, type = 'text', options = null) => {
+  const renderField = (label, value, fieldName, type = 'text', options = null, isRequired = false) => {
+    // Check if this is a required field based on the label
+    const hasAsterisk = label.includes('*');
+    const shouldStyleRequired = isRequired || hasAsterisk;
+    const labelClass = shouldStyleRequired ? 'form-field-label required-field-label' : 'form-field-label';
+
     if (isEditing && fieldName) {
       if (options) {
         // Render select dropdown
         return (
           <div className="form-field">
-            <div className="form-field-label">{label}</div>
+            <div className={labelClass}>{label}</div>
             <select
               value={formData[fieldName] || ''}
               onChange={(e) => handleChange(fieldName, e.target.value)}
@@ -280,7 +285,7 @@ function DemographicsTab({ data, onDataUpdate }) {
         // Render text input
         return (
           <div className="form-field">
-            <div className="form-field-label">{label}</div>
+            <div className={labelClass}>{label}</div>
             <input
               type={type}
               value={formData[fieldName] || ''}
@@ -302,7 +307,7 @@ function DemographicsTab({ data, onDataUpdate }) {
       }
       return (
         <div className="form-field">
-          <div className="form-field-label">{label}</div>
+          <div className={labelClass}>{label}</div>
           <div className="form-field-value">{displayValue}</div>
         </div>
       );

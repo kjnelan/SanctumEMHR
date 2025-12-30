@@ -70,42 +70,50 @@ function InsuranceTab({ data, onDataUpdate }) {
 
   // Get insurance by type
   let primaryInsurance = insurances?.find(ins => ins.type === 'primary');
-  const secondaryInsurance = insurances?.find(ins => ins.type === 'secondary');
-  const tertiaryInsurance = insurances?.find(ins => ins.type === 'tertiary');
+  let secondaryInsurance = insurances?.find(ins => ins.type === 'secondary');
+  let tertiaryInsurance = insurances?.find(ins => ins.type === 'tertiary');
 
-  // Always show primary insurance section, even if no record exists
-  // Create a placeholder if needed
+  // Helper to create placeholder insurance object
+  const createPlaceholder = (type) => ({
+    id: null,
+    type: type,
+    provider: '',
+    plan_name: '',
+    effective_date: '',
+    effective_date_end: '',
+    policy_number: '',
+    group_number: '',
+    subscriber_relationship: '',
+    subscriber_fname: '',
+    subscriber_mname: '',
+    subscriber_lname: '',
+    subscriber_DOB: '',
+    subscriber_sex: '',
+    subscriber_ss: '',
+    subscriber_street: '',
+    subscriber_street_line_2: '',
+    subscriber_city: '',
+    subscriber_state: '',
+    subscriber_postal_code: '',
+    subscriber_employer: '',
+    subscriber_employer_street: '',
+    subscriber_employer_street_line_2: '',
+    subscriber_employer_city: '',
+    subscriber_employer_state: '',
+    subscriber_employer_postal_code: '',
+    copay: '',
+    accept_assignment: ''
+  });
+
+  // Always show all insurance sections with placeholders if needed
   if (!primaryInsurance) {
-    primaryInsurance = {
-      id: null,
-      type: 'primary',
-      provider: '',
-      plan_name: '',
-      effective_date: '',
-      effective_date_end: '',
-      policy_number: '',
-      group_number: '',
-      subscriber_relationship: '',
-      subscriber_fname: '',
-      subscriber_mname: '',
-      subscriber_lname: '',
-      subscriber_DOB: '',
-      subscriber_sex: '',
-      subscriber_ss: '',
-      subscriber_street: '',
-      subscriber_street_line_2: '',
-      subscriber_city: '',
-      subscriber_state: '',
-      subscriber_postal_code: '',
-      subscriber_employer: '',
-      subscriber_employer_street: '',
-      subscriber_employer_street_line_2: '',
-      subscriber_employer_city: '',
-      subscriber_employer_state: '',
-      subscriber_employer_postal_code: '',
-      copay: '',
-      accept_assignment: ''
-    };
+    primaryInsurance = createPlaceholder('primary');
+  }
+  if (!secondaryInsurance) {
+    secondaryInsurance = createPlaceholder('secondary');
+  }
+  if (!tertiaryInsurance) {
+    tertiaryInsurance = createPlaceholder('tertiary');
   }
 
   // Helper function to initialize form data from insurance record
