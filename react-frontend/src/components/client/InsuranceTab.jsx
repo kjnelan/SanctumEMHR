@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { updateInsurance, getInsuranceCompanies, getListOptions } from '../../utils/api';
 
 function InsuranceTab({ data, onDataUpdate }) {
@@ -68,60 +68,68 @@ function InsuranceTab({ data, onDataUpdate }) {
 
   const { patient, insurances } = data;
 
-  // Get insurance by type
-  let primaryInsurance = insurances?.find(ins => ins.type === 'primary');
-  let secondaryInsurance = insurances?.find(ins => ins.type === 'secondary');
-  let tertiaryInsurance = insurances?.find(ins => ins.type === 'tertiary');
-
-  // Helper to create placeholder insurance object
-  const createPlaceholder = (type) => ({
-    id: null,
-    type: type,
-    provider: '',
-    plan_name: '',
-    effective_date: '',
-    effective_date_end: '',
-    policy_number: '',
-    group_number: '',
-    subscriber_relationship: '',
-    subscriber_fname: '',
-    subscriber_mname: '',
-    subscriber_lname: '',
-    subscriber_DOB: '',
-    subscriber_sex: '',
-    subscriber_ss: '',
-    subscriber_street: '',
-    subscriber_street_line_2: '',
-    subscriber_city: '',
-    subscriber_state: '',
-    subscriber_postal_code: '',
-    subscriber_employer: '',
-    subscriber_employer_street: '',
-    subscriber_employer_street_line_2: '',
-    subscriber_employer_city: '',
-    subscriber_employer_state: '',
-    subscriber_employer_postal_code: '',
-    copay: '',
-    accept_assignment: ''
-  });
-
   // Determine if client is self-pay based on payment_type field
   const isSelfPay = patient.payment_type === 'client';
 
-  // Always show primary insurance with placeholder if needed
-  if (!primaryInsurance) {
-    primaryInsurance = createPlaceholder('primary');
-  }
+  // Get insurance by type with placeholders - memoized to prevent re-render loops
+  const { primaryInsurance, secondaryInsurance, tertiaryInsurance } = useMemo(() => {
+    // Helper to create placeholder insurance object
+    const createPlaceholder = (type) => ({
+      id: null,
+      type: type,
+      provider: '',
+      plan_name: '',
+      effective_date: '',
+      effective_date_end: '',
+      policy_number: '',
+      group_number: '',
+      subscriber_relationship: '',
+      subscriber_fname: '',
+      subscriber_mname: '',
+      subscriber_lname: '',
+      subscriber_DOB: '',
+      subscriber_sex: '',
+      subscriber_ss: '',
+      subscriber_street: '',
+      subscriber_street_line_2: '',
+      subscriber_city: '',
+      subscriber_state: '',
+      subscriber_postal_code: '',
+      subscriber_employer: '',
+      subscriber_employer_street: '',
+      subscriber_employer_street_line_2: '',
+      subscriber_employer_city: '',
+      subscriber_employer_state: '',
+      subscriber_employer_postal_code: '',
+      copay: '',
+      accept_assignment: ''
+    });
 
-  // Only show secondary/tertiary placeholders if NOT self-pay (i.e., payment_type is 'insurance')
-  if (!isSelfPay) {
-    if (!secondaryInsurance) {
-      secondaryInsurance = createPlaceholder('secondary');
+    let primary = insurances?.find(ins => ins.type === 'primary');
+    let secondary = insurances?.find(ins => ins.type === 'secondary');
+    let tertiary = insurances?.find(ins => ins.type === 'tertiary');
+
+    // Always show primary insurance with placeholder if needed
+    if (!primary) {
+      primary = createPlaceholder('primary');
     }
-    if (!tertiaryInsurance) {
-      tertiaryInsurance = createPlaceholder('tertiary');
+
+    // Only show secondary/tertiary placeholders if NOT self-pay (i.e., payment_type is 'insurance')
+    if (!isSelfPay) {
+      if (!secondary) {
+        secondary = createPlaceholder('secondary');
+      }
+      if (!tertiary) {
+        tertiary = createPlaceholder('tertiary');
+      }
     }
-  }
+
+    return {
+      primaryInsurance: primary,
+      secondaryInsurance: secondary,
+      tertiaryInsurance: tertiary
+    };
+  }, [insurances, isSelfPay]);
 
   // Helper function to initialize form data from insurance record
   const initializeFormData = (insurance) => {
