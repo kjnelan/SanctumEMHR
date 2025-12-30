@@ -343,36 +343,34 @@ function InsuranceTab({ data, onDataUpdate }) {
             )}
           </div>
 
-          {/* Edit/Save/Cancel buttons */}
-          {isExpanded && (
-            <div className="flex space-x-2">
-              {!isEditing ? (
+          {/* Edit/Save/Cancel buttons - Always visible */}
+          <div className="flex space-x-2">
+            {!isEditing ? (
+              <button
+                onClick={() => handleEdit(insuranceType)}
+                className="btn-solid btn-solid-blue"
+              >
+                Edit Insurance
+              </button>
+            ) : (
+              <>
                 <button
-                  onClick={() => handleEdit(insuranceType)}
-                  className="btn-solid btn-solid-blue"
+                  onClick={() => handleCancel(insuranceType)}
+                  disabled={isSaving}
+                  className="btn-solid btn-solid-gray disabled:opacity-50"
                 >
-                  Edit Insurance
+                  Cancel
                 </button>
-              ) : (
-                <>
-                  <button
-                    onClick={() => handleCancel(insuranceType)}
-                    disabled={isSaving}
-                    className="btn-solid btn-solid-gray disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => handleSave(insuranceType)}
-                    disabled={isSaving}
-                    className="btn-solid btn-solid-green disabled:opacity-50"
-                  >
-                    {isSaving ? 'Saving...' : 'Save Changes'}
-                  </button>
-                </>
-              )}
-            </div>
-          )}
+                <button
+                  onClick={() => handleSave(insuranceType)}
+                  disabled={isSaving}
+                  className="btn-solid btn-solid-green disabled:opacity-50"
+                >
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Required fields legend - shown when editing */}
