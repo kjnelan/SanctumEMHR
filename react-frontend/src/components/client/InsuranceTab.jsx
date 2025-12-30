@@ -386,7 +386,7 @@ function InsuranceTab({ data, onDataUpdate }) {
     };
 
     return (
-      <div key={insurance.id} className="card-main mb-6">
+      <div key={insurance.id || `placeholder-${insuranceType}`} className="card-main mb-6">
         <div className="flex items-center justify-between mb-4">
           <div
             className={`flex items-center gap-4 ${isCollapsible ? 'cursor-pointer' : ''}`}
