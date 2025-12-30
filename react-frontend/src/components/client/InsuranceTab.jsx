@@ -69,7 +69,8 @@ function InsuranceTab({ data, onDataUpdate }) {
   const { patient, insurances } = data;
 
   // Determine if client is self-pay based on payment_type field
-  const isSelfPay = patient.payment_type === 'client';
+  // Both 'client' and 'patient' mean self-pay (patient-responsibility)
+  const isSelfPay = patient.payment_type === 'client' || patient.payment_type === 'patient';
 
   // Get insurance by type with placeholders - memoized to prevent re-render loops
   const { primaryInsurance, secondaryInsurance, tertiaryInsurance } = useMemo(() => {
