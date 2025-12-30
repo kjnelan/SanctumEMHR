@@ -111,6 +111,9 @@ $allowedFields = [
     // Risk & Protection
     'protect_indicator' => 'protect_indicator',
 
+    // Care Team Status
+    'care_team_status' => 'care_team_status',
+
     // Clinician Information
     'provider_id' => 'providerID',
     'referring_provider_id' => 'ref_providerID',
@@ -120,6 +123,7 @@ $allowedFields = [
     'cmsportal_login' => 'cmsportal_login',
 
     // HIPAA Preferences
+    'hipaa_notice' => 'hipaa_notice',
     'hipaa_allowsms' => 'hipaa_allowsms',
     'hipaa_voice' => 'hipaa_voice',
     'hipaa_mail' => 'hipaa_mail',
