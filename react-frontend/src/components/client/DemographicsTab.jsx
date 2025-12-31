@@ -97,17 +97,6 @@ function DemographicsTab({ data, onDataUpdate }) {
 
   const handleEdit = () => {
     // Initialize form data with current patient data
-    console.log('🔍 Demographics Edit - Patient values:', {
-      gender_identity: patient.gender_identity,
-      sexual_orientation: patient.sexual_orientation,
-      sex: patient.sex
-    });
-    console.log('🔍 Demographics Edit - Available options:', {
-      gender_identity: dropdownOptions.gender_identity,
-      sexual_orientation: dropdownOptions.sexual_orientation,
-      sex: dropdownOptions.sex
-    });
-
     setFormData({
       // Personal Information
       fname: patient.fname || '',
@@ -116,8 +105,8 @@ function DemographicsTab({ data, onDataUpdate }) {
       preferred_name: patient.preferred_name || '',
       DOB: patient.DOB || '',
       sex: patient.sex || '',
-      gender_identity: patient.gender_identity_code || patient.gender_identity || '',
-      sexual_orientation: patient.sexual_orientation_code || patient.sexual_orientation || '',
+      gender_identity: patient.gender_identity || '',
+      sexual_orientation: patient.sexual_orientation || '',
       marital_status: patient.marital_status || '',
       previous_names: patient.previous_names || '',
       patient_categories: patient.patient_categories || '',
@@ -269,18 +258,13 @@ function DemographicsTab({ data, onDataUpdate }) {
     }
   };
 
-  const renderField = (label, value, fieldName, type = 'text', options = null, isRequired = false) => {
-    // Check if this is a required field based on the label
-    const hasAsterisk = label.includes('*');
-    const shouldStyleRequired = isRequired || hasAsterisk;
-    const labelClass = shouldStyleRequired ? 'form-field-label required-field-label' : 'form-field-label';
-
+  const renderField = (label, value, fieldName, type = 'text', options = null) => {
     if (isEditing && fieldName) {
       if (options) {
         // Render select dropdown
         return (
           <div className="form-field">
-            <div className={labelClass}>{label}</div>
+            <div className="form-field-label">{label}</div>
             <select
               value={formData[fieldName] || ''}
               onChange={(e) => handleChange(fieldName, e.target.value)}
@@ -296,7 +280,7 @@ function DemographicsTab({ data, onDataUpdate }) {
         // Render text input
         return (
           <div className="form-field">
-            <div className={labelClass}>{label}</div>
+            <div className="form-field-label">{label}</div>
             <input
               type={type}
               value={formData[fieldName] || ''}
@@ -318,7 +302,7 @@ function DemographicsTab({ data, onDataUpdate }) {
       }
       return (
         <div className="form-field">
-          <div className={labelClass}>{label}</div>
+          <div className="form-field-label">{label}</div>
           <div className="form-field-value">{displayValue}</div>
         </div>
       );
