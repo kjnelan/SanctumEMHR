@@ -82,8 +82,8 @@ function Login() {
           <div className="grid md:grid-cols-2 gap-8 items-center">
 
             {/* Left side - Logo and branding */}
-            <div className="p-12 flex flex-col items-center justify-center backdrop-blur-2xl bg-white/10">
-              <div className="w-full max-w-md">
+            <div className="p-12 flex flex-col items-center justify-center">
+              <div className="w-full max-w-md backdrop-blur-xl bg-white/5 rounded-2xl p-6">
                 {branding.logoUrl ? (
                   <img src={branding.logoUrl} alt={`${branding.companyName} logo`} className="w-full h-auto object-contain" />
                 ) : (

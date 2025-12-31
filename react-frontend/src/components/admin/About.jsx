@@ -15,15 +15,23 @@ function About() {
     <div className="glass-card p-8">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">About Mindline EMHR</h2>
 
-      {/* Logo and Branding */}
-      <div className="flex items-center gap-6 mb-8 pb-6 border-b border-white/30">
-        <div className="w-32 h-32 backdrop-blur-xl bg-white/60 rounded-2xl flex items-center justify-center p-4 shadow-lg">
-          <img src="/mindlinelogo.png" alt="Mindline Logo" className="w-full h-full object-contain" />
+      {/* Logo, Branding, and Author Info */}
+      <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/30">
+        <div className="flex items-center gap-6">
+          <div className="w-32 h-32 backdrop-blur-xl bg-white/60 rounded-2xl flex items-center justify-center p-4 shadow-lg">
+            <img src="/mindlinelogo.png" alt="Mindline Logo" className="w-full h-full object-contain" />
+          </div>
+          <div>
+            <h3 className="text-3xl font-bold text-gray-900">Mindline</h3>
+            <p className="text-lg text-gray-700 mt-1">Electronic Mental Health Records</p>
+            <p className="text-sm text-gray-600 mt-2 italic">Where modern design meets clinical insight</p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-3xl font-bold text-gray-900">Mindline</h3>
-          <p className="text-lg text-gray-700 mt-1">Electronic Mental Health Records</p>
-          <p className="text-sm text-gray-600 mt-2 italic">Where modern design meets clinical insight</p>
+
+        {/* Author and Organization */}
+        <div className="text-right">
+          <p className="text-gray-900 font-semibold">Kenneth J. Nelan</p>
+          <p className="text-gray-700 mt-1">Sacred Wandering</p>
         </div>
       </div>
 
@@ -45,6 +53,33 @@ function About() {
               <span className="text-gray-900 font-semibold">{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
             </div>
           </div>
+        </div>
+
+        {/* What is EMHR? - with Product Description */}
+        <div className="bg-blue-50/60 backdrop-blur-sm rounded-lg p-6 border border-blue-200/50">
+          <h4 className="text-lg font-semibold text-blue-900 mb-3">What is EMHR?</h4>
+
+          {/* Product Description */}
+          <div className="mb-4 pb-4 border-b border-blue-200/30">
+            <p className="text-gray-700 leading-relaxed">
+              Mindline is a purpose-built Electronic Mental Health Records (EMHR) system designed specifically
+              for outpatient mental health practices. Combining modern design principles with specialized clinical
+              functionality, Mindline streamlines client management, appointment scheduling, clinical documentation,
+              and billing workflows—all within a beautiful, intuitive interface.
+            </p>
+          </div>
+
+          {/* EMHR Definition */}
+          <p className="text-gray-700 leading-relaxed mb-4">
+            <strong className="text-blue-900">EMHR (Electronic Mental Health Records)</strong> is a term we've introduced
+            to distinguish mental health-specific documentation systems from general medical EMRs.
+            While EMRs focus on physical health, EMHRs are purpose-built for the unique workflows,
+            documentation requirements, and clinical needs of mental health and behavioral health practices.
+          </p>
+          <p className="text-gray-600 text-sm">
+            Mindline represents a new generation of EMHR systems designed from the ground up
+            for outpatient mental health providers, combining modern UX with specialized clinical functionality.
+          </p>
         </div>
 
         {/* Features */}
@@ -121,7 +156,7 @@ function About() {
           </div>
         </div>
 
-        {/* Copyright and Legal */}
+        {/* Copyright and Legal - MOVED TO LAST */}
         <div className="bg-gradient-to-br from-blue-50/80 to-purple-50/80 backdrop-blur-sm rounded-lg p-6 border border-white/50">
           <div className="text-center space-y-3">
             <div>
@@ -141,36 +176,6 @@ function About() {
               </p>
             </div>
           </div>
-        </div>
-
-        {/* Contact Information */}
-        <div>
-          <h4 className="text-lg font-semibold text-gray-800 mb-3">Development</h4>
-          <div className="bg-white/40 backdrop-blur-sm rounded-lg p-4 space-y-2">
-            <div className="flex justify-between">
-              <span className="text-gray-700 font-medium">Author:</span>
-              <span className="text-gray-900">Kenneth J. Nelan</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-700 font-medium">Organization:</span>
-              <span className="text-gray-900">Sacred Wandering</span>
-            </div>
-          </div>
-        </div>
-
-        {/* EMHR Definition */}
-        <div className="bg-blue-50/60 backdrop-blur-sm rounded-lg p-6 border border-blue-200/50">
-          <h4 className="text-lg font-semibold text-blue-900 mb-3">What is EMHR?</h4>
-          <p className="text-gray-700 leading-relaxed">
-            <strong className="text-blue-900">EMHR (Electronic Mental Health Records)</strong> is a term we've introduced
-            to distinguish mental health-specific documentation systems from general medical EMRs.
-            While EMRs focus on physical health, EMHRs are purpose-built for the unique workflows,
-            documentation requirements, and clinical needs of mental health and behavioral health practices.
-          </p>
-          <p className="text-gray-600 text-sm mt-3">
-            Mindline represents a new generation of EMHR systems designed from the ground up
-            for outpatient mental health providers, combining modern UX with specialized clinical functionality.
-          </p>
         </div>
       </div>
     </div>
