@@ -1,0 +1,140 @@
+<?php
+/**
+ * VOIP.ms SMS Appointment Reminder Script
+ *
+ * Sends SMS reminders using the VOIP.ms Email-to-SMS gateway or API.
+ * Intended for cron-based use in OpenEMR with the custom VOIP.ms SMS module.
+ *
+ * Author: Kenneth J. Nelan
+ * License: GNU GPL v3.0
+ * Version: 1.0.1
+ */
+
+// ----------------------[ BOOTSTRAP ENVIRONMENT ]----------------------
+parse_str(implode('&', array_slice($argv, 1)), $_GET);
+
+define('NO_SESSION_VALIDATION', true);
+define('NO_AUTHenticate', true);
+define('skip_timeout_reset', true);
+define('skip_session_start', true);
+$GLOBALS['ignoreAuth'] = true;
+$ignoreAuth = true;
+
+if (!isset($_GET['site'])) {
+    fwrite(STDERR, "❌ Missing required argument: site=default\n");
+    exit(1);
+}
+
+$site_id = $_GET['site'];
+$_GET['site'] = $site_id;
+$basePath = realpath(__DIR__ . '/../../../../../');
+require_once("$basePath/interface/globals.php");
+
+// ----------------------[ LOAD MODULE CLASSES ]------------------------
+require_once(__DIR__ . '/../src/SmsVoipms/Service/SmsSender.php');
+require_once(__DIR__ . '/../src/SmsVoipms/Service/MessageBuilder.php');
+
+use OpenEMR\Modules\SmsVoipms\Service\SmsSender;
+use OpenEMR\Modules\SmsVoipms\Service\MessageBuilder;
+
+// ----------------------[ INPUTS AND SETTINGS ]------------------------
+$type = $_GET['type'] ?? 'reminder';
+$user = $_GET['user'] ?? 'cronjob';
+$testrun = (bool) ($_GET['testrun'] ?? false);
+$fromEmail = $GLOBALS['sms_voipms_email_from'] ?? '';
+
+if ($type !== 'reminder') {
+    echo "⚠ Unknown type: $type\n";
+    exit(1);
+}
+
+if (($GLOBALS['sms_voipms_use_email'] ?? '0') === '1' && empty($fromEmail)) {
+    echo "❌ Email-to-SMS is enabled but no 'From Email Address' is configured.\n";
+    exit(1);
+}
+
+// ----------------------[ TIME WINDOW & TEMPLATE ]---------------------
+$hoursAhead = (int) ($GLOBALS['sms_voipms_reminder_hours'] ?? 24);
+if ($hoursAhead <= 0) {
+    $hoursAhead = 24;
+}
+$msgTemplate = $GLOBALS['sms_voipms_template'] ?? "Reminder: Your appointment with ***PROVIDER*** is on ***DATE*** at ***STARTTIME***.";
+
+$now = new DateTimeImmutable();
+$cutoff = $now->modify("+$hoursAhead hours");
+
+echo "⏰ Scanning for reminders between now and {$cutoff->format('Y-m-d H:i:s')}...\n";
+
+// ----------------------[ APPOINTMENT QUERY – FIXED VERSION ]---------
+$sql = "
+    SELECT
+        e.pc_eventDate,
+        e.pc_startTime,
+        e.pc_duration,
+        e.pc_eid,
+        e.pc_aid,
+        e.pc_location,
+        e.pc_pid,
+        p.fname,
+        p.lname,
+        p.phone_cell,
+        u.lname AS provider_lname,
+        u.fname AS provider_fname
+    FROM openemr_postcalendar_events AS e
+    JOIN patient_data AS p ON e.pc_pid = p.pid
+    LEFT JOIN users AS u ON e.pc_aid = u.id
+    LEFT JOIN sms_voipms_appt_reminders AS r ON r.event_id = e.pc_eid AND r.type = 'reminder'
+    WHERE
+        CONCAT(e.pc_eventDate, ' ', e.pc_startTime) >= ?
+        AND CONCAT(e.pc_eventDate, ' ', e.pc_startTime) <= ?
+        AND p.phone_cell IS NOT NULL
+        AND TRIM(p.phone_cell) != ''
+        AND e.pc_apptstatus IN ('', 'Sched')
+        AND r.event_id IS NULL
+";
+
+$params = [$now->format('Y-m-d H:i:s'), $cutoff->format('Y-m-d H:i:s')];
+$result = sqlStatement($sql, $params);
+
+// ----------------------[ MESSAGE GENERATION & SENDING ]--------------
+$sender = new SmsSender();
+$count = 0;
+
+while ($row = sqlFetchArray($result)) {
+    $message = MessageBuilder::buildAppointmentMessage($row, $msgTemplate);
+    $phone = $row['phone_cell'];
+    $eventId = $row['pc_eid'];
+
+    echo "📋 EVENT ID: {$eventId}, Phone: {$phone}, Date: {$row['pc_eventDate']}, Time: {$row['pc_startTime']}\n";
+
+    if ($testrun) {
+        echo "[TEST] Would send to {$phone}: $message\n";
+    } else {
+        $response = $sender->send($phone, $message, $fromEmail, $user);
+
+        if ($response['status'] === 'success') {
+            // ✅ Insert reminder log
+            sqlStatement(
+                "INSERT INTO sms_voipms_appt_reminders (event_id, sent_at, user, type) VALUES (?, NOW(), ?, 'reminder')",
+                [$eventId, $user]
+            );
+
+            // 🟢 Update appointment status to prevent repeat sends
+            $update = sqlStatement(
+                "UPDATE openemr_postcalendar_events SET pc_apptstatus = ? WHERE pc_eid = ?",
+                ['SMS', $eventId]
+            );
+
+            error_log("✅ Reminder sent and logged: event_id {$eventId}");
+        } else {
+            error_log("❌ SMS failed to send to {$phone} (event_id {$eventId})");
+        }
+
+        echo "📨 Sent to {$phone} – Status: {$response['status']}\n";
+    }
+
+    $count++;
+}
+
+// ----------------------[ WRAP-UP ]------------------------------------
+echo "\n✅ Done. {$count} reminder(s) processed.\n";

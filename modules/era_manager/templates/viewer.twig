@@ -1,0 +1,41 @@
+<?php
+/**
+ * ERA Inbox Viewer Template
+ * 
+ * Simple file list for unprocessed ERA files.
+ * 
+ * @package   oe-module-oa-era-manager
+ */
+
+function render_era_inbox_viewer(array $files): string
+{
+    ob_start();
+    ?>
+    <div class="container">
+        <h2>ERA Inbox</h2>
+        <?php if (empty($files)): ?>
+            <p>No .835 files found in the inbox.</p>
+        <?php else: ?>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Filename</th>
+                        <th>Last Modified</th>
+                        <th>Size (bytes)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($files as $file): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($file['name']) ?></td>
+                            <td><?= $file['mtime'] ?></td>
+                            <td><?= number_format($file['size']) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+    </div>
+    <?php
+    return ob_get_clean();
+}
