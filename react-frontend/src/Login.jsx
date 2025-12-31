@@ -66,7 +66,7 @@ function Login() {
 
       <div className="relative z-10 w-full max-w-6xl mx-4">
         {/* Two-column layout */}
-        <div className="backdrop-blur-2xl bg-white/40 rounded-3xl shadow-2xl border border-white/50 overflow-hidden">
+        <div className="backdrop-blur-3xl bg-white/30 rounded-3xl shadow-2xl border border-white/50 overflow-hidden">
           <div className="grid md:grid-cols-2 gap-8 items-center">
 
             {/* Left side - Logo and branding */}
@@ -137,7 +137,7 @@ function Login() {
               </div>
 
               <div className="mt-4 text-center">
-                <p className="text-gray-600 text-xs">Version 1.0.0 Beta</p>
+                <p className="text-gray-600 text-xs">Version 0.3.0-alpha</p>
               </div>
             </div>
             {/* End right side */}

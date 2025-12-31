@@ -18,14 +18,16 @@ function DemographicsTab({ data, onDataUpdate }) {
     const loadDropdownOptions = async () => {
       try {
         // Fetch all required list options in parallel
-        const [sexOptions, genderOptions, orientationOptions, maritalOptions, protectOptions, stateOptions, categoriesOptions] = await Promise.all([
+        const [sexOptions, genderOptions, orientationOptions, maritalOptions, protectOptions, stateOptions, categoriesOptions, careTeamStatusOptions, paymentTypeOptions] = await Promise.all([
           getListOptions('sex'),
           getListOptions('gender_identity'),
           getListOptions('sexual_orientation'),
           getListOptions('marital'),
           getListOptions('yesno'),
           getListOptions('state'),
-          getListOptions('Patient_Groupings')
+          getListOptions('Patient_Groupings'),
+          getListOptions('Care_Team_Status'),
+          getListOptions('payment_type')
         ]);
 
         setDropdownOptions({
@@ -35,7 +37,9 @@ function DemographicsTab({ data, onDataUpdate }) {
           marital_status: maritalOptions.options || [],
           protect_indicator: protectOptions.options || [],
           state: stateOptions.options || [],
-          patient_categories: categoriesOptions.options || []
+          patient_categories: categoriesOptions.options || [],
+          care_team_status: careTeamStatusOptions.options || [],
+          payment_type: paymentTypeOptions.options || []
         });
       } catch (err) {
         console.error('Failed to load dropdown options:', err);
@@ -101,8 +105,8 @@ function DemographicsTab({ data, onDataUpdate }) {
       preferred_name: patient.preferred_name || '',
       DOB: patient.DOB || '',
       sex: patient.sex || '',
-      gender_identity: patient.gender_identity_code || '',
-      sexual_orientation: patient.sexual_orientation_code || '',
+      gender_identity: patient.gender_identity || '',
+      sexual_orientation: patient.sexual_orientation || '',
       marital_status: patient.marital_status || '',
       previous_names: patient.previous_names || '',
       patient_categories: patient.patient_categories || '',
@@ -126,6 +130,12 @@ function DemographicsTab({ data, onDataUpdate }) {
       // Risk & Protection
       protect_indicator: patient.protection_indicator_code || '',
 
+      // Care Team Status
+      care_team_status: patient.care_team_status || '',
+
+      // Payment Type
+      payment_type: patient.payment_type || '',
+
       // Clinician Information
       provider_id: patient.provider_id || '',
       referring_provider_id: patient.referring_provider_id || '',
@@ -135,6 +145,7 @@ function DemographicsTab({ data, onDataUpdate }) {
       cmsportal_login: patient.cmsportal_login || '',
 
       // HIPAA Preferences
+      hipaa_notice: patient.hipaa_notice || 'NO',
       hipaa_allowsms: patient.hipaa_allowsms || 'NO',
       hipaa_voice: patient.hipaa_voice || 'NO',
       hipaa_mail: patient.hipaa_mail || 'NO',
@@ -165,6 +176,18 @@ function DemographicsTab({ data, onDataUpdate }) {
       // Validate required fields
       if (!formData.fname || !formData.lname) {
         throw new Error('First name and last name are required');
+      }
+
+      if (!formData.sex) {
+        throw new Error('Sex is required');
+      }
+
+      if (!formData.gender_identity) {
+        throw new Error('Gender Identity is required');
+      }
+
+      if (!formData.sexual_orientation) {
+        throw new Error('Sexual Orientation is required');
       }
 
       if (formData.email && !formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
@@ -324,6 +347,15 @@ function DemographicsTab({ data, onDataUpdate }) {
         </div>
       )}
 
+      {/* Required fields legend - shown when editing */}
+      {isEditing && (
+        <div className="mb-4 px-4 py-2 bg-purple-50 border-l-4 border-purple-700 rounded">
+          <p className="text-sm text-purple-900">
+            <span className="required-field-label">*</span> Required fields are marked with an asterisk and displayed in <span className="required-field-label">purple</span>
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column */}
         <div className="space-y-6">
@@ -334,22 +366,22 @@ function DemographicsTab({ data, onDataUpdate }) {
               <div className="grid grid-cols-2 gap-3">
                 {isEditing ? (
                   <>
-                    {renderField('First Name', formData.fname, 'fname')}
+                    {renderField('First Name *', formData.fname, 'fname')}
                     {renderField('Middle Name', formData.mname, 'mname')}
-                    {renderField('Last Name', formData.lname, 'lname')}
+                    {renderField('Last Name *', formData.lname, 'lname')}
                     {renderField('Preferred Name', formData.preferred_name, 'preferred_name')}
                     {renderField('DOB', formData.DOB, 'DOB', 'date')}
-                    {renderField('Sex', formData.sex, 'sex', 'text',
+                    {renderField('Sex *', formData.sex, 'sex', 'text',
                       dropdownOptions.sex && dropdownOptions.sex.length > 0
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.sex]
                         : [{ value: '', label: 'Select...' }, { value: 'Male', label: 'Male' }, { value: 'Female', label: 'Female' }]
                     )}
-                    {renderField('Gender Identity', formData.gender_identity, 'gender_identity', 'text',
+                    {renderField('Gender Identity *', formData.gender_identity, 'gender_identity', 'text',
                       dropdownOptions.gender_identity && dropdownOptions.gender_identity.length > 0
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.gender_identity]
                         : null
                     )}
-                    {renderField('Sexual Orientation', formData.sexual_orientation, 'sexual_orientation', 'text',
+                    {renderField('Sexual Orientation *', formData.sexual_orientation, 'sexual_orientation', 'text',
                       dropdownOptions.sexual_orientation && dropdownOptions.sexual_orientation.length > 0
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.sexual_orientation]
                         : null
@@ -519,12 +551,46 @@ function DemographicsTab({ data, onDataUpdate }) {
         {/* Right Column */}
         <div className="space-y-6">
 
-          {/* Risk & Protection Section */}
+          {/* Client Status Section */}
           <div className="card-main">
-            <h2 className="card-header">Risk & Protection</h2>
+            <h2 className="card-header">Client Status</h2>
             <div className="card-inner">
               {isEditing ? (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-3">
+                  {renderField('Status', formData.care_team_status, 'care_team_status', 'text',
+                    dropdownOptions.care_team_status && dropdownOptions.care_team_status.length > 0
+                      ? [{ value: '', label: 'Select...' }, ...dropdownOptions.care_team_status]
+                      : null
+                  )}
+                  {renderField('Payment Type', formData.payment_type, 'payment_type', 'text',
+                    dropdownOptions.payment_type && dropdownOptions.payment_type.length > 0
+                      ? [{ value: '', label: 'Select...' }, ...dropdownOptions.payment_type]
+                      : null
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {renderField('Status', patient.care_team_status, null, 'text',
+                    dropdownOptions.care_team_status && dropdownOptions.care_team_status.length > 0
+                      ? dropdownOptions.care_team_status
+                      : null
+                  )}
+                  {renderField('Payment Type', patient.payment_type, null, 'text',
+                    dropdownOptions.payment_type && dropdownOptions.payment_type.length > 0
+                      ? dropdownOptions.payment_type
+                      : null
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Is the Client at Risk Section */}
+          <div className="card-main">
+            <h2 className="card-header">Is the Client at Risk?</h2>
+            <div className="card-inner">
+              {isEditing ? (
+                <div>
                   {renderField('Risk Indicator', formData.protect_indicator, 'protect_indicator', 'text',
                     dropdownOptions.protect_indicator && dropdownOptions.protect_indicator.length > 0
                       ? [{ value: '', label: 'Select...' }, ...dropdownOptions.protect_indicator]
@@ -593,12 +659,12 @@ function DemographicsTab({ data, onDataUpdate }) {
             <h2 className="card-header">Reminder Preferences</h2>
             <div className="card-inner">
               <div className="grid grid-cols-2 gap-3">
-                {!isEditing && (
-                  <div className="col-span-2 form-field">
-                    <div className="form-field-label">HIPAA Notice Received</div>
-                    <div className="form-field-value">{patient.hipaa_notice ? 'YES' : 'NO'}</div>
-                  </div>
-                )}
+                <div className="col-span-2">
+                  {renderField('HIPAA Notice Received', patient.hipaa_notice, 'hipaa_notice', 'text', [
+                    { value: 'NO', label: 'NO' },
+                    { value: 'YES', label: 'YES' }
+                  ])}
+                </div>
                 {renderField('Allow SMS', patient.hipaa_allowsms, 'hipaa_allowsms', 'text', [
                   { value: 'NO', label: 'NO' },
                   { value: 'YES', label: 'YES' }

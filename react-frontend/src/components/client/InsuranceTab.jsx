@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { updateInsurance, getInsuranceCompanies, getListOptions } from '../../utils/api';
 
 function InsuranceTab({ data, onDataUpdate }) {
@@ -68,10 +68,68 @@ function InsuranceTab({ data, onDataUpdate }) {
 
   const { patient, insurances } = data;
 
-  // Get insurance by type
-  const primaryInsurance = insurances?.find(ins => ins.type === 'primary');
-  const secondaryInsurance = insurances?.find(ins => ins.type === 'secondary');
-  const tertiaryInsurance = insurances?.find(ins => ins.type === 'tertiary');
+  // Determine if client is self-pay based on payment_type field
+  const isSelfPay = patient.payment_type === 'client';
+
+  // Get insurance by type with placeholders - memoized to prevent re-render loops
+  const { primaryInsurance, secondaryInsurance, tertiaryInsurance } = useMemo(() => {
+    // Helper to create placeholder insurance object
+    const createPlaceholder = (type) => ({
+      id: null,
+      type: type,
+      provider: '',
+      plan_name: '',
+      effective_date: '',
+      effective_date_end: '',
+      policy_number: '',
+      group_number: '',
+      subscriber_relationship: '',
+      subscriber_fname: '',
+      subscriber_mname: '',
+      subscriber_lname: '',
+      subscriber_DOB: '',
+      subscriber_sex: '',
+      subscriber_ss: '',
+      subscriber_street: '',
+      subscriber_street_line_2: '',
+      subscriber_city: '',
+      subscriber_state: '',
+      subscriber_postal_code: '',
+      subscriber_employer: '',
+      subscriber_employer_street: '',
+      subscriber_employer_street_line_2: '',
+      subscriber_employer_city: '',
+      subscriber_employer_state: '',
+      subscriber_employer_postal_code: '',
+      copay: '',
+      accept_assignment: ''
+    });
+
+    let primary = insurances?.find(ins => ins.type === 'primary');
+    let secondary = insurances?.find(ins => ins.type === 'secondary');
+    let tertiary = insurances?.find(ins => ins.type === 'tertiary');
+
+    // Always show primary insurance with placeholder if needed
+    if (!primary) {
+      primary = createPlaceholder('primary');
+    }
+
+    // Only show secondary/tertiary placeholders if NOT self-pay (i.e., payment_type is 'insurance')
+    if (!isSelfPay) {
+      if (!secondary) {
+        secondary = createPlaceholder('secondary');
+      }
+      if (!tertiary) {
+        tertiary = createPlaceholder('tertiary');
+      }
+    }
+
+    return {
+      primaryInsurance: primary,
+      secondaryInsurance: secondary,
+      tertiaryInsurance: tertiary
+    };
+  }, [insurances, isSelfPay]);
 
   // Helper function to initialize form data from insurance record
   const initializeFormData = (insurance) => {
@@ -224,8 +282,15 @@ function InsuranceTab({ data, onDataUpdate }) {
       // Validate required fields
       validateFormData(formData);
 
-      // Call API to update insurance (using insurance ID instead of UUID)
-      await updateInsurance(insurance.id, formData);
+      // If creating a new insurance (id is null), include patient_id and type
+      const dataToSave = { ...formData };
+      if (!insurance.id) {
+        dataToSave.patient_id = patient.pid;
+        dataToSave.type = insuranceType;
+      }
+
+      // Call API to update/create insurance
+      await updateInsurance(insurance.id, dataToSave);
 
       // Refresh the data
       if (onDataUpdate) {
@@ -321,7 +386,7 @@ function InsuranceTab({ data, onDataUpdate }) {
     };
 
     return (
-      <div key={insurance.id} className="card-main mb-6">
+      <div key={insurance.id || `placeholder-${insuranceType}`} className="card-main mb-6">
         <div className="flex items-center justify-between mb-4">
           <div
             className={`flex items-center gap-4 ${isCollapsible ? 'cursor-pointer' : ''}`}
@@ -343,36 +408,34 @@ function InsuranceTab({ data, onDataUpdate }) {
             )}
           </div>
 
-          {/* Edit/Save/Cancel buttons */}
-          {isExpanded && (
-            <div className="flex space-x-2">
-              {!isEditing ? (
+          {/* Edit/Save/Cancel buttons - Always visible */}
+          <div className="flex space-x-2">
+            {!isEditing ? (
+              <button
+                onClick={() => handleEdit(insuranceType)}
+                className="btn-solid btn-solid-blue"
+              >
+                Edit Insurance
+              </button>
+            ) : (
+              <>
                 <button
-                  onClick={() => handleEdit(insuranceType)}
-                  className="btn-solid btn-solid-blue"
+                  onClick={() => handleCancel(insuranceType)}
+                  disabled={isSaving}
+                  className="btn-solid btn-solid-gray disabled:opacity-50"
                 >
-                  Edit Insurance
+                  Cancel
                 </button>
-              ) : (
-                <>
-                  <button
-                    onClick={() => handleCancel(insuranceType)}
-                    disabled={isSaving}
-                    className="btn-solid btn-solid-gray disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => handleSave(insuranceType)}
-                    disabled={isSaving}
-                    className="btn-solid btn-solid-green disabled:opacity-50"
-                  >
-                    {isSaving ? 'Saving...' : 'Save Changes'}
-                  </button>
-                </>
-              )}
-            </div>
-          )}
+                <button
+                  onClick={() => handleSave(insuranceType)}
+                  disabled={isSaving}
+                  className="btn-solid btn-solid-green disabled:opacity-50"
+                >
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Required fields legend - shown when editing */}
@@ -448,8 +511,7 @@ function InsuranceTab({ data, onDataUpdate }) {
   const hasEmployerData = patient.employer || patient.employer_street || patient.employer_city ||
                          patient.employer_state || patient.employer_postal_code || patient.employer_occupation;
 
-  // Determine if client is self-pay based on payment_type field (userlist1)
-  const isSelfPay = patient.payment_type === 'client';
+  // Payment type label for display
   const paymentTypeLabel = isSelfPay ? 'Self-Pay (Client)' : 'Insurance';
 
   // Determine if we should show insurance sections
