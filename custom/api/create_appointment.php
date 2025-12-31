@@ -1,7 +1,15 @@
 <?php
 /**
- * Create Appointment API - Session-based
- * Creates a new appointment in the calendar
+ * Mindline EMHR
+ * Create Appointment API - Session-based authentication
+ * Creates a new appointment in the calendar system
+ *
+ * Author: Kenneth J. Nelan
+ * License: Proprietary and Confidential
+ * Version: ALPHA
+ *
+ * Copyright © 2026 Sacred Wandering
+ * Proprietary and Confidential
  */
 
 // Start output buffering to prevent any PHP warnings/notices from breaking JSON

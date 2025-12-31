@@ -1,3 +1,15 @@
+/**
+ * Mindline EMHR
+ * Login screen with glassmorphism design
+ *
+ * Author: Kenneth J. Nelan
+ * License: Proprietary and Confidential
+ * Version: ALPHA
+ *
+ * Copyright © 2026 Sacred Wandering
+ * Proprietary and Confidential
+ */
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { branding } from './config/branding';
@@ -70,7 +82,7 @@ function Login() {
           <div className="grid md:grid-cols-2 gap-8 items-center">
 
             {/* Left side - Logo and branding */}
-            <div className="p-12 flex flex-col items-center justify-center bg-white/20">
+            <div className="p-12 flex flex-col items-center justify-center backdrop-blur-2xl bg-white/10">
               <div className="w-full max-w-md">
                 {branding.logoUrl ? (
                   <img src={branding.logoUrl} alt={`${branding.companyName} logo`} className="w-full h-auto object-contain" />
@@ -138,6 +150,15 @@ function Login() {
 
               <div className="mt-4 text-center">
                 <p className="text-gray-600 text-xs">Version 0.3.0-alpha</p>
+              </div>
+
+              <div className="mt-6 text-center border-t border-white/30 pt-4">
+                <p className="text-gray-600 text-xs">
+                  Mindline is Copyright © 2026 Sacred Wandering
+                </p>
+                <p className="text-gray-500 text-xs mt-1">
+                  Proprietary and Confidential
+                </p>
               </div>
             </div>
             {/* End right side */}

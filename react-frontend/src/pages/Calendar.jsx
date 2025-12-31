@@ -1,3 +1,16 @@
+/**
+ * Mindline EMHR
+ * Calendar page - Day/Week/Month views with appointment management
+ * Supports creating appointments by clicking time slots
+ *
+ * Author: Kenneth J. Nelan
+ * License: Proprietary and Confidential
+ * Version: ALPHA
+ *
+ * Copyright © 2026 Sacred Wandering
+ * Proprietary and Confidential
+ */
+
 import React, { useState, useEffect } from 'react';
 import { getAppointments, getProviders, getCalendarSettings } from '../utils/api';
 import MiniCalendar from '../components/calendar/MiniCalendar';

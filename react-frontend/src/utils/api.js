@@ -1,4 +1,15 @@
-// API utility for making authenticated requests to OpenEMR
+/**
+ * Mindline EMHR
+ * API utility for making authenticated requests
+ * Session-based authentication with automatic redirect on 401
+ *
+ * Author: Kenneth J. Nelan
+ * License: Proprietary and Confidential
+ * Version: ALPHA
+ *
+ * Copyright © 2026 Sacred Wandering
+ * Proprietary and Confidential
+ */
 
 const API_BASE = '/apis/default';
 const FHIR_BASE = '/fhir';

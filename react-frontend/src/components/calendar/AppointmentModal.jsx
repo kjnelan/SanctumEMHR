@@ -1,9 +1,20 @@
+/**
+ * Mindline EMHR
+ * AppointmentModal - Modal component for creating appointments
+ * Features patient search, provider selection, date/time pickers
+ *
+ * Author: Kenneth J. Nelan
+ * License: Proprietary and Confidential
+ * Version: ALPHA
+ *
+ * Copyright © 2026 Sacred Wandering
+ * Proprietary and Confidential
+ */
+
 import React, { useState, useEffect } from 'react';
 import { createAppointment, getAppointmentCategories, searchPatients } from '../../utils/api';
 
 /**
- * AppointmentModal - Modal for creating/editing appointments
- *
  * Props:
  * - isOpen: boolean - Whether modal is open
  * - onClose: function - Close modal callback

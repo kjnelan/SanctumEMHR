@@ -1,7 +1,15 @@
 <?php
 /**
- * Get Appointment Categories API - Session-based
+ * Mindline EMHR
+ * Get Appointment Categories API - Session-based authentication
  * Returns list of active appointment categories/types
+ *
+ * Author: Kenneth J. Nelan
+ * License: Proprietary and Confidential
+ * Version: ALPHA
+ *
+ * Copyright © 2026 Sacred Wandering
+ * Proprietary and Confidential
  */
 
 // Start output buffering to prevent any PHP warnings/notices from breaking JSON

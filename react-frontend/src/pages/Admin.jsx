@@ -1,5 +1,18 @@
+/**
+ * Mindline EMHR
+ * Admin/Settings page - System configuration and preferences
+ *
+ * Author: Kenneth J. Nelan
+ * License: Proprietary and Confidential
+ * Version: ALPHA
+ *
+ * Copyright © 2026 Sacred Wandering
+ * Proprietary and Confidential
+ */
+
 import { useState } from 'react';
 import CalendarSettings from '../components/admin/CalendarSettings';
+import About from '../components/admin/About';
 
 function Admin() {
   const [activeSection, setActiveSection] = useState('calendar');
@@ -13,6 +26,7 @@ function Admin() {
     { id: 'facilities', label: 'Facilities', available: false },
     { id: 'users', label: 'Users', available: false },
     { id: 'security', label: 'Security', available: false },
+    { id: 'about', label: 'About', available: true },
   ];
 
   return (
@@ -55,8 +69,9 @@ function Admin() {
         {/* Main Settings Panel */}
         <div className="flex-1">
           {activeSection === 'calendar' && <CalendarSettings />}
+          {activeSection === 'about' && <About />}
 
-          {activeSection !== 'calendar' && (
+          {activeSection !== 'calendar' && activeSection !== 'about' && (
             <div className="glass-card p-12 text-center">
               <div className="text-gray-700 text-lg font-semibold">
                 {sections.find(s => s.id === activeSection)?.label} Settings
