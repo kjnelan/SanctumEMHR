@@ -1,72 +1,253 @@
-[![Syntax Status](https://github.com/openemr/openemr/actions/workflows/syntax.yml/badge.svg)](https://github.com/openemr/openemr/actions/workflows/syntax.yml)
-[![Styling Status](https://github.com/openemr/openemr/actions/workflows/styling.yml/badge.svg)](https://github.com/openemr/openemr/actions/workflows/styling.yml)
-[![Testing Status](https://github.com/openemr/openemr/actions/workflows/test.yml/badge.svg)](https://github.com/openemr/openemr/actions/workflows/test.yml)
-[![JS Unit Testing Status](https://github.com/openemr/openemr/actions/workflows/js-test.yml/badge.svg)](https://github.com/openemr/openemr/actions/workflows/js-test.yml)
-[![PHPStan](https://github.com/openemr/openemr/actions/workflows/phpstan.yml/badge.svg)](https://github.com/openemr/openemr/actions/workflows/phpstan.yml)
-[![Rector](https://github.com/openemr/openemr/actions/workflows/rector.yml/badge.svg)](https://github.com/openemr/openemr/actions/workflows/rector.yml)
-[![ShellCheck](https://github.com/openemr/openemr/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/openemr/openemr/actions/workflows/shellcheck.yml)
-[![codecov](https://codecov.io/gh/openemr/openemr/graph/badge.svg?token=7Eu3U1Ozdq)](https://codecov.io/gh/openemr/openemr)
+# Mindline EMHR
 
-[![Backers on Open Collective](https://opencollective.com/openemr/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/openemr/sponsors/badge.svg)](#sponsors)
+**Version 0.3.0-alpha**
+*Where modern design meets clinical insight.*
 
-# OpenEMR
+---
 
-[OpenEMR](https://open-emr.org) is a Free and Open Source electronic health records and medical practice management application. It features fully integrated electronic health records, practice management, scheduling, electronic billing, internationalization, free support, a vibrant community, and a whole lot more. It runs on Windows, Linux, Mac OS X, and many other platforms.
+## What is Mindline?
 
-### Contributing
+Mindline is a purpose-built **Electronic Mental Health Records (EMHR)** system designed specifically for outpatient mental health practices. Unlike traditional medical EMRs retrofitted for therapy, Mindline prioritizes therapeutic workflows, warm design, and the unique needs of mental health practitioners.
 
-OpenEMR is a leader in healthcare open source software and comprises a large and diverse community of software developers, medical providers and educators with a very healthy mix of both volunteers and professionals. [Join us and learn how to start contributing today!](https://open-emr.org/wiki/index.php/FAQ#How_do_I_begin_to_volunteer_for_the_OpenEMR_project.3F)
+### Why EMHR, not EMR?
 
-> Already comfortable with git? Check out [CONTRIBUTING.md](CONTRIBUTING.md) for quick setup instructions and requirements for contributing to OpenEMR by resolving a bug or adding an awesome feature 😊.
+We're introducing the term **EMHR (Electronic Mental Health Records)** to distinguish mental health documentation systems from general medical EMRs. Mental health practice has fundamentally different clinical workflows, documentation needs, and patient relationships that deserve purpose-built software.
 
-### Support
+---
 
-Community and Professional support can be found [here](https://open-emr.org/wiki/index.php/OpenEMR_Support_Guide).
+## Key Features
 
-Extensive documentation and forums can be found on the [OpenEMR website](https://open-emr.org) that can help you to become more familiar about the project 📖.
+### ✨ Modern, Warm Interface
+- Glassmorphism design with gradient aesthetics
+- Human-centered UI that feels welcoming, not clinical
+- Fast, responsive React frontend
+- Intuitive navigation designed for therapists
 
-### Reporting Issues and Bugs
+### 🧠 Mental Health-Optimized Workflows
+- **Client-focused** (not patient processing)
+- Session-based documentation
+- Risk assessment tracking (SI, HI, self-harm, substance, etc.)
+- Treatment plan management
+- Guardian/family relationship tracking
+- Outcome measures integration (future)
 
-Report these on the [Issue Tracker](https://github.com/openemr/openemr/issues). If you are unsure if it is an issue/bug, then always feel free to use the [Forum](https://community.open-emr.org/) and [Chat](https://www.open-emr.org/chat/) to discuss about the issue 🪲.
+### 🔒 HIPAA Compliant & Secure
+- Session-based authentication
+- Encrypted data transmission (HTTPS)
+- Role-based access controls
+- Audit logging
+- Automatic session timeout
 
-### Reporting Security Vulnerabilities
+### 📅 Integrated Scheduling
+- Visual calendar with provider scheduling
+- Appointment management
+- SMS/Email reminders (coming soon)
+- No-show tracking
 
-Check out [SECURITY.md](.github/SECURITY.md)
+### 💰 Built-in Billing
+- Insurance claims tracking
+- Payment recording
+- Sliding scale management
+- Session billing
+- Credit card integration (Square)
 
-### API
+---
 
-Check out [API_README.md](API_README.md)
+## Current Status: v0.3.0-alpha
 
-### Docker
+### ✅ Completed
+- Authentication & session management
+- Main dashboard with widgets
+- Client search (HIPAA-compliant)
+- Client management (create, edit, view)
+- Demographics with full CRUD
+- Guardian/related persons management
+- Insurance display and editing
+- Documents viewing
+- Calendar interface
+- Provider scheduling
 
-Check out [DOCKER_README.md](DOCKER_README.md)
+### 🚧 In Progress
+- Appointment creation/editing
+- Clinical documentation forms
+- Billing workflows
 
-### FHIR
+### 📋 Roadmap to v1.0 (2-3 weeks)
+See [MINDLINE_PROJECT_DOCUMENTATION.md](MINDLINE_PROJECT_DOCUMENTATION.md) for detailed roadmap.
 
-Check out [FHIR_README.md](FHIR_README.md)
+---
 
-### For Developers
+## Quick Start
 
-If using OpenEMR directly from the code repository, then the following commands will build OpenEMR (Node.js version 22.* is required) :
+### Prerequisites
+- Linux server (Ubuntu recommended)
+- Apache with PHP 8.3+ and PHP-FPM
+- MySQL 8.0+
+- Node.js 18+ (for frontend build)
 
-```shell
-composer install --no-dev
-npm install
-npm run build
-composer dump-autoload -o
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/kjnelan/sacwan-openemr-mh.git mindline
+   cd mindline
+   ```
+
+2. **Set up the database:**
+   ```bash
+   # Import OpenEMR 7.0.3 schema (provides base tables)
+   mysql -u root -p < sql/7_0_3-to-7_0_4_upgrade.sql
+
+   # Run Mindline customizations
+   mysql -u root -p openemr < custom/sql/add_discharged_status.sql
+   mysql -u root -p openemr < custom/sql/add_client_payment_type.sql
+   mysql -u root -p openemr < custom/sql/rename_gender_identity_codes.sql
+   mysql -u root -p openemr < custom/sql/rename_sexual_orientation_codes.sql
+   ```
+
+3. **Configure Apache virtual host:**
+   ```apache
+   <VirtualHost *:443>
+       ServerName your-mindline-domain.com
+       DocumentRoot /path/to/mindline
+
+       SSLEngine on
+       SSLCertificateFile /path/to/cert.pem
+       SSLCertificateKeyFile /path/to/key.pem
+
+       <Directory /path/to/mindline>
+           AllowOverride All
+           Require all granted
+       </Directory>
+   </VirtualHost>
+   ```
+
+4. **Build the React frontend:**
+   ```bash
+   cd react-frontend
+   npm install
+   npm run build
+   # Built files go to /app/
+   ```
+
+5. **Access Mindline:**
+   ```
+   https://your-mindline-domain.com/app/
+   ```
+
+---
+
+## For Developers
+
+### Tech Stack
+- **Frontend:** React 18, Vite, Tailwind CSS v4
+- **Backend:** PHP 8.3, Custom REST APIs
+- **Database:** MySQL (OpenEMR schema)
+- **Authentication:** Session-based (cookies)
+
+### Development Setup
+
+```bash
+# Frontend development server
+cd react-frontend
+npm run dev
+# Opens at http://localhost:5173
+
+# Backend uses Apache + PHP-FPM
+# APIs located in /custom/api/
 ```
 
-### Contributors
+### File Structure
+```
+/custom/api/          # Custom API endpoints (session-based)
+/app/                 # React frontend build output
+/react-frontend/      # React source code
+  /src/
+    /components/      # React components
+    /utils/           # API utilities
+/custom/sql/          # Database migrations & setup
+/interface/           # OpenEMR core (minimal usage)
+```
 
-This project exists thanks to all the people who have contributed. [[Contribute]](CONTRIBUTING.md).
-<a href="https://github.com/openemr/openemr/graphs/contributors"><img src="https://opencollective.com/openemr/contributors.svg?width=890" /></a>
+### Key Documentation
+- [MINDLINE_PROJECT_DOCUMENTATION.md](MINDLINE_PROJECT_DOCUMENTATION.md) - Full project vision & architecture
+- [ToDo.md](ToDo.md) - Development roadmap & tasks
+- [custom/sql/PAYMENT_TYPE_REFERENCE.md](custom/sql/PAYMENT_TYPE_REFERENCE.md) - List options reference
 
+---
 
-### Sponsors
+## Architecture Philosophy
 
-Thanks to our [ONC Certification Major Sponsors](https://www.open-emr.org/wiki/index.php/OpenEMR_Certification_Stage_III_Meaningful_Use#Major_sponsors)!
+Mindline is a **standalone EMHR** that currently uses OpenEMR's database schema as infrastructure. We are NOT building a React UI for OpenEMR - we're building our own mental health records system.
 
+**What we use from OpenEMR:**
+- Database schema (patient_data, encounters, billing tables)
+- Database connection infrastructure
+- Session management
 
-### License
+**What we DON'T use:**
+- OpenEMR's service layer or business logic
+- OpenEMR's REST APIs
+- OpenEMR's frontend interface
 
-[GNU GPL](LICENSE)
+**Future:** v2.0 will fork the database schema to `mindline_*` tables optimized for mental health workflows.
+
+See [MINDLINE_PROJECT_DOCUMENTATION.md](MINDLINE_PROJECT_DOCUMENTATION.md#architectural-decision) for details.
+
+---
+
+## Target Users
+
+- Outpatient mental health clinics
+- Solo practitioners and small group practices
+- Nonprofit counseling centers
+- Faith-based counseling organizations
+- Therapists who want modern tools without enterprise complexity
+
+---
+
+## Support & Community
+
+**Current Status:** Internal tool for Sacred Wandering (active development)
+
+**Future:** Open source release or product offering (TBD after v1.0)
+
+### Contact
+- **Developer:** Fr. Kenn, Sacred Wandering
+- **Repository:** https://github.com/kjnelan/sacwan-openemr-mh (private)
+
+---
+
+## License
+
+**Current:** Internal use only (Sacred Wandering)
+**Future:** TBD (likely GPL-3.0 or MIT after v1.0)
+
+---
+
+## Acknowledgments
+
+**Built with:**
+- React & Vite
+- Tailwind CSS
+- OpenEMR database schema (foundation)
+- Claude.ai & Claude Code (development partners)
+
+**Inspired by:**
+- Mental health professionals tired of medical EMRs
+- Sacred Wandering clients who deserve better tools
+- The belief that therapy software should feel therapeutic
+
+---
+
+## Why "Mindline"?
+
+Mental health work walks the line between science and art, structure and flexibility, protocol and humanity. Mindline represents that balance - providing the structure clinicians need while honoring the human connection at the heart of therapy.
+
+---
+
+**Current Version:** 0.3.0-alpha
+**Last Updated:** December 31, 2024
+**Status:** Active Development
+
+*Mental health practitioners deserve software built for how therapy actually works.*
