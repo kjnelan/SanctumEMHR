@@ -1,0 +1,9 @@
+1. The appointment screen itself is fairly transparent - difficult to see.  
+2. The Appointment screen look a lot like OpenEMR's.  Can we change the looks to our own creative tailwind css?
+3. Cannot edit an existing appointment
+4. Cannot set the correct amount of time for the appointment.
+5. The + New Appointment button on the front Dashboard does not work, yet.
+
+Questions: 
+How are we going to see if a clinician is available at that time?
+What if the appointment is made on a holiday or day the office is closed, or if the clinician is unavailable?

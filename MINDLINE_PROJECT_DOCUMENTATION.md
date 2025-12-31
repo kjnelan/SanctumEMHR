@@ -92,7 +92,7 @@ This is closer to "building a new EMHR that shares a database with OpenEMR" than
 ## Technical Stack
 
 ### Frontend
-- **Framework:** React 18
+- **Framework:** React 19.3
 - **Build Tool:** Vite
 - **Styling:** Tailwind CSS v4 with PostCSS
 - **State Management:** React Context API
@@ -100,7 +100,7 @@ This is closer to "building a new EMHR that shares a database with OpenEMR" than
 - **Design System:** Custom glassmorphism with gradient aesthetics
 
 ### Backend
-- **Language:** PHP 8.3
+- **Language:** PHP 8.4
 - **Web Server:** Apache with PHP-FPM
 - **Database:** MySQL (OpenEMR schema)
 - **Authentication:** Session-based (cookies, not OAuth2)
