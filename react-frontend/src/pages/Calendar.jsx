@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getAppointments, getProviders, getCalendarSettings } from '../utils/api';
 import MiniCalendar from '../components/calendar/MiniCalendar';
+import AppointmentModal from '../components/calendar/AppointmentModal';
 
 function Calendar() {
   const [view, setView] = useState('week'); // day, week, month
@@ -16,6 +17,12 @@ function Calendar() {
     interval: 15,
     viewType: 'week'
   });
+
+  // Appointment modal state
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [modalInitialDate, setModalInitialDate] = useState(null);
+  const [modalInitialTime, setModalInitialTime] = useState(null);
+  const [modalProviderId, setModalProviderId] = useState(null);
 
   // Generate time slots based on settings (respects interval)
   const generateTimeSlots = () => {
@@ -240,6 +247,28 @@ function Calendar() {
     }
   };
 
+  // Open appointment modal with optional date/time/provider pre-filled
+  const openAppointmentModal = (date = null, time = null, provider = null) => {
+    setModalInitialDate(date || currentDate.toISOString().split('T')[0]);
+    setModalInitialTime(time);
+    setModalProviderId(provider || (selectedProvider !== 'all' ? selectedProvider : null));
+    setShowAppointmentModal(true);
+  };
+
+  // Handle time slot click - open modal with that date/time
+  const handleTimeSlotClick = (date, hour, minutes) => {
+    const dateStr = date.toISOString().split('T')[0];
+    const timeStr = `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    openAppointmentModal(dateStr, timeStr, selectedProvider !== 'all' ? selectedProvider : null);
+  };
+
+  // Handle appointment save - reload appointments
+  const handleAppointmentSave = (newAppointment) => {
+    console.log('New appointment created:', newAppointment);
+    // Reload appointments to show the new one
+    loadAppointments();
+  };
+
   return (
     <div className="w-full">
       {/* Header */}
@@ -247,8 +276,20 @@ function Calendar() {
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-3xl font-bold text-gray-900">Calendar</h1>
 
-            {/* View Toggle */}
-            <div className="flex gap-2">
+            <div className="flex gap-3">
+              {/* New Appointment Button */}
+              <button
+                onClick={() => openAppointmentModal()}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                New Appointment
+              </button>
+
+              {/* View Toggle */}
+              <div className="flex gap-2">
               <button
                 onClick={() => setView('day')}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -279,6 +320,7 @@ function Calendar() {
               >
                 Month
               </button>
+              </div>
             </div>
           </div>
 
@@ -412,6 +454,7 @@ function Calendar() {
                     return (
                       <div
                         key={dayIndex}
+                        onClick={() => handleTimeSlotClick(day, slot.hour, slot.minutes)}
                         className="p-2 border-r border-white/30 hover:bg-white/10 cursor-pointer transition-colors min-h-[60px]"
                       >
                         {slotAppointments.map(apt => {
@@ -485,6 +528,7 @@ function Calendar() {
                     const slotAppointments = getAppointmentsForSlot(currentDate, slot.hour, slot.minutes);
                     return (
                       <div
+                        onClick={() => handleTimeSlotClick(currentDate, slot.hour, slot.minutes)}
                         className="p-2 border-r border-white/30 hover:bg-white/10 cursor-pointer transition-colors min-h-[60px]"
                       >
                         {slotAppointments.map(apt => {
@@ -599,6 +643,17 @@ function Calendar() {
           )}
         </div>
       </div>
+
+      {/* Appointment Modal */}
+      <AppointmentModal
+        isOpen={showAppointmentModal}
+        onClose={() => setShowAppointmentModal(false)}
+        onSave={handleAppointmentSave}
+        initialDate={modalInitialDate}
+        initialTime={modalInitialTime}
+        providerId={modalProviderId}
+        providers={providers}
+      />
     </div>
   );
 }

@@ -318,6 +318,37 @@ export async function getAppointments(startDate, endDate, providerId = null) {
 }
 
 /**
+ * Get appointment categories/types
+ */
+export async function getAppointmentCategories() {
+  console.log('Fetching appointment categories');
+  return apiRequest('/custom/api/get_appointment_categories.php');
+}
+
+/**
+ * Create a new appointment
+ * @param {Object} data - Appointment data
+ * @param {number} data.patientId - Patient ID
+ * @param {number} data.providerId - Provider ID
+ * @param {number} data.categoryId - Appointment category/type ID
+ * @param {string} data.eventDate - Appointment date (YYYY-MM-DD)
+ * @param {string} data.startTime - Start time (HH:MM:SS)
+ * @param {number} data.duration - Duration in minutes
+ * @param {string} data.title - Optional appointment title
+ * @param {string} data.comments - Optional comments
+ * @param {string} data.apptstatus - Optional appointment status
+ * @param {string} data.room - Optional room number
+ * @param {number} data.facilityId - Optional facility ID
+ */
+export async function createAppointment(data) {
+  console.log('Creating appointment:', data);
+  return apiRequest('/custom/api/create_appointment.php', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  });
+}
+
+/**
  * Logout the current user
  */
 export async function logout() {
