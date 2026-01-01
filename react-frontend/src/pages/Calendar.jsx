@@ -36,6 +36,7 @@ function Calendar() {
   const [modalInitialDate, setModalInitialDate] = useState(null);
   const [modalInitialTime, setModalInitialTime] = useState(null);
   const [modalProviderId, setModalProviderId] = useState(null);
+  const [editingAppointment, setEditingAppointment] = useState(null);
 
   // Generate time slots based on settings (respects interval)
   const generateTimeSlots = () => {
@@ -262,9 +263,20 @@ function Calendar() {
 
   // Open appointment modal with optional date/time/provider pre-filled
   const openAppointmentModal = (date = null, time = null, provider = null) => {
+    setEditingAppointment(null); // Clear any existing appointment being edited
     setModalInitialDate(date || currentDate.toISOString().split('T')[0]);
     setModalInitialTime(time);
     setModalProviderId(provider || (selectedProvider !== 'all' ? selectedProvider : null));
+    setShowAppointmentModal(true);
+  };
+
+  // Open appointment modal for editing an existing appointment
+  const handleAppointmentClick = (appointment, e) => {
+    e.stopPropagation(); // Prevent time slot click from firing
+    setEditingAppointment(appointment);
+    setModalInitialDate(null);
+    setModalInitialTime(null);
+    setModalProviderId(null);
     setShowAppointmentModal(true);
   };
 
@@ -478,7 +490,8 @@ function Calendar() {
                           return (
                             <div
                               key={apt.id}
-                              className="mb-1 px-2 py-1 rounded-lg text-xs border hover:opacity-80 transition-opacity cursor-pointer"
+                              onClick={(e) => handleAppointmentClick(apt, e)}
+                              className="mb-1 px-2 py-1 rounded-lg text-xs border hover:opacity-80 hover:shadow-md transition-all cursor-pointer"
                               style={{
                                 backgroundColor: `${bgColor}B3`, // 70% opacity
                                 borderColor: borderColor
@@ -552,7 +565,8 @@ function Calendar() {
                           return (
                             <div
                               key={apt.id}
-                              className="mb-1 px-2 py-1 rounded-lg text-xs border hover:opacity-80 transition-opacity cursor-pointer"
+                              onClick={(e) => handleAppointmentClick(apt, e)}
+                              className="mb-1 px-2 py-1 rounded-lg text-xs border hover:opacity-80 hover:shadow-md transition-all cursor-pointer"
                               style={{
                                 backgroundColor: `${bgColor}B3`, // 70% opacity
                                 borderColor: borderColor
@@ -629,7 +643,8 @@ function Calendar() {
                           return (
                             <div
                               key={apt.id}
-                              className="px-2 py-1 rounded text-xs border truncate hover:opacity-80 transition-opacity"
+                              onClick={(e) => handleAppointmentClick(apt, e)}
+                              className="px-2 py-1 rounded text-xs border truncate hover:opacity-80 hover:shadow-md transition-all cursor-pointer"
                               style={{
                                 backgroundColor: `${bgColor}B3`,
                                 borderColor: borderColor
@@ -666,6 +681,7 @@ function Calendar() {
         initialTime={modalInitialTime}
         providerId={modalProviderId}
         providers={providers}
+        appointment={editingAppointment}
       />
     </div>
   );

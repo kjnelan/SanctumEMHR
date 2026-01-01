@@ -360,6 +360,19 @@ export async function createAppointment(data) {
 }
 
 /**
+ * Update an existing appointment
+ * @param {number} appointmentId - The appointment ID to update
+ * @param {object} data - Appointment data (same structure as createAppointment)
+ */
+export async function updateAppointment(appointmentId, data) {
+  console.log('Updating appointment:', appointmentId, data);
+  return apiRequest('/custom/api/update_appointment.php', {
+    method: 'POST',
+    body: JSON.stringify({ appointmentId, ...data })
+  });
+}
+
+/**
  * Logout the current user
  */
 export async function logout() {

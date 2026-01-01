@@ -10,8 +10,9 @@ import Reports from './components/Reports';
 import Calendar from './pages/Calendar';
 import Admin from './pages/Admin';
 import NewClientModal from './components/client/NewClientModal';
+import AppointmentModal from './components/calendar/AppointmentModal';
 import { useAuth } from './hooks/useAuth';
-import { logout, getClientStats } from './utils/api';
+import { logout, getClientStats, getProviders } from './utils/api';
 
 function Dashboard() {
   const location = useLocation();
@@ -20,6 +21,8 @@ function Dashboard() {
   const { user, appointments, loading } = useAuth();
   const [clientStats, setClientStats] = useState({ activeClients: 0 });
   const [showNewClientModal, setShowNewClientModal] = useState(false);
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [providers, setProviders] = useState([]);
 
   // Update activeNav when navigating from client detail or other pages
   useEffect(() => {
@@ -38,8 +41,18 @@ function Dashboard() {
       }
     };
 
+    const fetchProviders = async () => {
+      try {
+        const response = await getProviders();
+        setProviders(response.providers || []);
+      } catch (err) {
+        console.error('Failed to fetch providers:', err);
+      }
+    };
+
     if (user) {
       fetchClientStats();
+      fetchProviders();
     }
   }, [user]);
 
@@ -83,6 +96,17 @@ function Dashboard() {
     navigate(`/clients/${patientId}`);
   };
 
+  const handleNewAppointment = () => {
+    setShowAppointmentModal(true);
+  };
+
+  const handleAppointmentSave = () => {
+    console.log('Appointment saved');
+    setShowAppointmentModal(false);
+    // Optionally refresh appointments here
+    window.location.reload(); // Simple way to refresh data
+  };
+
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-mental">
@@ -108,7 +132,7 @@ function Dashboard() {
           <Greeting />
           <StatsGrid stats={stats} />
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <QuickActions onNewClient={handleNewClient} />
+            <QuickActions onNewClient={handleNewClient} onNewAppointment={handleNewAppointment} />
             <AppointmentsList todaysAppointments={todaysAppointments} />
           </div>
         </>
@@ -138,6 +162,14 @@ function Dashboard() {
           onClientCreated={handleNewClientCreated}
         />
       )}
+
+      {/* New Appointment Modal */}
+      <AppointmentModal
+        isOpen={showAppointmentModal}
+        onClose={() => setShowAppointmentModal(false)}
+        onSave={handleAppointmentSave}
+        providers={providers}
+      />
     </AppShell>
   );
 }

@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { createAppointment, getAppointmentCategories, searchPatients } from '../../utils/api';
+import { createAppointment, updateAppointment, getAppointmentCategories, searchPatients } from '../../utils/api';
 
 /**
  * Props:
@@ -23,8 +23,9 @@ import { createAppointment, getAppointmentCategories, searchPatients } from '../
  * - initialTime: string - Initial time (HH:MM)
  * - providerId: number - Pre-selected provider ID
  * - providers: array - List of providers
+ * - appointment: object - Existing appointment to edit (optional)
  */
-function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, providerId, providers }) {
+function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, providerId, providers, appointment }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -66,6 +67,23 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
     if (initialDate) setEventDate(initialDate);
     if (initialTime) setStartTime(initialTime);
   }, [initialDate, initialTime]);
+
+  // Populate form when editing existing appointment
+  useEffect(() => {
+    if (appointment && isOpen) {
+      setPatientId(appointment.patientId || '');
+      setPatientName(appointment.patientName || '');
+      setPatientSearchQuery(appointment.patientName || '');
+      setSelectedProvider(appointment.providerId || '');
+      setCategoryId(appointment.categoryId || '');
+      setEventDate(appointment.eventDate || '');
+      setStartTime(appointment.startTime ? appointment.startTime.substring(0, 5) : ''); // HH:MM format
+      setDuration(appointment.duration || 60);
+      setTitle(appointment.title || '');
+      setComments(appointment.comments || '');
+      setRoom(appointment.room || '');
+    }
+  }, [appointment, isOpen]);
 
   const loadCategories = async () => {
     try {
@@ -163,16 +181,19 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
         title: title || patientName, // Use patient name as default title
         comments: comments,
         room: room,
-        apptstatus: '-' // Default status
+        apptstatus: appointment ? appointment.apptstatus : '-' // Preserve status when editing, default for new
       };
 
-      console.log('Creating appointment:', appointmentData);
-      const response = await createAppointment(appointmentData);
+      console.log(appointment ? 'Updating appointment:' : 'Creating appointment:', appointmentData);
+
+      const response = appointment
+        ? await updateAppointment(appointment.id, appointmentData)
+        : await createAppointment(appointmentData);
 
       if (response.success) {
-        setSuccess('Appointment created successfully!');
+        setSuccess(appointment ? 'Appointment updated successfully!' : 'Appointment created successfully!');
 
-        // Call onSave callback with new appointment
+        // Call onSave callback with appointment
         if (onSave) {
           onSave(response.appointment);
         }
@@ -182,11 +203,11 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
           handleClose();
         }, 1500);
       } else {
-        setError(response.message || 'Failed to create appointment');
+        setError(response.message || `Failed to ${appointment ? 'update' : 'create'} appointment`);
       }
     } catch (err) {
-      console.error('Failed to create appointment:', err);
-      setError(err.message || 'Failed to create appointment');
+      console.error(`Failed to ${appointment ? 'update' : 'create'} appointment:`, err);
+      setError(err.message || `Failed to ${appointment ? 'update' : 'create'} appointment`);
     } finally {
       setLoading(false);
     }
@@ -210,15 +231,25 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
 
   if (!isOpen) return null;
 
+  // Duration presets in minutes
+  const durationPresets = [15, 30, 45, 60, 90, 120];
+
   return (
-    <div className="fixed inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="glass-card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/20">
-          <h2 className="text-2xl font-bold text-gray-900">New Appointment</h2>
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 px-8 pt-6 bg-gradient-to-r from-blue-50 to-purple-50">
+          <div>
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              {appointment ? 'Edit Appointment' : 'New Appointment'}
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              {appointment ? 'Update appointment details' : 'Schedule a new appointment'}
+            </p>
+          </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-white/80 rounded-xl transition-all hover:scale-110"
             disabled={loading}
           >
             <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -227,21 +258,29 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
           </button>
         </div>
 
-        {/* Error/Success Messages */}
-        {error && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-300 rounded-lg text-red-700">
-            {error}
-          </div>
-        )}
+        {/* Form Content */}
+        <div className="px-8 pb-8">
+          {/* Error/Success Messages */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg text-red-700 flex items-start gap-3">
+              <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <span>{error}</span>
+            </div>
+          )}
 
-        {success && (
-          <div className="mb-4 p-4 bg-green-100 border border-green-300 rounded-lg text-green-700">
-            {success}
-          </div>
-        )}
+          {success && (
+            <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg text-green-700 flex items-start gap-3">
+              <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <span>{success}</span>
+            </div>
+          )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
           {/* Patient Search */}
           <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -359,13 +398,30 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Duration (minutes) <span className="text-red-500">*</span>
               </label>
+              {/* Duration preset buttons */}
+              <div className="flex flex-wrap gap-2 mb-3">
+                {durationPresets.map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setDuration(preset)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                      duration === preset
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {preset}m
+                  </button>
+                ))}
+              </div>
               <input
                 type="number"
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
                 min="5"
                 step="5"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                 required
               />
             </div>
@@ -413,24 +469,25 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
           </div>
 
           {/* Actions */}
-          <div className="flex gap-4 pt-4 border-t border-white/20">
+          <div className="flex gap-4 pt-6 mt-6 border-t border-gray-200">
             <button
               type="button"
               onClick={handleClose}
-              className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition-colors"
+              className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all hover:shadow-md"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
             >
-              {loading ? 'Creating...' : 'Create Appointment'}
+              {loading ? (appointment ? 'Updating...' : 'Creating...') : (appointment ? 'Update Appointment' : 'Create Appointment')}
             </button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );
