@@ -59,6 +59,13 @@ if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
 error_log("Get appointment categories: User authenticated - " . $_SESSION['authUserID']);
 
 try {
+    // Get optional category type filter from query parameter
+    // Type 0 = Patient/Client appointments
+    // Type 1 = Provider availability/blocking (vacation, meetings, etc.)
+    // Type 2 = Group therapy
+    // Type 3 = Clinic/Facility events
+    $categoryType = isset($_GET['type']) ? intval($_GET['type']) : null;
+
     // Fetch all active appointment categories
     $sql = "SELECT
         pc_catid,
@@ -68,11 +75,20 @@ try {
         pc_duration,
         pc_cattype
     FROM openemr_postcalendar_categories
-    WHERE pc_active = 1
-    ORDER BY pc_catname";
+    WHERE pc_active = 1";
 
-    error_log("Get appointment categories SQL: " . $sql);
-    $result = sqlStatement($sql);
+    // Add type filter if specified
+    if ($categoryType !== null) {
+        $sql .= " AND pc_cattype = ?";
+        $params = [$categoryType];
+    } else {
+        $params = [];
+    }
+
+    $sql .= " ORDER BY pc_catname";
+
+    error_log("Get appointment categories SQL: " . $sql . " (type filter: " . ($categoryType !== null ? $categoryType : 'none') . ")");
+    $result = sqlStatement($sql, $params);
 
     $categories = [];
     while ($row = sqlFetchArray($result)) {

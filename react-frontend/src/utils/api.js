@@ -330,10 +330,16 @@ export async function getAppointments(startDate, endDate, providerId = null) {
 
 /**
  * Get appointment categories/types
+ * @param {number} type - Optional category type filter
+ *   0 = Patient/Client appointments (default)
+ *   1 = Provider availability/blocking
+ *   2 = Group therapy
+ *   3 = Clinic/Facility events
  */
-export async function getAppointmentCategories() {
-  console.log('Fetching appointment categories');
-  return apiRequest('/custom/api/get_appointment_categories.php');
+export async function getAppointmentCategories(type = 0) {
+  console.log('Fetching appointment categories (type:', type, ')');
+  const params = type !== null ? `?type=${type}` : '';
+  return apiRequest(`/custom/api/get_appointment_categories.php${params}`);
 }
 
 /**
