@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { createAppointment, updateAppointment, getAppointmentCategories, searchPatients } from '../../utils/api';
+import { createAppointment, updateAppointment, getAppointmentCategories, searchPatients, getRooms } from '../../utils/api';
 
 /**
  * Props:
@@ -44,14 +44,16 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
 
   // Dropdown data
   const [categories, setCategories] = useState([]);
+  const [rooms, setRooms] = useState([]);
   const [patientSearchResults, setPatientSearchResults] = useState([]);
   const [showPatientDropdown, setShowPatientDropdown] = useState(false);
   const [patientSearchQuery, setPatientSearchQuery] = useState('');
 
-  // Load appointment categories on mount
+  // Load appointment categories and rooms on mount
   useEffect(() => {
     if (isOpen) {
       loadCategories();
+      loadRooms();
     }
   }, [isOpen]);
 
@@ -90,8 +92,8 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
       const response = await getAppointmentCategories();
       setCategories(response.categories || []);
 
-      // Auto-select first category if available
-      if (response.categories && response.categories.length > 0) {
+      // Auto-select first category if available AND we're not editing an existing appointment
+      if (response.categories && response.categories.length > 0 && !appointment) {
         setCategoryId(response.categories[0].id);
         // Set default duration from category
         if (response.categories[0].defaultDuration > 0) {
@@ -101,6 +103,16 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
     } catch (err) {
       console.error('Failed to load appointment categories:', err);
       setError('Failed to load appointment types');
+    }
+  };
+
+  const loadRooms = async () => {
+    try {
+      const response = await getRooms();
+      setRooms(response.rooms || []);
+    } catch (err) {
+      console.error('Failed to load rooms:', err);
+      // Don't set error - rooms are optional
     }
   };
 
@@ -428,15 +440,20 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Room
+                Location
               </label>
-              <input
-                type="text"
+              <select
                 value={room}
                 onChange={(e) => setRoom(e.target.value)}
-                placeholder="Optional"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+              >
+                <option value="">Select Location (Optional)</option>
+                {rooms.map((roomOption) => (
+                  <option key={roomOption.id} value={roomOption.value}>
+                    {roomOption.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

@@ -79,6 +79,7 @@ try {
         e.pc_hometext,
         e.pc_pid,
         e.pc_aid,
+        e.pc_room,
         c.pc_catname,
         c.pc_catcolor,
         pd.fname AS patient_fname,
@@ -115,10 +116,11 @@ try {
             'eventDate' => $row['pc_eventDate'],
             'startTime' => $row['pc_startTime'],
             'endTime' => $row['pc_endTime'],
-            'duration' => $row['pc_duration'],
+            'duration' => intval($row['pc_duration'] / 60), // Convert seconds to minutes
             'categoryId' => $row['pc_catid'],
             'categoryName' => $row['pc_catname'],
             'categoryColor' => $row['pc_catcolor'],
+            'apptstatus' => $row['pc_apptstatus'],
             'status' => $row['pc_apptstatus'],
             'title' => $row['pc_title'],
             'comments' => $row['pc_hometext'],
@@ -127,7 +129,8 @@ try {
             'patientDOB' => $row['patient_dob'],
             'providerId' => $row['provider_id'],
             'providerName' => $row['provider_name'],
-            'facilityName' => $row['facility_name']
+            'facilityName' => $row['facility_name'],
+            'room' => $row['pc_room']
         ];
     }
 

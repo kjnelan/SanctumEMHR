@@ -337,6 +337,14 @@ export async function getAppointmentCategories() {
 }
 
 /**
+ * Get rooms/locations list
+ */
+export async function getRooms() {
+  console.log('Fetching rooms list');
+  return apiRequest('/custom/api/get_rooms.php');
+}
+
+/**
  * Create a new appointment
  * @param {Object} data - Appointment data
  * @param {number} data.patientId - Patient ID
