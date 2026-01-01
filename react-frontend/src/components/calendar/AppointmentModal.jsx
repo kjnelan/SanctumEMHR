@@ -37,7 +37,7 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
   const [categoryId, setCategoryId] = useState('');
   const [eventDate, setEventDate] = useState(initialDate || new Date().toISOString().split('T')[0]);
   const [startTime, setStartTime] = useState(initialTime || '09:00');
-  const [duration, setDuration] = useState(60); // Default 60 minutes
+  const [duration, setDuration] = useState(50); // Default 50 minutes
   const [title, setTitle] = useState('');
   const [comments, setComments] = useState('');
   const [room, setRoom] = useState('');
@@ -80,7 +80,7 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
       setCategoryId(appointment.categoryId || '');
       setEventDate(appointment.eventDate || '');
       setStartTime(appointment.startTime ? appointment.startTime.substring(0, 5) : ''); // HH:MM format
-      setDuration(appointment.duration || 60);
+      setDuration(appointment.duration || 50);
       setTitle(appointment.title || '');
       setComments(appointment.comments || '');
       setRoom(appointment.room || '');
@@ -244,7 +244,7 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
   if (!isOpen) return null;
 
   // Duration presets in minutes
-  const durationPresets = [15, 30, 45, 60, 90, 120];
+  const durationPresets = [15, 30, 50, 90];
 
   return (
     <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
