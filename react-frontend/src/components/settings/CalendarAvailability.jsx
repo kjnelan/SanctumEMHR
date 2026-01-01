@@ -23,6 +23,7 @@ function CalendarAvailability() {
   const [loading, setLoading] = useState(true);
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
+  const [editingBlock, setEditingBlock] = useState(null);
 
   // Load availability categories (Type 1) on mount
   useEffect(() => {
@@ -100,12 +101,21 @@ function CalendarAvailability() {
   const handleTimeSlotClick = (date, hour, minutes) => {
     const dateStr = date.toISOString().split('T')[0];
     const timeStr = `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    setEditingBlock(null); // Clear editing block for new creation
     setSelectedSlot({ date: dateStr, time: timeStr });
+    setShowBlockModal(true);
+  };
+
+  const handleBlockClick = (block, e) => {
+    e.stopPropagation(); // Prevent time slot click from firing
+    setEditingBlock(block);
+    setSelectedSlot(null);
     setShowBlockModal(true);
   };
 
   const handleBlockSave = () => {
     setShowBlockModal(false);
+    setEditingBlock(null);
     loadAvailabilityBlocks();
   };
 
@@ -272,7 +282,8 @@ function CalendarAvailability() {
                         {blocks.map(block => (
                           <div
                             key={block.id}
-                            className="mb-1 px-2 py-1 rounded text-xs border bg-gray-100 border-gray-300"
+                            onClick={(e) => handleBlockClick(block, e)}
+                            className="mb-1 px-2 py-1 rounded text-xs border bg-gray-100 border-gray-300 hover:opacity-80 cursor-pointer transition-opacity"
                             style={{
                               backgroundColor: `${block.categoryColor || '#E5E7EB'}80`,
                               borderColor: `${block.categoryColor || '#9CA3AF'}80`
@@ -302,6 +313,7 @@ function CalendarAvailability() {
         initialDate={selectedSlot?.date}
         initialTime={selectedSlot?.time}
         categories={categories}
+        block={editingBlock}
       />
     </div>
   );

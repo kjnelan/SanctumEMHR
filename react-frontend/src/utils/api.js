@@ -387,6 +387,18 @@ export async function updateAppointment(appointmentId, data) {
 }
 
 /**
+ * Delete an appointment or availability block
+ * @param {number} appointmentId - The appointment ID to delete
+ */
+export async function deleteAppointment(appointmentId) {
+  console.log('Deleting appointment:', appointmentId);
+  return apiRequest('/custom/api/delete_appointment.php', {
+    method: 'POST',
+    body: JSON.stringify({ appointmentId })
+  });
+}
+
+/**
  * Logout the current user
  */
 export async function logout() {

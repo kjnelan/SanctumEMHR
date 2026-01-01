@@ -11,10 +11,10 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { createAppointment } from '../../utils/api';
+import { createAppointment, updateAppointment, deleteAppointment } from '../../utils/api';
 import { useAuth } from '../../hooks/useAuth';
 
-function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, categories }) {
+function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, categories, block }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -35,6 +35,17 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
     if (initialDate) setEventDate(initialDate);
     if (initialTime) setStartTime(initialTime);
   }, [initialDate, initialTime]);
+
+  // Populate form when editing existing block
+  useEffect(() => {
+    if (block && isOpen) {
+      setCategoryId(block.categoryId || '');
+      setEventDate(block.eventDate || '');
+      setStartTime(block.startTime ? block.startTime.substring(0, 5) : '');
+      setDuration(block.duration || 50);
+      setComments(block.comments || '');
+    }
+  }, [block, isOpen]);
 
   // Auto-select first category
   useEffect(() => {
@@ -61,7 +72,7 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
     try {
       const formattedTime = startTime.includes(':') ? `${startTime}:00` : `${startTime}:00:00`;
 
-      // Create availability block (appointment without patient)
+      // Create/update availability block (appointment without patient)
       const blockData = {
         patientId: 0, // No patient for availability blocks
         providerId: user.id, // Current logged-in provider
@@ -72,23 +83,56 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
         title: categories.find(c => c.id === parseInt(categoryId))?.name || 'Blocked',
         comments: comments,
         room: '',
-        apptstatus: '-'
+        apptstatus: block ? block.apptstatus : '-'
       };
 
-      console.log('Creating availability block:', blockData);
-      const response = await createAppointment(blockData);
+      console.log(block ? 'Updating availability block:' : 'Creating availability block:', blockData);
+
+      const response = block
+        ? await updateAppointment(block.id, blockData)
+        : await createAppointment(blockData);
 
       if (response.success) {
-        setSuccess('Time blocked successfully!');
+        setSuccess(block ? 'Block updated successfully!' : 'Time blocked successfully!');
         setTimeout(() => {
           handleClose();
         }, 1000);
       } else {
-        setError(response.message || 'Failed to block time');
+        setError(response.message || `Failed to ${block ? 'update' : 'create'} block`);
       }
     } catch (err) {
-      console.error('Failed to block time:', err);
-      setError(err.message || 'Failed to block time');
+      console.error(`Failed to ${block ? 'update' : 'create'} block:`, err);
+      setError(err.message || `Failed to ${block ? 'update' : 'create'} block`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!block) return;
+
+    if (!confirm('Are you sure you want to delete this availability block?')) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const response = await deleteAppointment(block.id);
+
+      if (response.success) {
+        setSuccess('Block deleted successfully!');
+        setTimeout(() => {
+          handleClose();
+        }, 1000);
+      } else {
+        setError(response.message || 'Failed to delete block');
+      }
+    } catch (err) {
+      console.error('Failed to delete block:', err);
+      setError(err.message || 'Failed to delete block');
     } finally {
       setLoading(false);
     }
@@ -112,10 +156,10 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
         <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 px-8 pt-6 bg-gradient-to-r from-purple-50 to-pink-50">
           <div>
             <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Block Time
+              {block ? 'Edit Availability Block' : 'Block Time'}
             </h2>
             <p className="text-sm text-gray-600 mt-1">
-              Mark yourself as unavailable during this time
+              {block ? 'Update or remove this availability block' : 'Mark yourself as unavailable during this time'}
             </p>
           </div>
           <button
@@ -249,6 +293,16 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
 
             {/* Actions */}
             <div className="flex gap-4 pt-6 mt-6 border-t border-gray-200">
+              {block && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="px-6 py-3 bg-red-100 hover:bg-red-200 text-red-700 font-semibold rounded-xl transition-all hover:shadow-md"
+                  disabled={loading}
+                >
+                  Delete
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleClose}
@@ -262,7 +316,7 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
                 className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
               >
-                {loading ? 'Blocking...' : 'Block Time'}
+                {loading ? (block ? 'Updating...' : 'Blocking...') : (block ? 'Update Block' : 'Block Time')}
               </button>
             </div>
           </form>
