@@ -483,23 +483,45 @@ function Calendar() {
                         className="p-2 border-r border-white/30 hover:bg-white/10 cursor-pointer transition-colors min-h-[60px]"
                       >
                         {slotAppointments.map(apt => {
-                          // Use category color if available, otherwise default blue
-                          const bgColor = apt.categoryColor || '#DBEAFE';
-                          const borderColor = apt.categoryColor ? `${apt.categoryColor}80` : '#93C5FD80';
+                          // Check if this is an availability block (Type 1) or regular appointment (Type 0)
+                          const isAvailabilityBlock = apt.categoryType === 1;
+
+                          // Use category color if available, otherwise default
+                          const bgColor = apt.categoryColor || (isAvailabilityBlock ? '#E5E7EB' : '#DBEAFE');
+                          const borderColor = apt.categoryColor ? `${apt.categoryColor}80` : (isAvailabilityBlock ? '#9CA3AF80' : '#93C5FD80');
 
                           return (
                             <div
                               key={apt.id}
                               onClick={(e) => handleAppointmentClick(apt, e)}
-                              className="mb-1 px-2 py-1 rounded-lg text-xs border hover:opacity-80 hover:shadow-md transition-all cursor-pointer"
+                              className={`mb-1 px-2 py-1 rounded-lg text-xs border hover:opacity-80 hover:shadow-md transition-all cursor-pointer ${
+                                isAvailabilityBlock ? 'border-dashed' : ''
+                              }`}
                               style={{
-                                backgroundColor: `${bgColor}B3`, // 70% opacity
-                                borderColor: borderColor
+                                backgroundColor: isAvailabilityBlock ? `${bgColor}99` : `${bgColor}B3`, // 60% vs 70% opacity
+                                borderColor: borderColor,
+                                backgroundImage: isAvailabilityBlock ? 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,.3) 4px, rgba(255,255,255,.3) 8px)' : 'none'
                               }}
                             >
-                              <div className="font-semibold text-gray-900">{formatTime12Hour(apt.startTime)}</div>
-                              <div className="text-gray-800 truncate">{apt.patientName}</div>
-                              <div className="text-gray-700 truncate text-[10px]">{apt.categoryName}</div>
+                              {isAvailabilityBlock ? (
+                                <>
+                                  <div className="font-semibold text-gray-900 flex items-center gap-1">
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                    </svg>
+                                    {apt.categoryName}
+                                  </div>
+                                  {apt.comments && (
+                                    <div className="text-gray-700 truncate text-[10px] italic">{apt.comments}</div>
+                                  )}
+                                </>
+                              ) : (
+                                <>
+                                  <div className="font-semibold text-gray-900">{formatTime12Hour(apt.startTime)}</div>
+                                  <div className="text-gray-800 truncate">{apt.patientName}</div>
+                                  <div className="text-gray-700 truncate text-[10px]">{apt.categoryName}</div>
+                                </>
+                              )}
                             </div>
                           );
                         })}
@@ -558,23 +580,45 @@ function Calendar() {
                         className="p-2 border-r border-white/30 hover:bg-white/10 cursor-pointer transition-colors min-h-[60px]"
                       >
                         {slotAppointments.map(apt => {
-                          // Use category color if available, otherwise default blue
-                          const bgColor = apt.categoryColor || '#DBEAFE';
-                          const borderColor = apt.categoryColor ? `${apt.categoryColor}80` : '#93C5FD80';
+                          // Check if this is an availability block (Type 1) or regular appointment (Type 0)
+                          const isAvailabilityBlock = apt.categoryType === 1;
+
+                          // Use category color if available, otherwise default
+                          const bgColor = apt.categoryColor || (isAvailabilityBlock ? '#E5E7EB' : '#DBEAFE');
+                          const borderColor = apt.categoryColor ? `${apt.categoryColor}80` : (isAvailabilityBlock ? '#9CA3AF80' : '#93C5FD80');
 
                           return (
                             <div
                               key={apt.id}
                               onClick={(e) => handleAppointmentClick(apt, e)}
-                              className="mb-1 px-2 py-1 rounded-lg text-xs border hover:opacity-80 hover:shadow-md transition-all cursor-pointer"
+                              className={`mb-1 px-2 py-1 rounded-lg text-xs border hover:opacity-80 hover:shadow-md transition-all cursor-pointer ${
+                                isAvailabilityBlock ? 'border-dashed' : ''
+                              }`}
                               style={{
-                                backgroundColor: `${bgColor}B3`, // 70% opacity
-                                borderColor: borderColor
+                                backgroundColor: isAvailabilityBlock ? `${bgColor}99` : `${bgColor}B3`, // 60% vs 70% opacity
+                                borderColor: borderColor,
+                                backgroundImage: isAvailabilityBlock ? 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,.3) 4px, rgba(255,255,255,.3) 8px)' : 'none'
                               }}
                             >
-                              <div className="font-semibold text-gray-900">{formatTime12Hour(apt.startTime)}</div>
-                              <div className="text-gray-800 truncate">{apt.patientName}</div>
-                              <div className="text-gray-700 truncate text-[10px]">{apt.categoryName}</div>
+                              {isAvailabilityBlock ? (
+                                <>
+                                  <div className="font-semibold text-gray-900 flex items-center gap-1">
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                    </svg>
+                                    {apt.categoryName}
+                                  </div>
+                                  {apt.comments && (
+                                    <div className="text-gray-700 truncate text-[10px] italic">{apt.comments}</div>
+                                  )}
+                                </>
+                              ) : (
+                                <>
+                                  <div className="font-semibold text-gray-900">{formatTime12Hour(apt.startTime)}</div>
+                                  <div className="text-gray-800 truncate">{apt.patientName}</div>
+                                  <div className="text-gray-700 truncate text-[10px]">{apt.categoryName}</div>
+                                </>
+                              )}
                             </div>
                           );
                         })}
@@ -637,23 +681,40 @@ function Calendar() {
                       {/* Appointments list */}
                       <div className="space-y-1">
                         {dayAppointments.slice(0, 3).map(apt => {
-                          const bgColor = apt.categoryColor || '#DBEAFE';
-                          const borderColor = apt.categoryColor ? `${apt.categoryColor}80` : '#93C5FD80';
+                          // Check if this is an availability block (Type 1) or regular appointment (Type 0)
+                          const isAvailabilityBlock = apt.categoryType === 1;
+
+                          const bgColor = apt.categoryColor || (isAvailabilityBlock ? '#E5E7EB' : '#DBEAFE');
+                          const borderColor = apt.categoryColor ? `${apt.categoryColor}80` : (isAvailabilityBlock ? '#9CA3AF80' : '#93C5FD80');
 
                           return (
                             <div
                               key={apt.id}
                               onClick={(e) => handleAppointmentClick(apt, e)}
-                              className="px-2 py-1 rounded text-xs border truncate hover:opacity-80 hover:shadow-md transition-all cursor-pointer"
+                              className={`px-2 py-1 rounded text-xs border truncate hover:opacity-80 hover:shadow-md transition-all cursor-pointer ${
+                                isAvailabilityBlock ? 'border-dashed' : ''
+                              }`}
                               style={{
-                                backgroundColor: `${bgColor}B3`,
-                                borderColor: borderColor
+                                backgroundColor: isAvailabilityBlock ? `${bgColor}99` : `${bgColor}B3`,
+                                borderColor: borderColor,
+                                backgroundImage: isAvailabilityBlock ? 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,.3) 4px, rgba(255,255,255,.3) 8px)' : 'none'
                               }}
                             >
-                              <div className="font-semibold text-gray-900">
-                                {formatTime12Hour(apt.startTime)}
-                              </div>
-                              <div className="text-gray-800 truncate">{apt.patientName}</div>
+                              {isAvailabilityBlock ? (
+                                <div className="font-semibold text-gray-900 flex items-center gap-1">
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 715.636 5.636m12.728 12.728L5.636 5.636" />
+                                  </svg>
+                                  <span className="truncate">{apt.categoryName}</span>
+                                </div>
+                              ) : (
+                                <>
+                                  <div className="font-semibold text-gray-900">
+                                    {formatTime12Hour(apt.startTime)}
+                                  </div>
+                                  <div className="text-gray-800 truncate">{apt.patientName}</div>
+                                </>
+                              )}
                             </div>
                           );
                         })}

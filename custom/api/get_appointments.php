@@ -82,6 +82,7 @@ try {
         e.pc_room,
         c.pc_catname,
         c.pc_catcolor,
+        c.pc_cattype,
         pd.fname AS patient_fname,
         pd.lname AS patient_lname,
         pd.DOB AS patient_dob,
@@ -120,6 +121,7 @@ try {
             'categoryId' => $row['pc_catid'],
             'categoryName' => $row['pc_catname'],
             'categoryColor' => $row['pc_catcolor'],
+            'categoryType' => intval($row['pc_cattype']), // 0=appointment, 1=availability block
             'apptstatus' => $row['pc_apptstatus'],
             'status' => $row['pc_apptstatus'],
             'title' => $row['pc_title'],
