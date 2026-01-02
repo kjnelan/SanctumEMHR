@@ -27,6 +27,9 @@ export async function apiRequest(endpoint, options = {}) {
     },
   });
 
+  // Parse JSON response regardless of status
+  const data = await response.json();
+
   if (!response.ok) {
     if (response.status === 401) {
       // Session expired or not authenticated → logout
@@ -36,10 +39,11 @@ export async function apiRequest(endpoint, options = {}) {
       }
       throw new Error('Authentication required');
     }
-    throw new Error(`API request failed: ${response.statusText}`);
+    // Throw error with message from API response
+    throw new Error(data.message || data.error || `API request failed: ${response.statusText}`);
   }
 
-  return response.json();
+  return data;
 }
 
 /**

@@ -214,18 +214,16 @@ function Calendar() {
       const aptHour = parseInt(aptHourStr);
       const aptMinute = parseInt(aptMinuteStr);
 
-      // Calculate appointment start and end times in minutes
-      const aptStartMinutes = aptHour * 60 + aptMinute;
-      const aptEndMinutes = aptStartMinutes + (apt.duration || 0);
-
-      // Current slot time in minutes
-      const slotStartMinutes = hour * 60 + minutes;
-      const slotEndMinutes = slotStartMinutes + calendarSettings.interval;
-
-      // Appointment should show if it overlaps with this time slot
-      // Overlaps if: appointment starts before slot ends AND appointment ends after slot starts
-      return aptStartMinutes < slotEndMinutes && aptEndMinutes > slotStartMinutes;
+      // Only return appointments that START in this specific time slot
+      return aptHour === hour && aptMinute === minutes;
     });
+  };
+
+  // Calculate how many time slots an appointment spans
+  const calculateSlotSpan = (appointment) => {
+    if (!appointment.duration) return 1;
+    const slots = Math.ceil(appointment.duration / calendarSettings.interval);
+    return slots;
   };
 
   // Get appointments for a specific day (for month view)
@@ -495,6 +493,10 @@ function Calendar() {
                           // Check if this is an availability block (Type 1) or regular appointment (Type 0)
                           const isAvailabilityBlock = apt.categoryType === 1;
 
+                          // Calculate how many slots this appointment spans
+                          const slotsSpan = calculateSlotSpan(apt);
+                          const heightPx = slotsSpan * 60 - 8; // 60px per slot, minus padding
+
                           // Use category color if available, otherwise default
                           const bgColor = apt.categoryColor || (isAvailabilityBlock ? '#E5E7EB' : '#DBEAFE');
                           const borderColor = apt.categoryColor ? `${apt.categoryColor}80` : (isAvailabilityBlock ? '#9CA3AF80' : '#93C5FD80');
@@ -507,6 +509,7 @@ function Calendar() {
                                 isAvailabilityBlock ? 'border-dashed' : ''
                               }`}
                               style={{
+                                height: `${heightPx}px`,
                                 backgroundColor: isAvailabilityBlock ? `${bgColor}99` : `${bgColor}B3`, // 60% vs 70% opacity
                                 borderColor: borderColor,
                                 backgroundImage: isAvailabilityBlock ? 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,.3) 4px, rgba(255,255,255,.3) 8px)' : 'none'
@@ -592,6 +595,10 @@ function Calendar() {
                           // Check if this is an availability block (Type 1) or regular appointment (Type 0)
                           const isAvailabilityBlock = apt.categoryType === 1;
 
+                          // Calculate how many slots this appointment spans
+                          const slotsSpan = calculateSlotSpan(apt);
+                          const heightPx = slotsSpan * 60 - 8; // 60px per slot, minus padding
+
                           // Use category color if available, otherwise default
                           const bgColor = apt.categoryColor || (isAvailabilityBlock ? '#E5E7EB' : '#DBEAFE');
                           const borderColor = apt.categoryColor ? `${apt.categoryColor}80` : (isAvailabilityBlock ? '#9CA3AF80' : '#93C5FD80');
@@ -604,6 +611,7 @@ function Calendar() {
                                 isAvailabilityBlock ? 'border-dashed' : ''
                               }`}
                               style={{
+                                height: `${heightPx}px`,
                                 backgroundColor: isAvailabilityBlock ? `${bgColor}99` : `${bgColor}B3`, // 60% vs 70% opacity
                                 borderColor: borderColor,
                                 backgroundImage: isAvailabilityBlock ? 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,.3) 4px, rgba(255,255,255,.3) 8px)' : 'none'
