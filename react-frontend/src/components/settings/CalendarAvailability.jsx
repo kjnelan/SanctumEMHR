@@ -167,19 +167,17 @@ function CalendarAvailability() {
 
       // Parse block start time
       const [blockHour, blockMin] = block.startTime.split(':').map(Number);
-      const blockStartMinutes = blockHour * 60 + blockMin;
 
-      // Calculate block end time
-      const blockEndMinutes = blockStartMinutes + block.duration;
-
-      // Current slot time in minutes
-      const slotStartMinutes = hour * 60 + minutes;
-      const slotEndMinutes = slotStartMinutes + 15; // 15-minute slot duration
-
-      // Block should show if it overlaps with this time slot
-      // Block overlaps if: block starts before slot ends AND block ends after slot starts
-      return blockStartMinutes < slotEndMinutes && blockEndMinutes > slotStartMinutes;
+      // Only return blocks that START in this specific time slot
+      return blockHour === hour && blockMin === minutes;
     });
+  };
+
+  // Calculate how many time slots a block spans
+  const calculateSlotSpan = (block) => {
+    if (!block.duration) return 1;
+    const slots = Math.ceil(block.duration / 15); // 15-minute slots
+    return slots;
   };
 
   return (
@@ -291,22 +289,30 @@ function CalendarAvailability() {
                         onClick={() => handleTimeSlotClick(day, slot.hour, slot.minutes)}
                         className="p-2 border-r border-gray-200 hover:bg-blue-50 cursor-pointer transition-colors min-h-[60px]"
                       >
-                        {blocks.map(block => (
-                          <div
-                            key={block.id}
-                            onClick={(e) => handleBlockClick(block, e)}
-                            className="mb-1 px-2 py-1 rounded text-xs border bg-gray-100 border-gray-300 hover:opacity-80 cursor-pointer transition-opacity"
-                            style={{
-                              backgroundColor: `${block.categoryColor || '#E5E7EB'}80`,
-                              borderColor: `${block.categoryColor || '#9CA3AF'}80`
-                            }}
-                          >
+                        {blocks.map(block => {
+                          // Calculate how many slots this block spans
+                          const slotsSpan = calculateSlotSpan(block);
+                          const heightPx = slotsSpan * 60 - 8; // 60px per slot, minus padding
+
+                          return (
+                            <div
+                              key={block.id}
+                              onClick={(e) => handleBlockClick(block, e)}
+                              className="mb-1 px-2 py-1 rounded text-xs border bg-gray-100 border-gray-300 hover:opacity-80 cursor-pointer transition-opacity"
+                              style={{
+                                height: `${heightPx}px`,
+                                backgroundColor: `${block.categoryColor || '#E5E7EB'}80`,
+                                borderColor: `${block.categoryColor || '#9CA3AF'}80`
+                              }}
+                            >
+
                             <div className="font-semibold text-gray-900">{block.categoryName}</div>
                             {block.comments && (
                               <div className="text-gray-700 text-[10px] truncate">{block.comments}</div>
                             )}
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     );
                   })}
