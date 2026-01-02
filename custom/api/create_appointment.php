@@ -148,8 +148,25 @@ try {
             // Determine conflict type
             $conflictType = intval($conflictResult['pc_cattype']);
             if ($conflictType === 1) {
-                // Conflict with availability block
-                throw new Exception("Provider is unavailable at this time: " . $conflictResult['pc_catname']);
+                // Availability block - check if it's a blocking type
+                $categoryName = strtolower($conflictResult['pc_catname']);
+
+                // Keywords that indicate unavailability (blocks appointments)
+                $blockingKeywords = ['out', 'vacation', 'meeting', 'lunch', 'break', 'unavailable', 'off', 'holiday', 'away'];
+                $isBlocking = false;
+
+                foreach ($blockingKeywords as $keyword) {
+                    if (strpos($categoryName, $keyword) !== false) {
+                        $isBlocking = true;
+                        break;
+                    }
+                }
+
+                if ($isBlocking) {
+                    // This availability block prevents appointments
+                    throw new Exception("Provider is unavailable at this time: " . $conflictResult['pc_catname']);
+                }
+                // If not blocking (e.g., "In Office"), allow the appointment to be created
             } else {
                 // Conflict with another appointment
                 throw new Exception("Provider already has an appointment at this time");
