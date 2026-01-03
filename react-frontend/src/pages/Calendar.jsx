@@ -545,43 +545,43 @@ function Calendar() {
                           const { top, height } = calculateAppointmentPosition(apt);
                           const isAvailabilityBlock = apt.categoryType === 1;
 
-                          const bgColor = apt.categoryColor || (isAvailabilityBlock ? '#E5E7EB' : '#DBEAFE');
-                          const borderColor = apt.categoryColor ? `${apt.categoryColor}80` : (isAvailabilityBlock ? '#9CA3AF80' : '#93C5FD80');
+                          // Availability blocks render as background, not clickable appointments
+                          if (isAvailabilityBlock) {
+                            const bgColor = apt.categoryColor || '#F3F4F6';
+                            return (
+                              <div
+                                key={apt.id}
+                                className="absolute left-0 right-0 pointer-events-none z-0"
+                                style={{
+                                  top: `${top}px`,
+                                  height: `${height}px`,
+                                  backgroundColor: `${bgColor}40`, // 25% opacity
+                                  backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,.02) 10px, rgba(0,0,0,.02) 20px)'
+                                }}
+                                title={`${apt.categoryName}${apt.comments ? ': ' + apt.comments : ''}`}
+                              />
+                            );
+                          }
+
+                          // Regular appointments are clickable cards
+                          const bgColor = apt.categoryColor || '#DBEAFE';
+                          const borderColor = apt.categoryColor ? `${apt.categoryColor}80` : '#93C5FD80';
 
                           return (
                             <div
                               key={apt.id}
                               onClick={(e) => handleAppointmentClick(apt, e)}
-                              className={`absolute left-1 right-1 px-2 py-1 rounded-lg text-xs border hover:opacity-80 hover:shadow-md transition-all cursor-pointer z-10 overflow-hidden ${
-                                isAvailabilityBlock ? 'border-dashed' : ''
-                              }`}
+                              className="absolute left-1 right-1 px-2 py-1 rounded-lg text-xs border hover:opacity-80 hover:shadow-md transition-all cursor-pointer z-10 overflow-hidden"
                               style={{
                                 top: `${top}px`,
                                 height: `${height}px`,
-                                backgroundColor: isAvailabilityBlock ? `${bgColor}99` : `${bgColor}B3`,
-                                borderColor: borderColor,
-                                backgroundImage: isAvailabilityBlock ? 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,.3) 4px, rgba(255,255,255,.3) 8px)' : 'none'
+                                backgroundColor: `${bgColor}B3`,
+                                borderColor: borderColor
                               }}
                             >
-                              {isAvailabilityBlock ? (
-                                <>
-                                  <div className="font-semibold text-gray-900 flex items-center gap-1">
-                                    <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 715.636 5.636m12.728 12.728L5.636 5.636" />
-                                    </svg>
-                                    <span className="truncate">{apt.categoryName}</span>
-                                  </div>
-                                  {apt.comments && height > 40 && (
-                                    <div className="text-gray-700 truncate text-[10px] italic mt-1">{apt.comments}</div>
-                                  )}
-                                </>
-                              ) : (
-                                <>
-                                  <div className="font-semibold text-gray-900">{formatTime12Hour(apt.startTime)}</div>
-                                  {height > 30 && <div className="text-gray-800 truncate">{apt.patientName}</div>}
-                                  {height > 50 && <div className="text-gray-700 truncate text-[10px]">{apt.categoryName}</div>}
-                                </>
-                              )}
+                              <div className="font-semibold text-gray-900">{formatTime12Hour(apt.startTime)}</div>
+                              {height > 30 && <div className="text-gray-800 truncate">{apt.patientName}</div>}
+                              {height > 50 && <div className="text-gray-700 truncate text-[10px]">{apt.categoryName}</div>}
                             </div>
                           );
                         })}
