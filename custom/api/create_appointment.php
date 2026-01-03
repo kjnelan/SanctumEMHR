@@ -92,6 +92,98 @@ try {
     $facilityId = isset($input['facilityId']) ? intval($input['facilityId']) : 0;
     $overrideAvailability = isset($input['overrideAvailability']) ? boolval($input['overrideAvailability']) : false;
 
+    // Check if this is a recurring appointment
+    $isRecurring = isset($input['recurrence']) && $input['recurrence']['enabled'] === true;
+    $occurrenceDates = [];
+
+    if ($isRecurring) {
+        // Extract recurrence parameters
+        $recurDays = $input['recurrence']['days']; // ['mon' => true, 'tue' => false, ...]
+        $recurInterval = intval($input['recurrence']['interval']); // 1=weekly, 2=bi-weekly, etc.
+        $recurEndType = $input['recurrence']['endType']; // 'count' or 'date'
+        $recurEndCount = $recurEndType === 'count' ? intval($input['recurrence']['endCount']) : null;
+        $recurEndDate = $recurEndType === 'date' ? $input['recurrence']['endDate'] : null;
+
+        // Convert selected days to array of day numbers (0=Sunday, 6=Saturday)
+        $selectedDayNumbers = [];
+        $dayMap = ['sun' => 0, 'mon' => 1, 'tue' => 2, 'wed' => 3, 'thu' => 4, 'fri' => 5, 'sat' => 6];
+        foreach ($recurDays as $dayKey => $isSelected) {
+            if ($isSelected && isset($dayMap[$dayKey])) {
+                $selectedDayNumbers[] = $dayMap[$dayKey];
+            }
+        }
+
+        if (empty($selectedDayNumbers)) {
+            throw new Exception('No days selected for recurrence');
+        }
+
+        sort($selectedDayNumbers); // Ensure days are in order
+
+        // Generate occurrence dates
+        $currentDate = new DateTime($eventDate);
+        $occurrenceCount = 0;
+        $maxOccurrences = $recurEndType === 'count' ? $recurEndCount : 365; // Safety limit of 365 occurrences
+        $endDateTime = $recurEndType === 'date' ? new DateTime($recurEndDate) : null;
+
+        // Start from the selected date
+        $weekOffset = 0;
+
+        while ($occurrenceCount < $maxOccurrences) {
+            // Calculate the date for current week offset
+            $weekStartDate = new DateTime($eventDate);
+            $weekStartDate->add(new DateInterval('P' . ($weekOffset * $recurInterval * 7) . 'D'));
+
+            // Check each selected day in this week
+            foreach ($selectedDayNumbers as $dayNum) {
+                $occurrenceDate = clone $weekStartDate;
+
+                // Find the first occurrence of this day in the week
+                $currentDayNum = intval($occurrenceDate->format('w')); // 0=Sunday, 6=Saturday
+                $daysToAdd = ($dayNum - $currentDayNum + 7) % 7;
+
+                // For the first week, skip if we'd go backwards
+                if ($weekOffset === 0 && $daysToAdd < 0) {
+                    continue;
+                }
+
+                $occurrenceDate->add(new DateInterval('P' . $daysToAdd . 'D'));
+
+                // Check if this occurrence is valid
+                if ($occurrenceDate < new DateTime($eventDate)) {
+                    continue; // Don't create occurrences before start date
+                }
+
+                if ($endDateTime && $occurrenceDate > $endDateTime) {
+                    break 2; // Exit both loops if past end date
+                }
+
+                if ($recurEndType === 'count' && $occurrenceCount >= $recurEndCount) {
+                    break 2; // Exit both loops if reached count limit
+                }
+
+                // Add this occurrence
+                $occurrenceDates[] = $occurrenceDate->format('Y-m-d');
+                $occurrenceCount++;
+
+                if ($recurEndType === 'count' && $occurrenceCount >= $recurEndCount) {
+                    break 2;
+                }
+            }
+
+            $weekOffset++;
+
+            // Safety check to prevent infinite loops
+            if ($weekOffset > 260) { // ~5 years of weeks
+                break;
+            }
+        }
+
+        error_log("Generated " . count($occurrenceDates) . " recurring occurrences: " . implode(', ', $occurrenceDates));
+    } else {
+        // Single occurrence
+        $occurrenceDates = [$eventDate];
+    }
+
     // Calculate end time based on start time and duration
     $startDateTime = new DateTime($eventDate . ' ' . $startTime);
     $endDateTime = clone $startDateTime;
@@ -110,131 +202,173 @@ try {
 
     // Check for conflicts with existing appointments and availability blocks
     // Only check conflicts for patient appointments (not for availability blocks themselves)
+    $conflicts = [];
     if ($patientId > 0) {
-        $conflictSql = "SELECT
-            e.pc_eid,
-            e.pc_title,
-            e.pc_startTime,
-            e.pc_duration,
-            e.pc_pid,
-            c.pc_catname,
-            c.pc_cattype
-        FROM openemr_postcalendar_events e
-        LEFT JOIN openemr_postcalendar_categories c ON e.pc_catid = c.pc_catid
-        WHERE e.pc_aid = ?
-          AND e.pc_eventDate = ?
-          AND e.pc_apptstatus NOT IN ('x', '?')
-          AND (
-              -- New appointment starts during existing event
-              (? >= e.pc_startTime AND ? < ADDTIME(e.pc_startTime, SEC_TO_TIME(e.pc_duration)))
-              OR
-              -- New appointment ends during existing event
-              (? > e.pc_startTime AND ? <= ADDTIME(e.pc_startTime, SEC_TO_TIME(e.pc_duration)))
-              OR
-              -- New appointment completely contains existing event
-              (? <= e.pc_startTime AND ? >= ADDTIME(e.pc_startTime, SEC_TO_TIME(e.pc_duration)))
-          )";
+        foreach ($occurrenceDates as $occurrenceDate) {
+            $conflictSql = "SELECT
+                e.pc_eid,
+                e.pc_title,
+                e.pc_eventDate,
+                e.pc_startTime,
+                e.pc_duration,
+                e.pc_pid,
+                c.pc_catname,
+                c.pc_cattype
+            FROM openemr_postcalendar_events e
+            LEFT JOIN openemr_postcalendar_categories c ON e.pc_catid = c.pc_catid
+            WHERE e.pc_aid = ?
+              AND e.pc_eventDate = ?
+              AND e.pc_apptstatus NOT IN ('x', '?')
+              AND (
+                  -- New appointment starts during existing event
+                  (? >= e.pc_startTime AND ? < ADDTIME(e.pc_startTime, SEC_TO_TIME(e.pc_duration)))
+                  OR
+                  -- New appointment ends during existing event
+                  (? > e.pc_startTime AND ? <= ADDTIME(e.pc_startTime, SEC_TO_TIME(e.pc_duration)))
+                  OR
+                  -- New appointment completely contains existing event
+                  (? <= e.pc_startTime AND ? >= ADDTIME(e.pc_startTime, SEC_TO_TIME(e.pc_duration)))
+              )";
 
-        $conflictParams = [
-            $providerId,
-            $eventDate,
-            $startTime, $startTime,  // Check start time
-            $endTime, $endTime,      // Check end time
-            $startTime, $endTime     // Check if contains
-        ];
+            $conflictParams = [
+                $providerId,
+                $occurrenceDate,
+                $startTime, $startTime,  // Check start time
+                $endTime, $endTime,      // Check end time
+                $startTime, $endTime     // Check if contains
+            ];
 
-        $conflictResult = sqlQuery($conflictSql, $conflictParams);
+            $conflictResult = sqlQuery($conflictSql, $conflictParams);
 
-        if ($conflictResult) {
-            // Determine conflict type
-            $conflictType = intval($conflictResult['pc_cattype']);
-            if ($conflictType === 1) {
-                // Availability block - check if it's a blocking type
-                $categoryName = strtolower($conflictResult['pc_catname']);
-
-                // Keywords that indicate unavailability (blocks appointments)
-                // Note: 'off' removed to prevent false match with "In Office"
-                $blockingKeywords = ['out', 'vacation', 'meeting', 'lunch', 'break', 'unavailable', 'holiday', 'away'];
+            if ($conflictResult) {
+                // Determine conflict type
+                $conflictType = intval($conflictResult['pc_cattype']);
                 $isBlocking = false;
+                $conflictReason = '';
 
-                foreach ($blockingKeywords as $keyword) {
-                    if (strpos($categoryName, $keyword) !== false) {
-                        $isBlocking = true;
-                        break;
+                if ($conflictType === 1) {
+                    // Availability block - check if it's a blocking type
+                    $categoryName = strtolower($conflictResult['pc_catname']);
+
+                    // Keywords that indicate unavailability (blocks appointments)
+                    $blockingKeywords = ['out', 'vacation', 'meeting', 'lunch', 'break', 'unavailable', 'holiday', 'away'];
+
+                    foreach ($blockingKeywords as $keyword) {
+                        if (strpos($categoryName, $keyword) !== false) {
+                            $isBlocking = true;
+                            $conflictReason = "Provider unavailable: " . $conflictResult['pc_catname'];
+                            break;
+                        }
                     }
+                } else {
+                    // Conflict with another appointment
+                    $isBlocking = true;
+                    $conflictReason = "Existing appointment: " . $conflictResult['pc_title'];
                 }
 
-                if ($isBlocking && !$overrideAvailability) {
-                    // This availability block prevents appointments (unless overridden)
-                    throw new Exception("Provider is unavailable at this time: " . $conflictResult['pc_catname']);
+                if ($isBlocking) {
+                    $conflicts[] = [
+                        'date' => $occurrenceDate,
+                        'time' => $startTime,
+                        'reason' => $conflictReason,
+                        'conflictType' => $conflictType === 1 ? 'availability' : 'appointment'
+                    ];
                 }
-                // If not blocking (e.g., "In Office") or override is enabled, allow the appointment to be created
-            } else {
-                // Conflict with another appointment - always block (cannot override patient appointments)
-                throw new Exception("Provider already has an appointment at this time");
             }
+        }
+
+        // If conflicts found and not overriding, return conflict details
+        if (!empty($conflicts) && !$overrideAvailability) {
+            error_log("Create appointment: Found " . count($conflicts) . " conflicts");
+            http_response_code(409); // Conflict status code
+            echo json_encode([
+                'success' => false,
+                'error' => 'conflicts',
+                'message' => count($conflicts) . ' conflict(s) found',
+                'conflicts' => $conflicts,
+                'totalOccurrences' => count($occurrenceDates),
+                'conflictCount' => count($conflicts)
+            ]);
+            exit;
         }
     }
 
-    // Build INSERT query
-    $sql = "INSERT INTO openemr_postcalendar_events (
-        pc_catid,
-        pc_aid,
-        pc_pid,
-        pc_title,
-        pc_eventDate,
-        pc_endDate,
-        pc_startTime,
-        pc_endTime,
-        pc_duration,
-        pc_hometext,
-        pc_apptstatus,
-        pc_room,
-        pc_facility,
-        pc_eventstatus,
-        pc_sharing,
-        pc_topic,
-        pc_multiple,
-        pc_alldayevent,
-        pc_recurrtype,
-        pc_sendalertsms,
-        pc_sendalertemail
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 1, 0, 0, 0, 'NO', 'NO')";
+    // Generate a unique recurrence ID if this is recurring
+    $recurrenceId = $isRecurring ? uniqid('recur_', true) : null;
 
-    $params = [
-        $categoryId,
-        $providerId,
-        $patientId,
-        $title,
-        $eventDate,
-        $endDate,
-        $startTime,
-        $endTime,
-        $durationSeconds,
-        $comments,
-        $apptstatus,
-        $room,
-        $facilityId
-    ];
+    // Create appointments for all occurrences
+    $createdAppointments = [];
+    $appointmentIds = [];
 
-    error_log("Create appointment SQL: " . $sql);
-    error_log("Create appointment params: " . print_r($params, true));
+    foreach ($occurrenceDates as $occurrenceDate) {
+        // Calculate end date for this occurrence
+        $occurrenceStartDateTime = new DateTime($occurrenceDate . ' ' . $startTime);
+        $occurrenceEndDateTime = clone $occurrenceStartDateTime;
+        $occurrenceEndDateTime->add(new DateInterval('PT' . $duration . 'M'));
+        $occurrenceEndTime = $occurrenceEndDateTime->format('H:i:s');
+        $occurrenceEndDate = $occurrenceEndDateTime->format('Y-m-d');
 
-    // Execute insert
-    $result = sqlInsert($sql, $params);
+        // Build INSERT query
+        $sql = "INSERT INTO openemr_postcalendar_events (
+            pc_catid,
+            pc_aid,
+            pc_pid,
+            pc_title,
+            pc_eventDate,
+            pc_endDate,
+            pc_startTime,
+            pc_endTime,
+            pc_duration,
+            pc_hometext,
+            pc_apptstatus,
+            pc_room,
+            pc_facility,
+            pc_eventstatus,
+            pc_sharing,
+            pc_topic,
+            pc_multiple,
+            pc_alldayevent,
+            pc_recurrtype,
+            pc_recurrspec,
+            pc_sendalertsms,
+            pc_sendalertemail
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 1, 0, 0, ?, ?, 'NO', 'NO')";
 
-    if ($result === false) {
-        throw new Exception('Failed to insert appointment');
+        $params = [
+            $categoryId,
+            $providerId,
+            $patientId,
+            $title,
+            $occurrenceDate,
+            $occurrenceEndDate,
+            $startTime,
+            $occurrenceEndTime,
+            $durationSeconds,
+            $comments,
+            $apptstatus,
+            $room,
+            $facilityId,
+            $isRecurring ? 1 : 0, // pc_recurrtype: 1 if recurring, 0 if not
+            $recurrenceId          // pc_recurrspec: shared ID for all occurrences in series
+        ];
+
+        error_log("Create appointment SQL for date $occurrenceDate: " . $sql);
+
+        // Execute insert
+        $result = sqlInsert($sql, $params);
+
+        if ($result === false) {
+            throw new Exception("Failed to insert appointment for date $occurrenceDate");
+        }
+
+        $appointmentIds[] = $result;
+
+        error_log("Create appointment: Successfully created appointment ID $result for date $occurrenceDate");
     }
 
-    // Get the newly created appointment ID
-    $appointmentId = $result;
-
-    error_log("Create appointment: Successfully created appointment ID $appointmentId");
-
-    // Fetch the created appointment to return full details
-    $createdAppt = sqlQuery(
-        "SELECT
+    // Fetch all created appointments to return full details
+    $placeholders = implode(',', array_fill(0, count($appointmentIds), '?'));
+    $createdApptsQuery = "SELECT
             e.pc_eid,
             e.pc_eventDate,
             e.pc_startTime,
@@ -246,6 +380,8 @@ try {
             e.pc_hometext,
             e.pc_pid,
             e.pc_aid,
+            e.pc_recurrtype,
+            e.pc_recurrspec,
             c.pc_catname,
             c.pc_catcolor,
             pd.fname AS patient_fname,
@@ -255,32 +391,46 @@ try {
         LEFT JOIN openemr_postcalendar_categories c ON e.pc_catid = c.pc_catid
         LEFT JOIN patient_data pd ON e.pc_pid = pd.pid
         LEFT JOIN users u ON e.pc_aid = u.id
-        WHERE e.pc_eid = ?",
-        [$appointmentId]
-    );
+        WHERE e.pc_eid IN ($placeholders)
+        ORDER BY e.pc_eventDate, e.pc_startTime";
+
+    $createdApptsResult = sqlStatement($createdApptsQuery, $appointmentIds);
+
+    while ($row = sqlFetchArray($createdApptsResult)) {
+        $createdAppointments[] = [
+            'id' => $row['pc_eid'],
+            'eventDate' => $row['pc_eventDate'],
+            'startTime' => $row['pc_startTime'],
+            'endTime' => $row['pc_endTime'],
+            'duration' => $row['pc_duration'],
+            'categoryId' => $row['pc_catid'],
+            'categoryName' => $row['pc_catname'],
+            'categoryColor' => $row['pc_catcolor'],
+            'status' => $row['pc_apptstatus'],
+            'title' => $row['pc_title'],
+            'comments' => $row['pc_hometext'],
+            'patientId' => $row['pc_pid'],
+            'patientName' => trim(($row['patient_fname'] ?? '') . ' ' . ($row['patient_lname'] ?? '')),
+            'providerId' => $row['pc_aid'],
+            'providerName' => $row['provider_name'],
+            'isRecurring' => intval($row['pc_recurrtype']) === 1,
+            'recurrenceId' => $row['pc_recurrspec']
+        ];
+    }
 
     http_response_code(201);
     echo json_encode([
         'success' => true,
-        'message' => 'Appointment created successfully',
-        'appointmentId' => $appointmentId,
-        'appointment' => [
-            'id' => $createdAppt['pc_eid'],
-            'eventDate' => $createdAppt['pc_eventDate'],
-            'startTime' => $createdAppt['pc_startTime'],
-            'endTime' => $createdAppt['pc_endTime'],
-            'duration' => $createdAppt['pc_duration'],
-            'categoryId' => $createdAppt['pc_catid'],
-            'categoryName' => $createdAppt['pc_catname'],
-            'categoryColor' => $createdAppt['pc_catcolor'],
-            'status' => $createdAppt['pc_apptstatus'],
-            'title' => $createdAppt['pc_title'],
-            'comments' => $createdAppt['pc_hometext'],
-            'patientId' => $createdAppt['pc_pid'],
-            'patientName' => trim(($createdAppt['patient_fname'] ?? '') . ' ' . ($createdAppt['patient_lname'] ?? '')),
-            'providerId' => $createdAppt['pc_aid'],
-            'providerName' => $createdAppt['provider_name']
-        ]
+        'message' => $isRecurring
+            ? count($createdAppointments) . ' recurring appointments created successfully'
+            : 'Appointment created successfully',
+        'isRecurring' => $isRecurring,
+        'occurrenceCount' => count($createdAppointments),
+        'recurrenceId' => $recurrenceId,
+        'appointmentId' => $appointmentIds[0], // First appointment ID for backwards compatibility
+        'appointmentIds' => $appointmentIds,
+        'appointments' => $createdAppointments,
+        'appointment' => $createdAppointments[0] ?? null // First appointment for backwards compatibility
     ]);
 
 } catch (Exception $e) {
