@@ -23,6 +23,7 @@ function Dashboard() {
   const [clientStats, setClientStats] = useState({ activeClients: 0 });
   const [showNewClientModal, setShowNewClientModal] = useState(false);
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [providers, setProviders] = useState([]);
 
   // Update activeNav when navigating from client detail or other pages
@@ -67,6 +68,7 @@ function Dashboard() {
   const todaysAppointments = appointments
     .filter(appt => appt.categoryType !== 1) // Exclude availability blocks
     .map(appt => ({
+      ...appt, // Include all original appointment data
       time: new Date(appt.eventDate + ' ' + appt.startTime).toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit'
@@ -74,6 +76,7 @@ function Dashboard() {
       client: appt.patientName || 'Unknown',
       type: appt.categoryName || 'Appointment',
       duration: appt.duration ? `${appt.duration} min` : '',
+      room: appt.room || '',
       isNext: false
     }));
 
@@ -100,14 +103,26 @@ function Dashboard() {
   };
 
   const handleNewAppointment = () => {
+    setSelectedAppointment(null);
+    setShowAppointmentModal(true);
+  };
+
+  const handleAppointmentClick = (appointment) => {
+    setSelectedAppointment(appointment);
     setShowAppointmentModal(true);
   };
 
   const handleAppointmentSave = () => {
     console.log('Appointment saved');
+    setSelectedAppointment(null);
     setShowAppointmentModal(false);
     // Optionally refresh appointments here
     window.location.reload(); // Simple way to refresh data
+  };
+
+  const handleAppointmentClose = () => {
+    setSelectedAppointment(null);
+    setShowAppointmentModal(false);
   };
 
   if (loading || !user) {
@@ -136,7 +151,10 @@ function Dashboard() {
           <StatsGrid stats={stats} />
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <QuickActions onNewClient={handleNewClient} onNewAppointment={handleNewAppointment} />
-            <AppointmentsList todaysAppointments={todaysAppointments} />
+            <AppointmentsList
+              todaysAppointments={todaysAppointments}
+              onAppointmentClick={handleAppointmentClick}
+            />
           </div>
         </>
       )}
@@ -168,11 +186,12 @@ function Dashboard() {
         />
       )}
 
-      {/* New Appointment Modal */}
+      {/* New/Edit Appointment Modal */}
       <AppointmentModal
         isOpen={showAppointmentModal}
-        onClose={() => setShowAppointmentModal(false)}
+        onClose={handleAppointmentClose}
         onSave={handleAppointmentSave}
+        appointment={selectedAppointment}
         providers={providers}
       />
     </AppShell>

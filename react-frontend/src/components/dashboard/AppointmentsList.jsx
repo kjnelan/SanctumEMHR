@@ -1,4 +1,4 @@
-function AppointmentsList({ todaysAppointments }) {
+function AppointmentsList({ todaysAppointments, onAppointmentClick }) {
     return (
         <div className="lg:col-span-2">
         <div className="card-main">
@@ -12,6 +12,7 @@ function AppointmentsList({ todaysAppointments }) {
         {todaysAppointments.map((appt, idx) => (
             <div
             key={idx}
+            onClick={() => onAppointmentClick && onAppointmentClick(appt)}
             className={`${
                 appt.isNext
                 ? 'backdrop-blur-2xl bg-gradient-to-r from-blue-500/40 to-purple-500/40 border-white/60'
@@ -41,6 +42,7 @@ function AppointmentsList({ todaysAppointments }) {
             </p>
             <p className={`text-sm mt-1 ${appt.isNext ? 'text-white/80' : 'text-gray-600'}`}>
             {appt.type} • {appt.duration}
+            {appt.room && ` • ${appt.room}`}
             {appt.participants && ` • ${appt.participants}`}
             </p>
             </div>

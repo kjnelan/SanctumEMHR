@@ -582,6 +582,7 @@ function Calendar() {
                               <div className="font-semibold text-gray-900">{formatTime12Hour(apt.startTime)}</div>
                               {height > 30 && <div className="text-gray-800 truncate">{apt.patientName}</div>}
                               {height > 50 && <div className="text-gray-700 truncate text-[10px]">{apt.categoryName}</div>}
+                              {height > 70 && apt.room && <div className="text-gray-600 truncate text-[10px]">{apt.room}</div>}
                             </div>
                           );
                         })}
@@ -682,6 +683,7 @@ function Calendar() {
                                   <div className="font-semibold text-gray-900">{formatTime12Hour(apt.startTime)}</div>
                                   <div className="text-gray-800 truncate">{apt.patientName}</div>
                                   <div className="text-gray-700 truncate text-[10px]">{apt.categoryName}</div>
+                                  {apt.room && <div className="text-gray-600 truncate text-[10px]">{apt.room}</div>}
                                 </>
                               )}
                             </div>
@@ -778,6 +780,7 @@ function Calendar() {
                                     {formatTime12Hour(apt.startTime)}
                                   </div>
                                   <div className="text-gray-800 truncate">{apt.patientName}</div>
+                                  {apt.room && <div className="text-gray-600 truncate text-[10px]">{apt.room}</div>}
                                 </>
                               )}
                             </div>
