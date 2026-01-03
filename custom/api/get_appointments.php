@@ -88,12 +88,14 @@ try {
         pd.DOB AS patient_dob,
         CONCAT(u.fname, ' ', u.lname) AS provider_name,
         u.id AS provider_id,
-        f.name AS facility_name
+        f.name AS facility_name,
+        r.title AS room_name
     FROM openemr_postcalendar_events e
     LEFT JOIN openemr_postcalendar_categories c ON e.pc_catid = c.pc_catid
     LEFT JOIN patient_data pd ON e.pc_pid = pd.pid
     LEFT JOIN users u ON e.pc_aid = u.id
     LEFT JOIN facility f ON e.pc_facility = f.id
+    LEFT JOIN list_options r ON r.list_id = 'rooms' AND r.option_id = e.pc_room
     WHERE e.pc_eventDate >= ? AND e.pc_eventDate <= ?";
 
     $params = [$start_date, $end_date];
@@ -132,7 +134,8 @@ try {
             'providerId' => $row['provider_id'],
             'providerName' => $row['provider_name'],
             'facilityName' => $row['facility_name'],
-            'room' => $row['pc_room']
+            'room' => $row['room_name'] ?? $row['pc_room'], // Use friendly name, fallback to ID
+            'roomId' => $row['pc_room'] // Keep room ID for editing
         ];
     }
 

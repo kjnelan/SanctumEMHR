@@ -98,7 +98,7 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
       setDuration(appointment.duration || 50);
       setTitle(appointment.title || '');
       setComments(appointment.comments || '');
-      setRoom(appointment.room || '');
+      setRoom(appointment.roomId || appointment.room || ''); // Use roomId for editing, fallback to room
 
       // Check if this is part of a recurring series
       if (appointment.isRecurring && appointment.recurrenceId) {
