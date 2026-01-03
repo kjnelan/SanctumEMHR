@@ -58,22 +58,24 @@ function Dashboard() {
   }, [user]);
 
   const stats = {
-    todayAppointments: { value: appointments.length || 0, trend: { direction: 'up', change: 0, label: 'from yesterday' } },
+    todayAppointments: { value: appointments.filter(apt => apt.categoryType !== 1).length || 0, trend: { direction: 'up', change: 0, label: 'from yesterday' } },
     unbilledAppointments: { value: 0, trend: { direction: 'up', change: 0, label: 'from last week' } },
     sessionsYTD: { value: 0, trend: { direction: 'up', change: 0, label: 'from last month' } },
     activeClients: { value: clientStats.activeClients || 0, trend: { direction: 'down', change: 0, label: 'from last month' } }
   };
 
-  const todaysAppointments = appointments.map(appt => ({
-    time: new Date(appt.eventDate + ' ' + appt.startTime).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit'
-    }),
-    client: appt.patientName || 'Unknown',
-    type: appt.categoryName || 'Appointment',
-    duration: appt.duration ? `${appt.duration} min` : '',
-    isNext: false
-  }));
+  const todaysAppointments = appointments
+    .filter(appt => appt.categoryType !== 1) // Exclude availability blocks
+    .map(appt => ({
+      time: new Date(appt.eventDate + ' ' + appt.startTime).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit'
+      }),
+      client: appt.patientName || 'Unknown',
+      type: appt.categoryName || 'Appointment',
+      duration: appt.duration ? `${appt.duration} min` : '',
+      isNext: false
+    }));
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
