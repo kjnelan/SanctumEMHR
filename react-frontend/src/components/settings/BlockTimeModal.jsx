@@ -57,24 +57,6 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
     }
   }, [categories]);
 
-  // Prevent body scroll and ensure modal is visible when open
-  useEffect(() => {
-    if (isOpen) {
-      // Prevent body scroll
-      document.body.style.overflow = 'hidden';
-      // Scroll to top to ensure modal is visible
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      // Restore body scroll
-      document.body.style.overflow = '';
-    }
-
-    // Cleanup
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
