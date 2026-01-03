@@ -72,7 +72,7 @@ try {
         'fullName' => trim(($user['fname'] ?? '') . ' ' . ($user['lname'] ?? '')),
         'authorized' => $_SESSION['authProvider'] ?? 0,
         'calendar' => $_SESSION['calendar'] ?? 0,
-        'admin' => ($user['calendar'] ?? 0) == 1 || ($user['authorized'] ?? 0) == 1,
+        'admin' => ($user['calendar'] ?? 0) == 1, // Only calendar admins have admin access
         'facility' => $user['facility'] ?? '',
         'facility_id' => $user['facility_id'] ?? ''
     ];

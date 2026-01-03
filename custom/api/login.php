@@ -100,6 +100,6 @@ echo json_encode([
         'lname' => $userRecord['lname'] ?? '',
         'fullName' => trim(($userRecord['fname'] ?? '') . ' ' . ($userRecord['lname'] ?? '')),
         'authorized' => $_SESSION['authProvider'] ?? 0,
-        'admin' => ($userRecord['calendar'] ?? 0) == 1 || ($userRecord['authorized'] ?? 0) == 1
+        'admin' => ($userRecord['calendar'] ?? 0) == 1 // Only calendar admins have admin access
     ]
 ]);
