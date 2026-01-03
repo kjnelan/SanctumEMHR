@@ -148,8 +148,16 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
         overrideAvailability: overrideConflicts // Pass override flag
       };
 
-      // Add recurrence data if enabled
-      if (isRecurring) {
+      // Add series management data if editing a recurring series
+      if (isEditingRecurringSeries) {
+        blockData.seriesUpdate = {
+          scope: seriesScope,
+          recurrenceId: currentRecurrenceId
+        };
+      }
+
+      // Add recurrence data if enabled (for new recurring blocks)
+      if (isRecurring && !block) {
         blockData.recurrence = {
           enabled: true,
           days: recurDays,
@@ -202,7 +210,17 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
   const handleDelete = async () => {
     if (!block) return;
 
-    if (!confirm('Are you sure you want to delete this availability block?')) {
+    // Build confirmation message based on series scope
+    let confirmMessage = 'Are you sure you want to delete this availability block?';
+    if (isEditingRecurringSeries) {
+      if (seriesScope === 'all') {
+        confirmMessage = 'Are you sure you want to delete ALL occurrences in this recurring series?';
+      } else if (seriesScope === 'future') {
+        confirmMessage = 'Are you sure you want to delete this and all future occurrences?';
+      }
+    }
+
+    if (!confirm(confirmMessage)) {
       return;
     }
 
@@ -211,10 +229,19 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
     setSuccess(null);
 
     try {
-      const response = await deleteAppointment(block.id);
+      // Pass series data if deleting from a recurring series
+      const deleteData = isEditingRecurringSeries ? {
+        scope: seriesScope,
+        recurrenceId: currentRecurrenceId
+      } : null;
+
+      const response = await deleteAppointment(block.id, deleteData);
 
       if (response.success) {
-        setSuccess('Block deleted successfully!');
+        const successMsg = isEditingRecurringSeries && seriesScope !== 'single'
+          ? `${response.deletedCount || 'Multiple'} block(s) deleted successfully!`
+          : 'Block deleted successfully!';
+        setSuccess(successMsg);
         setTimeout(() => {
           handleClose();
         }, 1000);
@@ -242,6 +269,10 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
     setRecurEndType('count');
     setRecurCount(10);
     setRecurEndDate('');
+    // Reset series management fields
+    setIsEditingRecurringSeries(false);
+    setSeriesScope('single');
+    setCurrentRecurrenceId(null);
     onClose();
     if (onSave) onSave();
   };
@@ -355,6 +386,60 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
               <span>{success}</span>
+            </div>
+          )}
+
+          {/* Recurring Series Banner */}
+          {isEditingRecurringSeries && (
+            <div className="mb-6 p-4 bg-purple-50 border-l-4 border-purple-500 rounded-lg">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 mt-0.5 flex-shrink-0 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-purple-700 font-medium mb-2">
+                    Recurring Availability Block Series
+                  </p>
+                  <p className="text-purple-600 text-sm mb-3">
+                    This block is part of a recurring series. Choose what to update:
+                  </p>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="seriesScope"
+                        value="single"
+                        checked={seriesScope === 'single'}
+                        onChange={(e) => setSeriesScope(e.target.value)}
+                        className="text-purple-600 focus:ring-purple-500"
+                      />
+                      <span className="text-sm text-purple-700">Just this occurrence ({new Date(eventDate).toLocaleDateString()})</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="seriesScope"
+                        value="future"
+                        checked={seriesScope === 'future'}
+                        onChange={(e) => setSeriesScope(e.target.value)}
+                        className="text-purple-600 focus:ring-purple-500"
+                      />
+                      <span className="text-sm text-purple-700">This and all future occurrences</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="seriesScope"
+                        value="all"
+                        checked={seriesScope === 'all'}
+                        onChange={(e) => setSeriesScope(e.target.value)}
+                        className="text-purple-600 focus:ring-purple-500"
+                      />
+                      <span className="text-sm text-purple-700">All occurrences in the series</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
