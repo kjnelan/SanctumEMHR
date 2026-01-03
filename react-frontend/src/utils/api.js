@@ -393,12 +393,13 @@ export async function updateAppointment(appointmentId, data) {
 /**
  * Delete an appointment or availability block
  * @param {number} appointmentId - The appointment ID to delete
+ * @param {object} seriesData - Optional series data for recurring appointments (scope, recurrenceId)
  */
-export async function deleteAppointment(appointmentId) {
-  console.log('Deleting appointment:', appointmentId);
+export async function deleteAppointment(appointmentId, seriesData = null) {
+  console.log('Deleting appointment:', appointmentId, seriesData);
   return apiRequest('/custom/api/delete_appointment.php', {
     method: 'POST',
-    body: JSON.stringify({ appointmentId })
+    body: JSON.stringify({ appointmentId, seriesData })
   });
 }
 
