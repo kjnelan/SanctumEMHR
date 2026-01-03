@@ -30,6 +30,7 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [availabilityConflict, setAvailabilityConflict] = useState(null);
+  const [recurrenceConflicts, setRecurrenceConflicts] = useState(null); // { conflicts: [], totalOccurrences: N }
 
   // Form fields
   const [patientId, setPatientId] = useState('');
@@ -263,8 +264,16 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
     } catch (err) {
       console.error(`Failed to ${appointment ? 'update' : 'create'} appointment:`, err);
 
+      // Check if it's a recurrence conflict (409 status with conflicts array)
+      if (err.conflicts) {
+        setRecurrenceConflicts({
+          conflicts: err.conflicts,
+          totalOccurrences: err.totalOccurrences,
+          conflictCount: err.conflictCount
+        });
+      }
       // Check if it's an availability conflict
-      if (err.message && err.message.includes('Provider is unavailable')) {
+      else if (err.message && err.message.includes('Provider is unavailable')) {
         setAvailabilityConflict(err.message);
       } else {
         setError(err.message || `Failed to ${appointment ? 'update' : 'create'} appointment`);
@@ -274,9 +283,15 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
     }
   };
 
-  // Handle override confirmation
+  // Handle override confirmation for availability conflicts
   const handleOverride = () => {
     setAvailabilityConflict(null);
+    handleSubmit(null, true); // Resubmit with override flag
+  };
+
+  // Handle override confirmation for recurrence conflicts
+  const handleOverrideRecurrence = () => {
+    setRecurrenceConflicts(null);
     handleSubmit(null, true); // Resubmit with override flag
   };
 
@@ -323,6 +338,8 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
     setRoom('');
     setError(null);
     setSuccess(null);
+    setAvailabilityConflict(null);
+    setRecurrenceConflicts(null);
     setPatientSearchResults([]);
     setShowPatientDropdown(false);
     // Reset recurrence fields
@@ -398,6 +415,51 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
                     <button
                       type="button"
                       onClick={() => setAvailabilityConflict(null)}
+                      className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Recurrence Conflicts Warning */}
+          {recurrenceConflicts && (
+            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 mt-0.5 flex-shrink-0 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-red-700 font-bold mb-2">
+                    Scheduling Conflicts Detected
+                  </p>
+                  <p className="text-red-600 text-sm mb-3">
+                    {recurrenceConflicts.conflictCount} of {recurrenceConflicts.totalOccurrences} recurring appointments have conflicts:
+                  </p>
+                  <div className="max-h-48 overflow-y-auto mb-4 space-y-2">
+                    {recurrenceConflicts.conflicts.map((conflict, idx) => (
+                      <div key={idx} className="bg-white border border-red-200 rounded p-2 text-sm">
+                        <div className="font-medium text-red-700">
+                          {new Date(conflict.date).toLocaleDateString()} at {conflict.time}
+                        </div>
+                        <div className="text-red-600">{conflict.reason}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={handleOverrideRecurrence}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      Create Anyway (Skip Conflicts)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRecurrenceConflicts(null)}
                       className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-lg transition-colors"
                     >
                       Cancel

@@ -20,6 +20,7 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [recurrenceConflicts, setRecurrenceConflicts] = useState(null); // { conflicts: [], totalOccurrences: N }
 
   // Form fields
   const [categoryId, setCategoryId] = useState('');
@@ -81,11 +82,12 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
     }
   }, [startTime, endTime]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e, overrideConflicts = false) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setSuccess(null);
+    setRecurrenceConflicts(null);
 
     if (!categoryId) {
       setError('Please select a block type');
@@ -127,7 +129,8 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
         title: categories.find(c => c.id === parseInt(categoryId))?.name || 'Blocked',
         comments: comments,
         room: '',
-        apptstatus: block ? block.apptstatus : '-'
+        apptstatus: block ? block.apptstatus : '-',
+        overrideAvailability: overrideConflicts // Pass override flag
       };
 
       // Add recurrence data if enabled
@@ -158,10 +161,27 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
       }
     } catch (err) {
       console.error(`Failed to ${block ? 'update' : 'create'} block:`, err);
-      setError(err.message || `Failed to ${block ? 'update' : 'create'} block`);
+
+      // Check if it's a recurrence conflict (409 status with conflicts array)
+      if (err.conflicts) {
+        setRecurrenceConflicts({
+          conflicts: err.conflicts,
+          totalOccurrences: err.totalOccurrences,
+          conflictCount: err.conflictCount
+        });
+      } else {
+        setError(err.message || `Failed to ${block ? 'update' : 'create'} block`);
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle override confirmation for recurrence conflicts
+  const handleOverrideRecurrence = () => {
+    setRecurrenceConflicts(null);
+    // Resubmit with override - need to add override logic
+    handleSubmit({ preventDefault: () => {} }, true);
   };
 
   const handleDelete = async () => {
@@ -199,6 +219,7 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
     setComments('');
     setError(null);
     setSuccess(null);
+    setRecurrenceConflicts(null);
     // Reset recurrence fields
     setIsRecurring(false);
     setRecurDays({ mon: false, tue: false, wed: false, thu: false, fri: false, sat: false, sun: false });
@@ -259,6 +280,51 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
         {/* Form Content */}
         <div className="px-8 pb-8">
           {/* Error/Success Messages */}
+          {/* Recurrence Conflicts Warning */}
+          {recurrenceConflicts && (
+            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 mt-0.5 flex-shrink-0 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-red-700 font-bold mb-2">
+                    Scheduling Conflicts Detected
+                  </p>
+                  <p className="text-red-600 text-sm mb-3">
+                    {recurrenceConflicts.conflictCount} of {recurrenceConflicts.totalOccurrences} recurring blocks have conflicts:
+                  </p>
+                  <div className="max-h-48 overflow-y-auto mb-4 space-y-2">
+                    {recurrenceConflicts.conflicts.map((conflict, idx) => (
+                      <div key={idx} className="bg-white border border-red-200 rounded p-2 text-sm">
+                        <div className="font-medium text-red-700">
+                          {new Date(conflict.date).toLocaleDateString()} at {conflict.time}
+                        </div>
+                        <div className="text-red-600">{conflict.reason}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={handleOverrideRecurrence}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      Create Anyway (Skip Conflicts)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRecurrenceConflicts(null)}
+                      className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg text-red-700 flex items-start gap-3">
               <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
