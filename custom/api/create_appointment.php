@@ -153,7 +153,8 @@ try {
                 $categoryName = strtolower($conflictResult['pc_catname']);
 
                 // Keywords that indicate unavailability (blocks appointments)
-                $blockingKeywords = ['out', 'vacation', 'meeting', 'lunch', 'break', 'unavailable', 'off', 'holiday', 'away'];
+                // Note: 'off' removed to prevent false match with "In Office"
+                $blockingKeywords = ['out', 'vacation', 'meeting', 'lunch', 'break', 'unavailable', 'holiday', 'away'];
                 $isBlocking = false;
 
                 foreach ($blockingKeywords as $keyword) {

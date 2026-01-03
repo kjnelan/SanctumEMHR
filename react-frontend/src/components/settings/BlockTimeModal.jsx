@@ -154,7 +154,7 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
       className="fixed inset-0 z-50 overflow-y-auto"
       style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
     >
-      <div className="flex min-h-screen items-start justify-center p-4 pt-8">
+      <div className="flex min-h-screen items-center justify-center p-4">
         {/* Backdrop */}
         <div
           className="fixed inset-0 bg-gray-900/60 backdrop-blur-md transition-opacity"

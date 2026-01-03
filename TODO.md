@@ -1,0 +1,104 @@
+# TODO - Mindline EMHR Calendar System
+
+## Configuration Tasks
+
+### Remove "In Office" Category from Calendar Categories
+**Status:** Pending (User will handle)
+**Priority:** Medium
+**Location:** Calendar Settings > Calendar Categories
+
+**Why:** The "In Office" availability category is unnecessary because:
+- Providers are assumed available by default
+- Only blocking categories (Out of Office, Vacation, etc.) are needed
+- "In Office" was causing confusion by appearing in availability blocks
+- Simpler UX: Providers only need to mark when they're unavailable
+
+**Action Required:**
+1. Navigate to Calendar Settings > Calendar Categories
+2. Find the "In Office" category (Type 1 - Availability)
+3. Delete or deactivate this category
+4. Providers should only use blocking categories like:
+   - Out of Office
+   - Vacation
+   - Meeting
+   - Lunch Break
+   - Holiday
+   - etc.
+
+---
+
+## Future Enhancements
+
+### 1. Repeating Appointments
+**Status:** Planned
+**Priority:** High
+
+Allow appointments to repeat on a schedule (daily, weekly, monthly, etc.)
+
+**Requirements:**
+- UI to configure recurrence pattern (frequency, interval, end date)
+- Backend to generate recurring appointment records
+- Ability to edit/delete single occurrence vs entire series
+- Handle exceptions (skip certain dates)
+
+### 2. Repeating Availability Blocks
+**Status:** Planned
+**Priority:** High
+
+Allow availability blocks to repeat (e.g., "Out of Office every Friday")
+
+**Requirements:**
+- Same recurrence UI as appointments
+- Generate recurring availability block records
+- Handle series editing/deletion
+- Efficient conflict checking for recurring blocks
+
+### 3. Modal Positioning Fix
+**Status:** Pending
+**Priority:** Medium
+
+The add/edit appointment modal currently appears at the top of the page instead of being centered in the viewport.
+
+**Components to Check:**
+- `AppointmentModal.jsx`
+- `BlockTimeModal.jsx`
+
+**Expected Behavior:**
+- Modal should be centered in current viewport
+- Should scroll with page if content is tall
+- Should use `fixed` positioning or proper centering approach
+
+---
+
+## Recently Completed
+
+### ✅ Calendar Availability - Provider Filtering
+- Fixed to show only logged-in user's availability blocks
+- Added provider ID filtering to API calls
+
+### ✅ Calendar Availability - Absolute Positioning
+- Refactored from CSS Grid to absolute positioning
+- Multi-hour blocks now span properly across time slots
+
+### ✅ "In Office" Blocking Bug
+- Fixed keyword matching in `create_appointment.php`
+- Removed 'off' from blocking keywords to prevent false match with "In Office"
+
+### ✅ Dashboard Phantom Appointments
+- Filter out availability blocks (categoryType=1) from dashboard
+- Fixed timezone bug using local date instead of UTC
+
+### ✅ Appointment Spanning
+- Implemented absolute positioning for appointments
+- Calculate top/height based on start time and duration
+- Appointments now span correctly across multiple time slots
+
+### ✅ Availability Blocks as Background
+- Render as background overlays (not clickable cards)
+- Use transparency and striped pattern
+- Patient appointments remain clickable
+
+### ✅ Override Functionality
+- Added amber warning dialog for availability conflicts
+- "Override and Book Anyway" button
+- Backend accepts `overrideAvailability` parameter
