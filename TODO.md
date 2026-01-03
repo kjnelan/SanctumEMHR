@@ -29,29 +29,41 @@
 
 ## Future Enhancements
 
-### 1. Repeating Appointments
-**Status:** Planned
+### 1. Repeating Appointments & Availability Blocks
+**Status:** In Progress
 **Priority:** High
 
-Allow appointments to repeat on a schedule (daily, weekly, monthly, etc.)
+**User Requirements:**
+- Weekly patterns with specific days (Mon/Thu, Wed/Sat, etc.)
+- Intervals: Weekly, Every 2 weeks, Every 3 weeks, Every 4 weeks
+- End conditions: After X occurrences OR on specific date
+- Series management: Edit/delete single, all, or "this and future"
+- Conflict detection BEFORE creating with user decision
 
-**Requirements:**
-- UI to configure recurrence pattern (frequency, interval, end date)
-- Backend to generate recurring appointment records
-- Ability to edit/delete single occurrence vs entire series
-- Handle exceptions (skip certain dates)
+**Implementation Plan:**
 
-### 2. Repeating Availability Blocks
-**Status:** Planned
-**Priority:** High
+**Phase 1: Database & Backend**
+- Add recurrence fields (or use OpenEMR's existing structure)
+- Create API to generate occurrences from recurrence rules
+- Conflict validation before creation
+- Series management endpoints (edit/delete variants)
 
-Allow availability blocks to repeat (e.g., "Out of Office every Friday")
+**Phase 2: Frontend UI**
+- Recurrence section in modals (between Duration and Title)
+- Day checkboxes (Mon-Sun)
+- Interval dropdown (Weekly, Every 2/3/4 weeks)
+- End condition radio: After X occurrences / On date
+- Conflict warning dialog with options
 
-**Requirements:**
-- Same recurrence UI as appointments
-- Generate recurring availability block records
-- Handle series editing/deletion
-- Efficient conflict checking for recurring blocks
+**Phase 3: Series Management**
+- Detect recurring events (show banner)
+- Edit/Delete options: Just this / This and future / All
+- "This and future" splits series (original ends, new begins)
+
+**Technical Approach:**
+- Option A (Recommended): Create individual records with shared `recurrence_id`
+- Link occurrences via `pc_recurrspec` field in OpenEMR
+- Simpler, uses existing structure, easier to manage
 
 ### 3. Modal Positioning Fix
 **Status:** Pending
