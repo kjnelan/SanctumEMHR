@@ -67,8 +67,14 @@ export function useAuth() {
 
                 // Fetch today's appointments
                 try {
-                    const today = new Date().toISOString().split('T')[0];
-                    const appointmentsResponse = await getAppointments(today, today);
+                    // Use local date, not UTC (fixes timezone issues)
+                    const today = new Date();
+                    const year = today.getFullYear();
+                    const month = String(today.getMonth() + 1).padStart(2, '0');
+                    const day = String(today.getDate()).padStart(2, '0');
+                    const todayLocal = `${year}-${month}-${day}`;
+
+                    const appointmentsResponse = await getAppointments(todayLocal, todayLocal);
                     setAppointments(appointmentsResponse.appointments || []);
                 } catch (error) {
                     console.error('Failed to load today\'s appointments:', error);
