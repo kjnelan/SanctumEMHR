@@ -109,6 +109,28 @@ The add/edit appointment modal currently appears at the top of the page instead 
 - Should scroll with page if content is tall
 - Should use `fixed` positioning or proper centering approach
 
+### 4. Admin Access Control (ACL System)
+**Status:** Pending
+**Priority:** Medium
+
+**Issue:** Regular clinicians can still see the Administration/Settings menu despite attempting to restrict it to calendar admins only.
+
+**Root Cause:** Likely related to OpenEMR's ACL (Access Control List) system which is more complex than simple field checks.
+
+**Current Implementation:**
+- Basic check: `admin = (calendar == 1)`
+- Located in: session_user.php, login.php, session_login.php
+
+**Required Investigation:**
+- Research OpenEMR's ACL system and proper admin permission checks
+- May need to use ACL functions like `acl_check()` instead of field checks
+- Consider role-based permissions vs. simple boolean flags
+
+**Files to Review:**
+- OpenEMR ACL documentation
+- `/interface/main/main_screen.php` (OpenEMR admin menu logic)
+- ACL-related functions in OpenEMR core
+
 ---
 
 ## Recently Completed
