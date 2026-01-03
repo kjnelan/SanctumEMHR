@@ -50,6 +50,8 @@ function CalendarAvailability() {
     try {
       // Get current user's provider ID
       const currentUser = getCurrentUser();
+      console.log('[CalendarAvailability] Current user:', currentUser);
+
       if (!currentUser || !currentUser.id) {
         console.error('No current user found');
         setAvailabilityBlocks([]);
@@ -58,13 +60,30 @@ function CalendarAvailability() {
       }
 
       const { startDate, endDate } = getDateRange();
-      // Pass provider ID to only get this user's availability blocks
-      const response = await getAppointments(startDate, endDate, currentUser.id);
+      console.log('[CalendarAvailability] Date range:', { startDate, endDate });
+      console.log('[CalendarAvailability] Fetching for provider ID:', currentUser.id);
 
-      // Filter to only show availability blocks (Type 1 categories)
-      // Use categoryType field from API response instead of checking against categories array
-      const blocks = response.appointments.filter(apt => apt.categoryType === 1);
+      // TEMPORARY: Try without provider filter to debug
+      const response = await getAppointments(startDate, endDate, 'all');
+      console.log('[CalendarAvailability] API response:', response);
+      console.log('[CalendarAvailability] Total appointments:', response.appointments?.length);
 
+      // Filter to only show availability blocks (Type 1 categories) for THIS user
+      const blocks = response.appointments.filter(apt => {
+        const isAvailabilityBlock = apt.categoryType === 1;
+        const isCurrentProvider = apt.providerId == currentUser.id; // Use == for loose comparison
+        console.log('[CalendarAvailability] Checking appointment:', {
+          id: apt.id,
+          categoryType: apt.categoryType,
+          providerId: apt.providerId,
+          currentUserId: currentUser.id,
+          isAvailabilityBlock,
+          isCurrentProvider
+        });
+        return isAvailabilityBlock && isCurrentProvider;
+      });
+
+      console.log('[CalendarAvailability] Filtered blocks:', blocks);
       setAvailabilityBlocks(blocks);
     } catch (err) {
       console.error('Failed to load availability blocks:', err);
