@@ -30,7 +30,7 @@
 ## Future Enhancements
 
 ### 1. Repeating Appointments & Availability Blocks
-**Status:** In Progress
+**Status:** Phase 2 Complete - Frontend UI Implemented
 **Priority:** High
 
 **User Requirements:**
@@ -64,6 +64,22 @@
 - Option A (Recommended): Create individual records with shared `recurrence_id`
 - Link occurrences via `pc_recurrspec` field in OpenEMR
 - Simpler, uses existing structure, easier to manage
+
+**Completed (Phase 2):**
+- ✅ Added recurrence state variables to AppointmentModal and BlockTimeModal
+- ✅ Implemented day selection checkboxes (Mon-Sun)
+- ✅ Added frequency dropdown (Weekly, Every 2/3/4 weeks)
+- ✅ Implemented end condition options (After X occurrences / On date)
+- ✅ Added form validation for recurrence fields
+- ✅ Positioned UI between Duration and Title/Notes fields
+- ✅ Reset recurrence fields on modal close
+- ✅ Frontend sends recurrence data to backend
+
+**Remaining Work:**
+- Backend API to generate occurrences from recurrence rules
+- Conflict detection BEFORE creating occurrences
+- Series management (edit/delete single, all, this+future)
+- Conflict warning dialog
 
 ### 3. Modal Positioning Fix
 **Status:** Pending
