@@ -155,10 +155,10 @@ function NoteTypeSelector({ onSelect, preselected = null, appointment = null }) 
         </div>
       </div>
 
-      {/* Other note types (smaller buttons) */}
+      {/* Specialized note types */}
       <div>
         <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
-          Other Types
+          Specialized Documentation
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {noteTypes.filter(t => !t.common).map((noteType) => (
