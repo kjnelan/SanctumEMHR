@@ -17,7 +17,7 @@ import { getPatientNotes } from '../../utils/api';
 /**
  * Props:
  * - patientId: number - Patient ID
- * - onNoteClick: function(noteId) - Callback when note is clicked
+ * - onNoteClick: function(noteId, isDraft) - Callback when note is clicked
  * - onCreateNote: function - Callback to create new note
  */
 function NotesList({ patientId, onNoteClick, onCreateNote }) {
@@ -226,10 +226,12 @@ function NotesList({ patientId, onNoteClick, onCreateNote }) {
         </div>
       ) : (
         <div className="space-y-3">
-          {notes.map((note) => (
+          {notes.map((note) => {
+            const isDraft = note.status === 'draft';
+            return (
             <div
               key={note.id}
-              onClick={() => onNoteClick && onNoteClick(note.id)}
+              onClick={() => onNoteClick && onNoteClick(note.id, isDraft, note.note_type)}
               className="card-inner hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-all"
             >
               <div className="flex items-start justify-between gap-4">
@@ -276,11 +278,12 @@ function NotesList({ patientId, onNoteClick, onCreateNote }) {
 
                 {/* Action */}
                 <button className="btn-mini">
-                  View
+                  {isDraft ? 'Edit' : 'View'}
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -19,9 +19,16 @@ function ClinicalNotesTab({ data }) {
     setView('create');
   };
 
-  const handleNoteClick = (noteId) => {
+  const handleNoteClick = (noteId, isDraft, noteType) => {
     setSelectedNoteId(noteId);
-    setView('view');
+    setSelectedNoteType(noteType);
+
+    // Drafts open in edit mode, signed notes open in view mode
+    if (isDraft) {
+      setView('edit');
+    } else {
+      setView('view');
+    }
   };
 
   const handleEditNote = (noteId) => {
