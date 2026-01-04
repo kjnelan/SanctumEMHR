@@ -52,7 +52,9 @@ function NotesList({ patientId, onNoteClick, onCreateNote }) {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A';
-    const date = new Date(dateStr);
+    // Parse date without timezone conversion (fixes "tomorrow" bug)
+    const [year, month, day] = dateStr.split(/[-T]/);
+    const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -133,7 +135,79 @@ function NotesList({ patientId, onNoteClick, onCreateNote }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex gap-6">
+      {/* Left Sidebar - Filters */}
+      <div className="w-64 flex-shrink-0">
+        <div className="card-main sticky top-6">
+          <h3 className="font-semibold text-gray-800 mb-4">Filter Notes</h3>
+
+          <div className="space-y-4">
+            {/* Note Type Filter */}
+            <div>
+              <label className="block">
+                <span className="text-xs font-semibold text-gray-600 mb-2 block">Note Type</span>
+                <select
+                  value={filters.note_type || ''}
+                  onChange={(e) => setFilters({ ...filters, note_type: e.target.value || null })}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="">All Types</option>
+                  <option value="progress">Progress</option>
+                  <option value="intake">Intake</option>
+                  <option value="crisis">Crisis</option>
+                  <option value="discharge">Discharge</option>
+                  <option value="mse">Mental Status</option>
+                  <option value="admin">Administrative</option>
+                </select>
+              </label>
+            </div>
+
+            {/* Status Filter */}
+            <div>
+              <label className="block">
+                <span className="text-xs font-semibold text-gray-600 mb-2 block">Status</span>
+                <select
+                  value={filters.status || ''}
+                  onChange={(e) => setFilters({ ...filters, status: e.target.value || null })}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="draft">Drafts</option>
+                  <option value="signed">Signed</option>
+                </select>
+              </label>
+            </div>
+
+            {/* Date Range */}
+            <div>
+              <label className="block">
+                <span className="text-xs font-semibold text-gray-600 mb-2 block">From Date</span>
+                <input
+                  type="date"
+                  value={filters.start_date || ''}
+                  onChange={(e) => setFilters({ ...filters, start_date: e.target.value || null })}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                />
+              </label>
+            </div>
+
+            <div>
+              <label className="block">
+                <span className="text-xs font-semibold text-gray-600 mb-2 block">To Date</span>
+                <input
+                  type="date"
+                  value={filters.end_date || ''}
+                  onChange={(e) => setFilters({ ...filters, end_date: e.target.value || null })}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 space-y-6">
       {/* Header with Create Button */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-gray-800">
@@ -147,72 +221,6 @@ function NotesList({ patientId, onNoteClick, onCreateNote }) {
             + New Note
           </button>
         )}
-      </div>
-
-      {/* Filters */}
-      <div className="card-main">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* Note Type Filter */}
-          <div>
-            <label className="block">
-              <span className="text-xs font-semibold text-gray-600 mb-1 block">Note Type</span>
-              <select
-                value={filters.note_type || ''}
-                onChange={(e) => setFilters({ ...filters, note_type: e.target.value || null })}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Types</option>
-                <option value="progress">Progress</option>
-                <option value="intake">Intake</option>
-                <option value="crisis">Crisis</option>
-                <option value="discharge">Discharge</option>
-                <option value="mse">Mental Status</option>
-                <option value="admin">Administrative</option>
-              </select>
-            </label>
-          </div>
-
-          {/* Status Filter */}
-          <div>
-            <label className="block">
-              <span className="text-xs font-semibold text-gray-600 mb-1 block">Status</span>
-              <select
-                value={filters.status || ''}
-                onChange={(e) => setFilters({ ...filters, status: e.target.value || null })}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Statuses</option>
-                <option value="draft">Drafts</option>
-                <option value="signed">Signed</option>
-              </select>
-            </label>
-          </div>
-
-          {/* Date Range */}
-          <div>
-            <label className="block">
-              <span className="text-xs font-semibold text-gray-600 mb-1 block">From Date</span>
-              <input
-                type="date"
-                value={filters.start_date || ''}
-                onChange={(e) => setFilters({ ...filters, start_date: e.target.value || null })}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </label>
-          </div>
-
-          <div>
-            <label className="block">
-              <span className="text-xs font-semibold text-gray-600 mb-1 block">To Date</span>
-              <input
-                type="date"
-                value={filters.end_date || ''}
-                onChange={(e) => setFilters({ ...filters, end_date: e.target.value || null })}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </label>
-          </div>
-        </div>
       </div>
 
       {/* Notes List */}
@@ -232,7 +240,7 @@ function NotesList({ patientId, onNoteClick, onCreateNote }) {
             <div
               key={note.id}
               onClick={() => onNoteClick && onNoteClick(note.id, isDraft, note.note_type)}
-              className="card-main hover:bg-white/50 hover:border-blue-300 cursor-pointer transition-all"
+              className="card-main hover:shadow-2xl hover:scale-[1.01] hover:border-blue-400 cursor-pointer transition-all duration-200"
             >
               <div className="flex items-start justify-between gap-4">
                 {/* Note Info */}
@@ -286,6 +294,7 @@ function NotesList({ patientId, onNoteClick, onCreateNote }) {
           })}
         </div>
       )}
+      </div>
     </div>
   );
 }

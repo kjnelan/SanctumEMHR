@@ -47,7 +47,9 @@ function NoteViewer({ noteId, onClose, onEdit, onAddendum }) {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A';
-    const date = new Date(dateStr);
+    // Parse date without timezone conversion (fixes "tomorrow" bug)
+    const [year, month, day] = dateStr.split(/[-T]/);
+    const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', {
       month: 'long',
       day: 'numeric',
