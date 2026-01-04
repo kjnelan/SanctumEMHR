@@ -29,6 +29,29 @@ function NoteTypeSelector({ onSelect, preselected = null, appointment = null }) 
       common: true
     },
     {
+      id: 'noshow',
+      label: 'No-Show',
+      description: 'Client did not attend',
+      icon: '❌',
+      common: true,
+      quick: true
+    },
+    {
+      id: 'cancel',
+      label: 'Cancellation',
+      description: 'Session cancelled',
+      icon: '🚫',
+      common: true,
+      quick: true
+    },
+    {
+      id: 'risk_assessment',
+      label: 'Risk Assessment',
+      description: 'Safety evaluation and risk screening',
+      icon: '🛡️',
+      common: false
+    },
+    {
       id: 'intake',
       label: 'Intake Assessment',
       description: 'First session with client',
@@ -62,22 +85,6 @@ function NoteTypeSelector({ onSelect, preselected = null, appointment = null }) 
       description: 'Non-clinical documentation',
       icon: '📋',
       common: false
-    },
-    {
-      id: 'noshow',
-      label: 'No-Show',
-      description: 'Client did not attend',
-      icon: '❌',
-      common: true,
-      quick: true
-    },
-    {
-      id: 'cancel',
-      label: 'Cancellation',
-      description: 'Session cancelled',
-      icon: '🚫',
-      common: true,
-      quick: true
     }
   ];
 
@@ -117,7 +124,7 @@ function NoteTypeSelector({ onSelect, preselected = null, appointment = null }) 
         <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
           Most Common
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {noteTypes.filter(t => t.common).map((noteType) => (
             <button
               key={noteType.id}
@@ -148,10 +155,10 @@ function NoteTypeSelector({ onSelect, preselected = null, appointment = null }) 
         </div>
       </div>
 
-      {/* Other note types (smaller buttons) */}
+      {/* Specialized note types */}
       <div>
         <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
-          Other Types
+          Specialized Documentation
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {noteTypes.filter(t => !t.common).map((noteType) => (

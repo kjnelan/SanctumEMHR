@@ -161,16 +161,16 @@ try {
 
     // If this note has addenda, fetch them
     $addendaSql = "SELECT
-        id,
-        note_uuid,
-        addendum_reason,
-        created_at,
-        updated_at,
+        n.id,
+        n.note_uuid,
+        n.addendum_reason,
+        n.created_at,
+        n.updated_at,
         CONCAT(u.fname, ' ', u.lname) AS provider_name
     FROM clinical_notes n
     LEFT JOIN users u ON u.id = n.provider_id
-    WHERE parent_note_id = ? AND is_addendum = 1
-    ORDER BY created_at DESC";
+    WHERE n.parent_note_id = ? AND n.is_addendum = 1
+    ORDER BY n.created_at DESC";
 
     $addendaResult = sqlStatement($addendaSql, [$note['id']]);
     $addenda = [];

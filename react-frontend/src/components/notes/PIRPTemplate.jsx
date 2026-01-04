@@ -1,7 +1,7 @@
 /**
  * Mindline EMHR
- * BIRPTemplate - BIRP format clinical note template
- * B - Behavior (what you observed)
+ * PIRPTemplate - PIRP format clinical note template
+ * P - Problem (presenting issue/chief complaint)
  * I - Intervention (what you did)
  * R - Response (how client responded)
  * P - Plan (what's next)
@@ -25,7 +25,7 @@ import { getTreatmentGoals } from '../../utils/api';
  * - patientId: number - Patient ID for fetching goals
  * - autoSave: function() - Trigger auto-save
  */
-function BIRPTemplate({ note, onChange, patientId, autoSave }) {
+function PIRPTemplate({ note, onChange, patientId, autoSave }) {
   const [goals, setGoals] = useState([]);
   const [loadingGoals, setLoadingGoals] = useState(true);
   const [riskPresent, setRiskPresent] = useState(note.riskPresent || false);
@@ -72,30 +72,30 @@ function BIRPTemplate({ note, onChange, patientId, autoSave }) {
 
   return (
     <div className="space-y-6">
-      {/* B - Behavior/Observations */}
+      {/* P - Problem/Presenting Issue */}
       <div className="card-main">
         <label className="block">
           <div className="flex items-center justify-between mb-2">
             <span className="font-semibold text-gray-800">
-              <span className="text-blue-600 mr-2">B</span>
-              Behavior / What You Observed
+              <span className="text-purple-600 mr-2">P</span>
+              Problem / Presenting Issue
             </span>
-            <span className="text-xs text-gray-500">Client presentation, affect, mood</span>
+            <span className="text-xs text-gray-500">Chief complaint, reason for session</span>
           </div>
           <textarea
             value={note.behaviorProblem || ''}
             onChange={(e) => handleChange('behaviorProblem', e.target.value)}
-            className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none bg-white shadow-sm"
+            className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none bg-white shadow-sm"
             rows="4"
-            placeholder="Example: Client presented as anxious with tearful affect. Reported difficulty sleeping and increased worry about work performance..."
+            placeholder="Example: Client reports increased anxiety related to work stress. Difficulty concentrating, racing thoughts, sleep disruption. Concerned about upcoming performance review..."
           />
         </label>
 
-        {/* Quick-select client presentation tags */}
+        {/* Quick-select problem tags */}
         <div className="mt-3">
           <div className="text-xs font-semibold text-gray-600 mb-2">Quick Tags (Optional)</div>
           <div className="flex flex-wrap gap-2">
-            {['Engaged', 'Tearful', 'Anxious', 'Flat affect', 'Guarded', 'Motivated', 'Resistant', 'Calm'].map((tag) => {
+            {['Anxiety', 'Depression', 'Stress', 'Trauma', 'Grief', 'Relationship Issues', 'Work Stress', 'Sleep Issues', 'Anger', 'Self-Esteem'].map((tag) => {
               const isSelected = (note.clientPresentation || []).includes(tag);
               return (
                 <button
@@ -110,7 +110,7 @@ function BIRPTemplate({ note, onChange, patientId, autoSave }) {
                   }}
                   className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                     isSelected
-                      ? 'bg-blue-500 text-white'
+                      ? 'bg-purple-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -127,14 +127,14 @@ function BIRPTemplate({ note, onChange, patientId, autoSave }) {
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <span className="font-semibold text-gray-800">
-              <span className="text-blue-600 mr-2">I</span>
+              <span className="text-purple-600 mr-2">I</span>
               Intervention / What You Did
             </span>
           </div>
           <textarea
             value={note.intervention || ''}
             onChange={(e) => handleChange('intervention', e.target.value)}
-            className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none bg-white shadow-sm"
+            className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none bg-white shadow-sm"
             rows="4"
             placeholder="Narrative description of interventions used... (or use checkboxes below for quick selection)"
           />
@@ -156,7 +156,7 @@ function BIRPTemplate({ note, onChange, patientId, autoSave }) {
         <label className="block">
           <div className="flex items-center justify-between mb-2">
             <span className="font-semibold text-gray-800">
-              <span className="text-blue-600 mr-2">R</span>
+              <span className="text-purple-600 mr-2">R</span>
               Response / How Client Responded
             </span>
             <span className="text-xs text-gray-500">Client's reaction to interventions</span>
@@ -164,9 +164,9 @@ function BIRPTemplate({ note, onChange, patientId, autoSave }) {
           <textarea
             value={note.response || ''}
             onChange={(e) => handleChange('response', e.target.value)}
-            className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none bg-white shadow-sm"
+            className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none bg-white shadow-sm"
             rows="4"
-            placeholder="Example: Client engaged well with cognitive restructuring. Reported feeling less overwhelmed after identifying automatic thoughts. Demonstrated understanding of homework assignment..."
+            placeholder="Example: Client reported feeling validated after reframing negative thoughts. Expressed willingness to practice relaxation techniques. Appeared more hopeful by end of session..."
           />
         </label>
       </div>
@@ -176,7 +176,7 @@ function BIRPTemplate({ note, onChange, patientId, autoSave }) {
         <label className="block mb-4">
           <div className="flex items-center justify-between mb-2">
             <span className="font-semibold text-gray-800">
-              <span className="text-blue-600 mr-2">P</span>
+              <span className="text-purple-600 mr-2">P</span>
               Plan / What's Next
             </span>
             <span className="text-xs text-gray-500">Homework, next steps, follow-up</span>
@@ -184,9 +184,9 @@ function BIRPTemplate({ note, onChange, patientId, autoSave }) {
           <textarea
             value={note.plan || ''}
             onChange={(e) => handleChange('plan', e.target.value)}
-            className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none bg-white shadow-sm"
+            className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none bg-white shadow-sm"
             rows="4"
-            placeholder="Example: Continue weekly sessions. Homework: Practice thought records daily. Will reassess anxiety levels next session. May refer to psychiatry if no improvement..."
+            placeholder="Example: Continue weekly sessions. Homework: Practice deep breathing 3x daily. Client will monitor anxiety levels in journal. Follow up on work situation next session..."
           />
         </label>
 
@@ -200,13 +200,13 @@ function BIRPTemplate({ note, onChange, patientId, autoSave }) {
               {goals.map((goal) => (
                 <label
                   key={goal.id}
-                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors"
+                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-purple-50 cursor-pointer transition-colors"
                 >
                   <input
                     type="checkbox"
                     checked={(note.goalsAddressed || []).includes(goal.id)}
                     onChange={() => handleGoalToggle(goal.id)}
-                    className="mt-0.5 w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    className="mt-0.5 w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
                   />
                   <div className="flex-1">
                     <div className="text-sm text-gray-800">{goal.goal_text}</div>
@@ -257,4 +257,4 @@ function BIRPTemplate({ note, onChange, patientId, autoSave }) {
   );
 }
 
-export default BIRPTemplate;
+export default PIRPTemplate;
