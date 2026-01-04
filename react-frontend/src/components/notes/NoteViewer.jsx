@@ -151,7 +151,7 @@ function NoteViewer({ noteId, onClose, onEdit, onAddendum }) {
           <>
             {/* Behavior */}
             {note.behavior_problem && (
-              <div className="card-inner">
+              <div className="card-main">
                 <h3 className="font-semibold text-gray-800 mb-3">
                   <span className="text-blue-600 mr-2">B</span>
                   Behavior / Observations
@@ -169,7 +169,7 @@ function NoteViewer({ noteId, onClose, onEdit, onAddendum }) {
 
             {/* Intervention */}
             {(note.intervention || (note.interventions_selected && note.interventions_selected.length > 0)) && (
-              <div className="card-inner">
+              <div className="card-main">
                 <h3 className="font-semibold text-gray-800 mb-3">
                   <span className="text-blue-600 mr-2">I</span>
                   Interventions Used
@@ -194,7 +194,7 @@ function NoteViewer({ noteId, onClose, onEdit, onAddendum }) {
 
             {/* Response */}
             {note.response && (
-              <div className="card-inner">
+              <div className="card-main">
                 <h3 className="font-semibold text-gray-800 mb-3">
                   <span className="text-blue-600 mr-2">R</span>
                   Client Response
@@ -205,7 +205,7 @@ function NoteViewer({ noteId, onClose, onEdit, onAddendum }) {
 
             {/* Plan */}
             {note.plan && (
-              <div className="card-inner">
+              <div className="card-main">
                 <h3 className="font-semibold text-gray-800 mb-3">
                   <span className="text-blue-600 mr-2">P</span>
                   Plan / Next Steps
@@ -218,7 +218,7 @@ function NoteViewer({ noteId, onClose, onEdit, onAddendum }) {
 
         {/* Risk Assessment */}
         {note.risk_present && note.risk_assessment && (
-          <div className="card-inner bg-orange-50 border-2 border-orange-200">
+          <div className="card-main bg-orange-50 border-2 border-orange-300">
             <h3 className="font-semibold text-orange-800 mb-3">
               ⚠️ Risk Assessment
             </h3>
@@ -228,13 +228,13 @@ function NoteViewer({ noteId, onClose, onEdit, onAddendum }) {
 
         {/* Addenda */}
         {note.addenda && note.addenda.length > 0 && (
-          <div className="card-inner bg-blue-50 border-2 border-blue-200">
+          <div className="card-main bg-blue-50 border-2 border-blue-300">
             <h3 className="font-semibold text-blue-800 mb-3">
               📎 Addenda ({note.addenda.length})
             </h3>
             <div className="space-y-3">
               {note.addenda.map((addendum, idx) => (
-                <div key={addendum.id} className="bg-white rounded-lg p-4">
+                <div key={addendum.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-blue-200">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-semibold text-gray-800">
                       Addendum {idx + 1}
@@ -254,7 +254,7 @@ function NoteViewer({ noteId, onClose, onEdit, onAddendum }) {
 
         {/* Signature Block */}
         {isLocked && (
-          <div className="card-inner bg-green-50 border-2 border-green-200">
+          <div className="card-main bg-green-50 border-2 border-green-300">
             <div className="flex items-center gap-3">
               <span className="text-2xl">✅</span>
               <div className="flex-1">
@@ -270,18 +270,18 @@ function NoteViewer({ noteId, onClose, onEdit, onAddendum }) {
 
       {/* Actions */}
       <div className="flex gap-3 mt-8 pt-6 border-t border-gray-200">
-        <button onClick={onClose} className="btn-secondary">
+        <button onClick={onClose} className="btn-action btn-cancel px-6">
           Close
         </button>
 
         {isDraft && onEdit && (
-          <button onClick={() => onEdit(note.id)} className="btn-primary">
+          <button onClick={() => onEdit(note.id)} className="btn-action btn-primary flex-1">
             Edit Draft
           </button>
         )}
 
         {isLocked && onAddendum && (
-          <button onClick={() => onAddendum(note.id)} className="btn-secondary">
+          <button onClick={() => onAddendum(note.id)} className="btn-action btn-secondary flex-1">
             Add Addendum
           </button>
         )}

@@ -125,7 +125,7 @@ function NotesList({ patientId, onNoteClick, onCreateNote }) {
     return (
       <div className="p-6 text-center">
         <div className="text-red-600 mb-4">Error loading notes: {error}</div>
-        <button onClick={loadNotes} className="btn-secondary">
+        <button onClick={loadNotes} className="btn-action btn-secondary">
           Retry
         </button>
       </div>
@@ -143,7 +143,7 @@ function NotesList({ patientId, onNoteClick, onCreateNote }) {
           </span>
         </h2>
         {onCreateNote && (
-          <button onClick={onCreateNote} className="btn-primary">
+          <button onClick={onCreateNote} className="btn-action btn-primary">
             + New Note
           </button>
         )}
