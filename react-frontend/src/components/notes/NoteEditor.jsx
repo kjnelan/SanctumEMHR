@@ -331,7 +331,7 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
       </div>
 
       {/* Actions */}
-      <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 p-6 -mx-6 -mb-6 rounded-b-3xl">
+      <div className="sticky bottom-0 bg-white/40 backdrop-blur-xl border-t border-white/50 p-6 -mx-6 -mb-6 rounded-b-3xl shadow-lg">
         <div className="flex gap-3 max-w-5xl mx-auto">
           <button
             type="button"

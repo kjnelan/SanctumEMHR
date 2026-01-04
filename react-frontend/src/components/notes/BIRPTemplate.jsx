@@ -85,7 +85,7 @@ function BIRPTemplate({ note, onChange, patientId, autoSave }) {
           <textarea
             value={note.behaviorProblem || ''}
             onChange={(e) => handleChange('behaviorProblem', e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none bg-white shadow-sm"
             rows="4"
             placeholder="Example: Client presented as anxious with tearful affect. Reported difficulty sleeping and increased worry about work performance..."
           />
@@ -134,7 +134,7 @@ function BIRPTemplate({ note, onChange, patientId, autoSave }) {
           <textarea
             value={note.intervention || ''}
             onChange={(e) => handleChange('intervention', e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none bg-white shadow-sm"
             rows="4"
             placeholder="Narrative description of interventions used... (or use checkboxes below for quick selection)"
           />
@@ -164,7 +164,7 @@ function BIRPTemplate({ note, onChange, patientId, autoSave }) {
           <textarea
             value={note.response || ''}
             onChange={(e) => handleChange('response', e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none bg-white shadow-sm"
             rows="4"
             placeholder="Example: Client engaged well with cognitive restructuring. Reported feeling less overwhelmed after identifying automatic thoughts. Demonstrated understanding of homework assignment..."
           />
@@ -184,7 +184,7 @@ function BIRPTemplate({ note, onChange, patientId, autoSave }) {
           <textarea
             value={note.plan || ''}
             onChange={(e) => handleChange('plan', e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none bg-white shadow-sm"
             rows="4"
             placeholder="Example: Continue weekly sessions. Homework: Practice thought records daily. Will reassess anxiety levels next session. May refer to psychiatry if no improvement..."
           />
@@ -244,7 +244,7 @@ function BIRPTemplate({ note, onChange, patientId, autoSave }) {
               <textarea
                 value={note.riskAssessment || ''}
                 onChange={(e) => handleChange('riskAssessment', e.target.value)}
-                className="w-full px-4 py-3 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none bg-white"
+                className="w-full px-4 py-3 border-2 border-orange-400 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none bg-white shadow-sm"
                 rows="5"
                 placeholder="Document risk factors, protective factors, safety plan, level of risk, interventions used, follow-up plan..."
                 required={riskPresent}
