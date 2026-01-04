@@ -52,11 +52,17 @@ const getNoteTemplateType = (noteType) => {
  * - onSave: function - Callback after save
  */
 function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, onClose, onSave }) {
+  const mappedTemplateType = getNoteTemplateType(noteType);
+
+  // Debug logging
+  console.log('NoteEditor - noteType:', noteType);
+  console.log('NoteEditor - mappedTemplateType:', mappedTemplateType);
+
   const [note, setNote] = useState({
     patientId,
     appointmentId,
     noteType,
-    templateType: getNoteTemplateType(noteType),
+    templateType: mappedTemplateType,
     serviceDate: new Date().toISOString().split('T')[0],
     behaviorProblem: '',
     intervention: '',
@@ -339,6 +345,11 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
           {error}
         </div>
       )}
+
+      {/* DEBUG INFO - TEMPORARY */}
+      <div className="mb-4 p-3 bg-yellow-100 border-2 border-yellow-400 rounded-lg text-sm">
+        <strong>DEBUG:</strong> noteType = "{noteType}" | templateType = "{note.templateType}"
+      </div>
 
       {/* Template */}
       <div className="mb-6">
