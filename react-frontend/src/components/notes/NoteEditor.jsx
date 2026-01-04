@@ -128,8 +128,14 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
         try {
           const draftData = await getDraft(draftParams);
           if (draftData.draft) {
-            setNote({ ...note, ...draftData.draft.draft_content });
-            console.log('Restored draft from server');
+            const draftContent = draftData.draft.draft_content;
+            // Only restore if note type matches
+            if (draftContent.noteType === noteType) {
+              setNote({ ...note, ...draftContent });
+              console.log('Restored draft from server');
+            } else {
+              console.log('Server draft note type mismatch, skipping restore. Expected:', noteType, 'Got:', draftContent.noteType);
+            }
           }
         } catch (err) {
           // No draft found - that's okay
