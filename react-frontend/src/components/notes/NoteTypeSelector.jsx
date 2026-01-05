@@ -22,6 +22,13 @@ import React from 'react';
 function NoteTypeSelector({ onSelect, preselected = null, appointment = null }) {
   const noteTypes = [
     {
+      id: 'diagnosis',
+      label: 'Diagnosis Note',
+      description: 'ICD-10 diagnosis assessment and documentation',
+      icon: '🏥',
+      common: true
+    },
+    {
       id: 'progress',
       label: 'Progress Note',
       description: 'Regular therapy session',
@@ -56,13 +63,6 @@ function NoteTypeSelector({ onSelect, preselected = null, appointment = null }) 
       label: 'Intake Assessment',
       description: 'First session with client',
       icon: '👋',
-      common: false
-    },
-    {
-      id: 'diagnosis',
-      label: 'Diagnosis Note',
-      description: 'ICD-10 diagnosis assessment and documentation',
-      icon: '🏥',
       common: false
     },
     {

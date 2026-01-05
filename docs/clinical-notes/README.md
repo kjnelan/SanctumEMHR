@@ -1,8 +1,8 @@
 # Clinical Notes System - Implementation Guide
 
 **Mindline EMHR - Phase 4**
-**Status**: 🟡 In Progress (Core Complete, Enhancements Needed)
-**Last Updated**: 2026-01-04
+**Status**: 🟢 Phase 4B Complete (Diagnosis Note System Operational)
+**Last Updated**: 2026-01-05
 
 ---
 
@@ -51,12 +51,13 @@ The Clinical Notes system is designed to be **trauma-informed**, **minimal-burde
 
 1. **Progress Notes** (BIRP/PIRP)
 2. **Intake Assessment** / Diagnostic Evaluation
-3. **Mental Status Exam** (MSE)
-4. **Crisis Notes**
-5. **Discharge Summary**
-6. **Risk Assessment**
-7. **Administrative Notes** (cancel, no-show, coordination)
-8. **Treatment Plan Updates** ⏳ *Not yet implemented*
+3. **Diagnosis Note** - ICD-10 diagnosis documentation ✅ **NEW in Phase 4B**
+4. **Mental Status Exam** (MSE)
+5. **Crisis Notes**
+6. **Discharge Summary**
+7. **Risk Assessment**
+8. **Administrative Notes** (cancel, no-show, coordination)
+9. **Treatment Plan Updates** ⏳ *Not yet implemented*
 
 ### Workflow Requirements
 
@@ -84,11 +85,12 @@ The Clinical Notes system is designed to be **trauma-informed**, **minimal-burde
 - ✅ **Note type to template mapping** - Automatic routing to correct template
 - ✅ **Quick notes bypass** - No-show/cancel use minimal QuickNoteForm
 
-#### Templates Built (8 Total)
+#### Templates Built (9 Total)
 - ✅ **BIRPTemplate** - Behavior, Intervention, Response, Plan (blue accent)
 - ✅ **PIRPTemplate** - Problem, Intervention, Response, Plan (purple accent)
 - ✅ **MSETemplate** - Mental Status Exam with 9 domains (teal accent)
 - ✅ **IntakeTemplate** - Comprehensive first-session evaluation (indigo accent)
+- ✅ **DiagnosisTemplate** - ICD-10 diagnosis assessment and documentation (purple accent) **NEW in Phase 4B**
 - ✅ **DischargeTemplate** - Treatment conclusion documentation (emerald accent)
 - ✅ **CrisisTemplate** - Emergency intervention with required risk assessment (red accent)
 - ✅ **RiskAssessmentTemplate** - Standalone safety evaluation (orange accent)
