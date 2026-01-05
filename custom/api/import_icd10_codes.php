@@ -146,12 +146,24 @@ try {
             continue;
         }
 
-        // Parse tab-delimited line
+        // Parse delimited line (tabs or multiple spaces)
         // Format: ORDER \t CODE \t VALID \t SHORT_DESC \t LONG_DESC
+        // Try tab-delimited first
         $parts = explode("\t", $line);
 
+        // If tab split didn't work (only 1 part), try space-delimited
         if (count($parts) < 3) {
-            error_log("ICD-10 Import: Skipping malformed line " . ($lineNum + 1));
+            // Split on multiple spaces (2+)
+            $parts = preg_split('/\s{2,}/', $line);
+        }
+
+        // If still not enough parts, try single space
+        if (count($parts) < 3) {
+            $parts = preg_split('/\s+/', $line, 5); // Max 5 parts
+        }
+
+        if (count($parts) < 3) {
+            error_log("ICD-10 Import: Skipping malformed line " . ($lineNum + 1) . " - only " . count($parts) . " parts");
             $skipped++;
             continue;
         }
