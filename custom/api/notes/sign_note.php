@@ -49,7 +49,7 @@ function syncDiagnosesToProblemList($noteId, $userId) {
             return ['synced' => false, 'count' => 0];
         }
 
-        // Parse diagnosis codes
+        // Parse diagnosis codes from the new note
         $diagnosisCodes = json_decode($note['diagnosis_codes'], true);
         if (empty($diagnosisCodes)) {
             return ['synced' => false, 'count' => 0];
@@ -65,56 +65,97 @@ function syncDiagnosesToProblemList($noteId, $userId) {
         $serviceDate = $note['service_date'];
         $syncCount = 0;
 
+        // Build list of codes from the new note (with periods for comparison)
+        $newCodes = [];
         foreach ($diagnosisCodes as $diagItem) {
             $code = $diagItem['code'] ?? '';
+            if (!empty($code)) {
+                // Format code with period (F411 → F41.1)
+                $formattedCode = strlen($code) >= 4 ? substr($code, 0, 3) . '.' . substr($code, 3) : $code;
+                $newCodes[$formattedCode] = $diagItem;
+            }
+        }
+
+        // Get all currently ACTIVE diagnoses for this patient
+        $activeSql = "SELECT id, diagnosis, title FROM lists
+                      WHERE pid = ? AND type = 'medical_problem' AND activity = 1
+                      ORDER BY begdate DESC";
+        $activeResult = sqlStatement($activeSql, [$patientId]);
+        $activeDiagnoses = [];
+        while ($row = sqlFetchArray($activeResult)) {
+            $activeDiagnoses[$row['diagnosis']] = $row;
+        }
+
+        // STEP 1: Process codes from the new note
+        foreach ($newCodes as $formattedCode => $diagItem) {
             $description = $diagItem['description'] ?? '';
             $isPrimary = $diagItem['isPrimary'] ?? false;
 
-            if (empty($code)) continue;
-
-            // Format code with period for display (F411 → F41.1)
-            $formattedCode = strlen($code) >= 4 ? substr($code, 0, 3) . '.' . substr($code, 3) : $code;
-
-            // Check if this diagnosis already exists for this patient
-            $checkSql = "SELECT id, activity, enddate FROM lists
-                        WHERE pid = ? AND type = 'medical_problem' AND diagnosis = ?
-                        ORDER BY date DESC LIMIT 1";
-            $checkResult = sqlStatement($checkSql, [$patientId, $formattedCode]);
-            $existing = sqlFetchArray($checkResult);
-
-            if ($existing) {
-                // Update existing diagnosis - reactivate if inactive
+            if (isset($activeDiagnoses[$formattedCode])) {
+                // Already active - just update comments
                 $updateSql = "UPDATE lists SET
-                    activity = 1,
-                    enddate = NULL,
                     modifydate = NOW(),
-                    comments = CONCAT(COALESCE(comments, ''), '\nUpdated from diagnosis note #', ?)
+                    comments = CONCAT(COALESCE(comments, ''), '\nConfirmed in diagnosis note #', ?)
                     WHERE id = ?";
-                sqlStatement($updateSql, [$noteId, $existing['id']]);
-                error_log("Reactivated existing diagnosis: {$formattedCode} for patient {$patientId}");
+                sqlStatement($updateSql, [$noteId, $activeDiagnoses[$formattedCode]['id']]);
+                error_log("Kept active diagnosis: {$formattedCode} for patient {$patientId}");
             } else {
-                // Create new diagnosis entry
-                $insertSql = "INSERT INTO lists (
-                    date, type, title, diagnosis, begdate,
-                    activity, pid, user, comments
-                ) VALUES (NOW(), 'medical_problem', ?, ?, ?, 1, ?, ?, ?)";
+                // Not currently active - check if it existed before (inactive)
+                $checkSql = "SELECT id, activity, enddate FROM lists
+                            WHERE pid = ? AND type = 'medical_problem' AND diagnosis = ?
+                            ORDER BY date DESC LIMIT 1";
+                $checkResult = sqlStatement($checkSql, [$patientId, $formattedCode]);
+                $existing = sqlFetchArray($checkResult);
 
-                $title = $description ?: "Diagnosis: {$formattedCode}";
-                $comments = "Created from diagnosis note #{$noteId}" . ($isPrimary ? " (Primary Diagnosis)" : "");
+                if ($existing) {
+                    // Reactivate previously inactive diagnosis
+                    $updateSql = "UPDATE lists SET
+                        activity = 1,
+                        enddate = NULL,
+                        modifydate = NOW(),
+                        comments = CONCAT(COALESCE(comments, ''), '\nReactivated in diagnosis note #', ?)
+                        WHERE id = ?";
+                    sqlStatement($updateSql, [$noteId, $existing['id']]);
+                    error_log("Reactivated diagnosis: {$formattedCode} for patient {$patientId}");
+                } else {
+                    // Create brand new diagnosis
+                    $insertSql = "INSERT INTO lists (
+                        date, type, title, diagnosis, begdate,
+                        activity, pid, user, comments
+                    ) VALUES (NOW(), 'medical_problem', ?, ?, ?, 1, ?, ?, ?)";
 
-                sqlStatement($insertSql, [
-                    $title,
-                    $formattedCode,
-                    $serviceDate,
-                    $patientId,
-                    $username,
-                    $comments
-                ]);
+                    $title = $description ?: "Diagnosis: {$formattedCode}";
+                    $comments = "Created from diagnosis note #{$noteId}" . ($isPrimary ? " (Primary Diagnosis)" : "");
 
-                error_log("Created new diagnosis: {$formattedCode} for patient {$patientId}");
+                    sqlStatement($insertSql, [
+                        $title,
+                        $formattedCode,
+                        $serviceDate,
+                        $patientId,
+                        $username,
+                        $comments
+                    ]);
+
+                    error_log("Created new diagnosis: {$formattedCode} for patient {$patientId}");
+                }
             }
 
             $syncCount++;
+        }
+
+        // STEP 2: Retire diagnoses that are active but NOT in the new note
+        foreach ($activeDiagnoses as $diagCode => $diagData) {
+            if (!isset($newCodes[$diagCode])) {
+                // This diagnosis was active but is no longer in the new note - retire it
+                $retireSql = "UPDATE lists SET
+                    activity = 0,
+                    enddate = ?,
+                    modifydate = NOW(),
+                    comments = CONCAT(COALESCE(comments, ''), '\nRetired by diagnosis note #', ?)
+                    WHERE id = ?";
+                sqlStatement($retireSql, [$serviceDate, $noteId, $diagData['id']]);
+                error_log("Retired diagnosis: {$diagCode} for patient {$patientId} (no longer in diagnosis note)");
+            }
         }
 
         return ['synced' => true, 'count' => $syncCount];
