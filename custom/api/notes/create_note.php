@@ -208,14 +208,20 @@ try {
 
     // Execute INSERT
     sqlStatement($sql, $params);
-    $noteId = $GLOBALS['adodb']['db']->Insert_ID();
 
-    if (!$noteId || $noteId == 0) {
-        error_log("ERROR: Failed to get note ID after insert");
-        throw new Exception("Failed to create note - no ID returned");
+    // CRITICAL FIX: Don't use Insert_ID() - it returns auto_increment value which may be wrong
+    // Instead, query for the note we just created using the UUID (which is unique)
+    $noteId = $GLOBALS['adodb']['db']->GetOne(
+        "SELECT id FROM clinical_notes WHERE note_uuid = ?",
+        [$noteUuid]
+    );
+
+    if (!$noteId) {
+        error_log("ERROR: Failed to retrieve note ID after insert (UUID: $noteUuid)");
+        throw new Exception("Failed to create note - could not retrieve ID");
     }
 
-    error_log("Clinical note created successfully - ID: $noteId, Type: $templateType, Patient: $patientId");
+    error_log("Clinical note created successfully - ID: $noteId, UUID: $noteUuid, Type: $templateType, Patient: $patientId");
 
     // If this note is linked to an appointment, update the appointment's clinical_note_id
     if ($appointmentId) {
