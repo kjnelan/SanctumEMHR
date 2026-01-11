@@ -112,7 +112,16 @@ try {
         'riskAssessment' => 'risk_assessment',
         'presentingConcerns' => 'presenting_concerns',
         'clinicalObservations' => 'clinical_observations',
-        'mentalStatusExam' => 'mental_status_exam'
+        'mentalStatusExam' => 'mental_status_exam',
+        // Diagnosis note fields (Phase 4B) - using snake_case to match frontend
+        'symptoms_reported' => 'symptoms_reported',
+        'symptoms_observed' => 'symptoms_observed',
+        'clinical_justification' => 'clinical_justification',
+        'differential_diagnosis' => 'differential_diagnosis',
+        'severity_specifiers' => 'severity_specifiers',
+        'functional_impairment' => 'functional_impairment',
+        'duration_of_symptoms' => 'duration_of_symptoms',
+        'previous_diagnoses' => 'previous_diagnoses'
     ];
 
     foreach ($updatableFields as $inputKey => $dbField) {

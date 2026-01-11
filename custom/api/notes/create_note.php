@@ -110,6 +110,16 @@ try {
     $clinicalObservations = $input['clinicalObservations'] ?? null;
     $mentalStatusExam = $input['mentalStatusExam'] ?? null;
 
+    // Diagnosis note fields (Phase 4B)
+    $symptomsReported = $input['symptoms_reported'] ?? null;
+    $symptomsObserved = $input['symptoms_observed'] ?? null;
+    $clinicalJustification = $input['clinical_justification'] ?? null;
+    $differentialDiagnosis = $input['differential_diagnosis'] ?? null;
+    $severitySpecifiers = $input['severity_specifiers'] ?? null;
+    $functionalImpairment = $input['functional_impairment'] ?? null;
+    $durationOfSymptoms = $input['duration_of_symptoms'] ?? null;
+    $previousDiagnoses = $input['previous_diagnoses'] ?? null;
+
     // Supervision
     $supervisorReviewRequired = isset($input['supervisorReviewRequired']) ? boolval($input['supervisorReviewRequired']) : false;
 
@@ -148,10 +158,18 @@ try {
         presenting_concerns,
         clinical_observations,
         mental_status_exam,
+        symptoms_reported,
+        symptoms_observed,
+        clinical_justification,
+        differential_diagnosis,
+        severity_specifiers,
+        functional_impairment,
+        duration_of_symptoms,
+        previous_diagnoses,
         supervisor_review_required,
         status,
         last_autosave_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', NOW())";
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', NOW())";
 
     $params = [
         $noteUuid,
@@ -177,6 +195,14 @@ try {
         $presentingConcerns,
         $clinicalObservations,
         $mentalStatusExam,
+        $symptomsReported,
+        $symptomsObserved,
+        $clinicalJustification,
+        $differentialDiagnosis,
+        $severitySpecifiers,
+        $functionalImpairment,
+        $durationOfSymptoms,
+        $previousDiagnoses,
         $supervisorReviewRequired
     ];
 
