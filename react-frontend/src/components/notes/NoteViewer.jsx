@@ -110,6 +110,7 @@ function NoteViewer({ noteId, onClose, onEdit, onAddendum }) {
             {note.note_type === 'crisis' && '⚠️ Crisis Note'}
             {note.note_type === 'discharge' && '✅ Discharge Summary'}
             {note.note_type === 'mse' && '🧠 Mental Status Exam'}
+            {note.note_type === 'diagnosis' && '🏥 Diagnosis Note'}
             {note.note_type === 'admin' && '📋 Administrative Note'}
           </h1>
 
@@ -148,6 +149,123 @@ function NoteViewer({ noteId, onClose, onEdit, onAddendum }) {
 
       {/* Note Content */}
       <div className="space-y-6">
+        {/* Diagnosis Template Display */}
+        {note.template_type === 'Diagnosis' && (
+          <>
+            {/* ICD-10 Codes */}
+            {note.diagnosis_codes && note.diagnosis_codes.length > 0 && (
+              <div className="card-main">
+                <h3 className="font-semibold text-gray-800 mb-3">
+                  🏥 ICD-10 Diagnosis Codes
+                </h3>
+                <div className="space-y-2">
+                  {note.diagnosis_codes.map((item, idx) => {
+                    const code = item.code || item;
+                    const description = item.description || '';
+                    const isPrimary = item.isPrimary || false;
+                    const isBillable = item.billable || false;
+                    const severity = item.severity || null;
+
+                    // Format code with period (F411 → F41.1)
+                    const formattedCode = code.length >= 4 ? code.slice(0, 3) + '.' + code.slice(3) : code;
+
+                    return (
+                      <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <div className="flex-1">
+                          <div className="font-semibold text-gray-900">
+                            {formattedCode} {description && `- ${description}`}
+                          </div>
+                          <div className="flex gap-2 mt-1">
+                            {isPrimary && (
+                              <span className="badge-sm badge-light-primary">Primary</span>
+                            )}
+                            {isBillable && (
+                              <span className="badge-sm badge-light-success">Billable</span>
+                            )}
+                            {severity && (
+                              <span className="badge-sm badge-light-warning">{severity}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Clinical Assessment */}
+            {(note.symptoms_reported || note.symptoms_observed || note.duration_of_symptoms) && (
+              <div className="card-main">
+                <h3 className="font-semibold text-gray-800 mb-4">Clinical Assessment</h3>
+                <div className="space-y-4">
+                  {note.symptoms_reported && (
+                    <div>
+                      <div className="text-sm font-semibold text-gray-600 mb-1">Symptoms Reported by Client</div>
+                      <div className="text-gray-700 whitespace-pre-wrap">{note.symptoms_reported}</div>
+                    </div>
+                  )}
+                  {note.symptoms_observed && (
+                    <div>
+                      <div className="text-sm font-semibold text-gray-600 mb-1">Symptoms Observed by Clinician</div>
+                      <div className="text-gray-700 whitespace-pre-wrap">{note.symptoms_observed}</div>
+                    </div>
+                  )}
+                  {note.duration_of_symptoms && (
+                    <div>
+                      <div className="text-sm font-semibold text-gray-600 mb-1">Duration of Symptoms</div>
+                      <div className="text-gray-700 whitespace-pre-wrap">{note.duration_of_symptoms}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Diagnostic Reasoning */}
+            {(note.clinical_justification || note.differential_diagnosis || note.severity_specifiers) && (
+              <div className="card-main">
+                <h3 className="font-semibold text-gray-800 mb-4">Diagnostic Reasoning</h3>
+                <div className="space-y-4">
+                  {note.clinical_justification && (
+                    <div>
+                      <div className="text-sm font-semibold text-gray-600 mb-1">Clinical Justification</div>
+                      <div className="text-gray-700 whitespace-pre-wrap">{note.clinical_justification}</div>
+                    </div>
+                  )}
+                  {note.differential_diagnosis && (
+                    <div>
+                      <div className="text-sm font-semibold text-gray-600 mb-1">Differential Diagnosis</div>
+                      <div className="text-gray-700 whitespace-pre-wrap">{note.differential_diagnosis}</div>
+                    </div>
+                  )}
+                  {note.severity_specifiers && (
+                    <div>
+                      <div className="text-sm font-semibold text-gray-600 mb-1">Severity Specifiers</div>
+                      <div className="text-gray-700 whitespace-pre-wrap">{note.severity_specifiers}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Functional Impact */}
+            {note.functional_impairment && (
+              <div className="card-main">
+                <h3 className="font-semibold text-gray-800 mb-3">Functional Impairment</h3>
+                <div className="text-gray-700 whitespace-pre-wrap">{note.functional_impairment}</div>
+              </div>
+            )}
+
+            {/* Diagnosis History */}
+            {note.previous_diagnoses && (
+              <div className="card-main">
+                <h3 className="font-semibold text-gray-800 mb-3">Previous Diagnoses</h3>
+                <div className="text-gray-700 whitespace-pre-wrap">{note.previous_diagnoses}</div>
+              </div>
+            )}
+          </>
+        )}
+
         {/* BIRP Template Display */}
         {note.template_type === 'BIRP' && (
           <>
