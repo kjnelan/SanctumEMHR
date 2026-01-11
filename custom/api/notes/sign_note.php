@@ -28,6 +28,103 @@ ob_end_clean();
 // Enable error logging
 error_log("Sign note API called - Session ID: " . session_id());
 
+/**
+ * Sync diagnosis codes from a diagnosis note to the patient's problem list
+ *
+ * @param int $noteId - Clinical note ID
+ * @param int $userId - User ID performing the sync
+ * @return array - ['synced' => bool, 'count' => int]
+ */
+function syncDiagnosesToProblemList($noteId, $userId) {
+    try {
+        // Get the note details
+        $noteSql = "SELECT patient_id, note_type, diagnosis_codes, service_date
+                    FROM clinical_notes
+                    WHERE id = ?";
+        $noteResult = sqlStatement($noteSql, [$noteId]);
+        $note = sqlFetchArray($noteResult);
+
+        // Only sync diagnosis notes
+        if (!$note || $note['note_type'] !== 'diagnosis') {
+            return ['synced' => false, 'count' => 0];
+        }
+
+        // Parse diagnosis codes
+        $diagnosisCodes = json_decode($note['diagnosis_codes'], true);
+        if (empty($diagnosisCodes)) {
+            return ['synced' => false, 'count' => 0];
+        }
+
+        // Get username for the user field
+        $userSql = "SELECT username FROM users WHERE id = ?";
+        $userResult = sqlStatement($userSql, [$userId]);
+        $userRow = sqlFetchArray($userResult);
+        $username = $userRow['username'] ?? 'unknown';
+
+        $patientId = intval($note['patient_id']);
+        $serviceDate = $note['service_date'];
+        $syncCount = 0;
+
+        foreach ($diagnosisCodes as $diagItem) {
+            $code = $diagItem['code'] ?? '';
+            $description = $diagItem['description'] ?? '';
+            $isPrimary = $diagItem['isPrimary'] ?? false;
+
+            if (empty($code)) continue;
+
+            // Format code with period for display (F411 → F41.1)
+            $formattedCode = strlen($code) >= 4 ? substr($code, 0, 3) . '.' . substr($code, 3) : $code;
+
+            // Check if this diagnosis already exists for this patient
+            $checkSql = "SELECT id, activity, enddate FROM lists
+                        WHERE pid = ? AND type = 'medical_problem' AND diagnosis = ?
+                        ORDER BY date DESC LIMIT 1";
+            $checkResult = sqlStatement($checkSql, [$patientId, $formattedCode]);
+            $existing = sqlFetchArray($checkResult);
+
+            if ($existing) {
+                // Update existing diagnosis - reactivate if inactive
+                $updateSql = "UPDATE lists SET
+                    activity = 1,
+                    enddate = NULL,
+                    modifydate = NOW(),
+                    comments = CONCAT(COALESCE(comments, ''), '\nUpdated from diagnosis note #', ?)
+                    WHERE id = ?";
+                sqlStatement($updateSql, [$noteId, $existing['id']]);
+                error_log("Reactivated existing diagnosis: {$formattedCode} for patient {$patientId}");
+            } else {
+                // Create new diagnosis entry
+                $insertSql = "INSERT INTO lists (
+                    date, type, title, diagnosis, begdate,
+                    activity, pid, user, comments
+                ) VALUES (NOW(), 'medical_problem', ?, ?, ?, 1, ?, ?, ?)";
+
+                $title = $description ?: "Diagnosis: {$formattedCode}";
+                $comments = "Created from diagnosis note #{$noteId}" . ($isPrimary ? " (Primary Diagnosis)" : "");
+
+                sqlStatement($insertSql, [
+                    $title,
+                    $formattedCode,
+                    $serviceDate,
+                    $patientId,
+                    $username,
+                    $comments
+                ]);
+
+                error_log("Created new diagnosis: {$formattedCode} for patient {$patientId}");
+            }
+
+            $syncCount++;
+        }
+
+        return ['synced' => true, 'count' => $syncCount];
+
+    } catch (Exception $e) {
+        error_log("Error syncing diagnoses to problem list: " . $e->getMessage());
+        return ['synced' => false, 'count' => 0];
+    }
+}
+
 // Set JSON header
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -125,11 +222,19 @@ try {
 
     error_log("Note signed and locked successfully: ID " . $noteId);
 
+    // If this is a diagnosis note, sync diagnoses to problem list
+    $syncResult = syncDiagnosesToProblemList($noteId, $userId);
+    if ($syncResult['synced']) {
+        error_log("Synced {$syncResult['count']} diagnosis codes to problem list");
+    }
+
     $response = [
         'success' => true,
         'noteId' => $noteId,
         'message' => 'Note signed and locked successfully',
-        'signedAt' => date('Y-m-d H:i:s')
+        'signedAt' => date('Y-m-d H:i:s'),
+        'diagnosisSynced' => $syncResult['synced'],
+        'diagnosisCount' => $syncResult['count']
     ];
 
     http_response_code(200);
