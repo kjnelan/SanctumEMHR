@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Diagnosis Note Drafts</title>
+</head>
+<body>
+    <h1>Clear Diagnosis Note Drafts from localStorage</h1>
+    <button onclick="clearDrafts()">Clear All Drafts</button>
+    <pre id="output"></pre>
+
+    <script>
+        function clearDrafts() {
+            const output = document.getElementById('output');
+            let cleared = [];
+            let keys = Object.keys(localStorage);
+
+            keys.forEach(key => {
+                if (key.includes('note_draft') || key.includes('diagnosis')) {
+                    output.textContent += `Clearing: ${key}\n`;
+                    output.textContent += `Value: ${localStorage.getItem(key).substring(0, 100)}...\n\n`;
+                    localStorage.removeItem(key);
+                    cleared.push(key);
+                }
+            });
+
+            if (cleared.length === 0) {
+                output.textContent += 'No drafts found.\n';
+            } else {
+                output.textContent += `\n✅ Cleared ${cleared.length} items from localStorage.\n`;
+                output.textContent += '\nNow refresh the main app and try creating a new diagnosis note.';
+            }
+        }
+
+        // Auto-display what's currently stored
+        window.addEventListener('load', () => {
+            const output = document.getElementById('output');
+            output.textContent = '=== Current localStorage entries ===\n\n';
+            let keys = Object.keys(localStorage);
+            keys.forEach(key => {
+                if (key.includes('note_draft') || key.includes('diagnosis')) {
+                    output.textContent += `Key: ${key}\n`;
+                    let value = localStorage.getItem(key);
+                    output.textContent += `Value (first 200 chars): ${value.substring(0, 200)}\n\n`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

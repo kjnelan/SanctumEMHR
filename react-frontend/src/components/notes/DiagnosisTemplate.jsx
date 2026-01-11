@@ -38,17 +38,20 @@ function DiagnosisTemplate({ note, onChange, disabled = false }) {
 
   // Parse diagnosis_codes from JSON string (handle empty strings safely)
   let diagnosisCodes = [];
-  if (note.diagnosis_codes && note.diagnosis_codes !== '') {
-    if (typeof note.diagnosis_codes === 'string') {
-      try {
-        diagnosisCodes = JSON.parse(note.diagnosis_codes);
-      } catch (e) {
-        console.error('Failed to parse diagnosis_codes:', e);
-        diagnosisCodes = [];
+  try {
+    if (note.diagnosis_codes) {
+      if (typeof note.diagnosis_codes === 'string') {
+        const trimmed = note.diagnosis_codes.trim();
+        if (trimmed.length > 0) {
+          diagnosisCodes = JSON.parse(trimmed);
+        }
+      } else if (Array.isArray(note.diagnosis_codes)) {
+        diagnosisCodes = note.diagnosis_codes;
       }
-    } else {
-      diagnosisCodes = note.diagnosis_codes;
     }
+  } catch (e) {
+    console.error('Failed to parse diagnosis_codes, using empty array:', e, note.diagnosis_codes);
+    diagnosisCodes = [];
   }
 
   return (
