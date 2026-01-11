@@ -18,6 +18,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { searchCodes } from '../../utils/api';
 
 const SEVERITY_OPTIONS = [
@@ -29,6 +30,20 @@ const SEVERITY_OPTIONS = [
   'With psychotic features',
   'Unspecified'
 ];
+
+/**
+ * Format ICD-10 code with period for display
+ * F411 → F41.1
+ * F4110 → F41.10
+ * Z91411 → Z91.411
+ */
+const formatCode = (code) => {
+  if (!code || code.length < 4) return code;
+
+  // ICD-10 format: Insert period after 3rd character
+  // Examples: F41.1, F33.1, Z63.0, F41.10
+  return code.slice(0, 3) + '.' + code.slice(3);
+};
 
 function ICD10Picker({
   selectedCodes = [],
@@ -44,8 +59,10 @@ function ICD10Picker({
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [error, setError] = useState(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const searchTimeoutRef = useRef(null);
   const dropdownRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   // Handle search with debounce
   useEffect(() => {
@@ -82,6 +99,18 @@ function ICD10Picker({
       }
     };
   }, [searchTerm]);
+
+  // Update dropdown position when it opens
+  useEffect(() => {
+    if (showDropdown && searchInputRef.current) {
+      const rect = searchInputRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  }, [showDropdown]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -176,10 +205,50 @@ function ICD10Picker({
 
   const billableCount = selectedCodes.filter(c => c.billable).length;
 
+  // Render dropdown using portal
+  const renderDropdown = () => {
+    if (!showDropdown) return null;
+
+    const dropdownContent = (
+      <div
+        ref={dropdownRef}
+        style={{
+          position: 'absolute',
+          top: `${dropdownPosition.top}px`,
+          left: `${dropdownPosition.left}px`,
+          width: `${dropdownPosition.width}px`,
+          zIndex: 9999
+        }}
+        className="mt-2 bg-white border-2 border-gray-200 rounded-lg shadow-xl max-h-96 overflow-y-auto"
+      >
+        {searchResults.length > 0 ? (
+          searchResults.map((result, index) => (
+            <button
+              key={index}
+              onClick={() => addCode(result)}
+              className="w-full px-4 py-3 text-left hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-colors"
+            >
+              <div className="font-semibold text-gray-900">{formatCode(result.code)}</div>
+              <div className="text-sm text-gray-600 mt-1">{result.description}</div>
+            </button>
+          ))
+        ) : (
+          !isSearching && searchTerm.length >= 2 && (
+            <div className="p-4 text-center text-gray-500">
+              No codes found matching "{searchTerm}"
+            </div>
+          )
+        )}
+      </div>
+    );
+
+    return ReactDOM.createPortal(dropdownContent, document.body);
+  };
+
   return (
     <div className="space-y-4">
       {/* Search Input */}
-      <div className="relative" ref={dropdownRef}>
+      <div className="relative">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Search ICD-10 Codes
           <span className="ml-2 text-xs text-gray-500">
@@ -189,6 +258,7 @@ function ICD10Picker({
 
         <div className="relative">
           <input
+            ref={searchInputRef}
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -203,29 +273,10 @@ function ICD10Picker({
             </div>
           )}
         </div>
-
-        {/* Search Results Dropdown */}
-        {showDropdown && searchResults.length > 0 && (
-          <div className="absolute z-50 w-full mt-2 bg-white border-2 border-gray-200 rounded-lg shadow-xl max-h-96 overflow-y-auto">
-            {searchResults.map((result, index) => (
-              <button
-                key={index}
-                onClick={() => addCode(result)}
-                className="w-full px-4 py-3 text-left hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-colors"
-              >
-                <div className="font-semibold text-gray-900">{result.code}</div>
-                <div className="text-sm text-gray-600 mt-1">{result.description}</div>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {showDropdown && searchResults.length === 0 && !isSearching && searchTerm.length >= 2 && (
-          <div className="absolute z-50 w-full mt-2 bg-white border-2 border-gray-200 rounded-lg shadow-xl p-4 text-center text-gray-500">
-            No codes found matching "{searchTerm}"
-          </div>
-        )}
       </div>
+
+      {/* Render dropdown via portal (appears on top of everything) */}
+      {renderDropdown()}
 
       {/* Error Message */}
       {error && (
@@ -252,7 +303,7 @@ function ICD10Picker({
                 {/* Code and Description */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="font-bold text-gray-900">{dx.code}</span>
+                    <span className="font-bold text-gray-900">{formatCode(dx.code)}</span>
                     {dx.primary && (
                       <span className="px-2 py-0.5 bg-blue-500 text-white text-xs font-semibold rounded">
                         PRIMARY

@@ -13,7 +13,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  createNote, updateNote, autosaveNote, signNote, getNote, getDraft, getClinicalSettings,
+  createNote, updateNote, autosaveNote, signNote, deleteNote, getNote, getDraft, getClinicalSettings,
   getClientDetail, getCurrentUser
 } from '../../utils/api';
 import BIRPTemplate from './BIRPTemplate';
@@ -342,6 +342,31 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
     }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this draft? This cannot be undone.')) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      await deleteNote(noteIdRef.current);
+
+      // Clear localStorage draft
+      localStorage.removeItem(`note_draft_${patientId}_${appointmentId || 'new'}_${note.noteType}`);
+
+      if (onClose) {
+        onClose();
+      }
+    } catch (err) {
+      console.error('Error deleting note:', err);
+      setError('Failed to delete note: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Quick notes bypass full editor
   if (noteType === 'noshow' || noteType === 'cancel') {
     return (
@@ -505,6 +530,18 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
           >
             Cancel
           </button>
+
+          {/* Delete button - only show for unsigned notes that exist */}
+          {noteIdRef.current && !note.is_locked && note.status !== 'signed' && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={saving}
+              className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-xl hover:from-red-600 hover:to-red-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              🗑️ Delete Draft
+            </button>
+          )}
 
           <button
             type="button"

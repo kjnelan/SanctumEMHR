@@ -99,16 +99,26 @@ try {
     $riskPresent = isset($input['riskPresent']) ? boolval($input['riskPresent']) : false;
     $riskAssessment = $input['riskAssessment'] ?? null;
 
-    // JSON fields
+    // JSON fields - diagnosis_codes already JSON stringified by frontend
     $goalsAddressed = isset($input['goalsAddressed']) ? json_encode($input['goalsAddressed']) : null;
     $interventionsSelected = isset($input['interventionsSelected']) ? json_encode($input['interventionsSelected']) : null;
     $clientPresentation = isset($input['clientPresentation']) ? json_encode($input['clientPresentation']) : null;
-    $diagnosisCodes = isset($input['diagnosisCodes']) ? json_encode($input['diagnosisCodes']) : null;
+    $diagnosisCodes = $input['diagnosis_codes'] ?? null; // Already stringified by frontend, don't encode again
 
     // Free-form fields
     $presentingConcerns = $input['presentingConcerns'] ?? null;
     $clinicalObservations = $input['clinicalObservations'] ?? null;
     $mentalStatusExam = $input['mentalStatusExam'] ?? null;
+
+    // Diagnosis note fields (Phase 4B)
+    $symptomsReported = $input['symptoms_reported'] ?? null;
+    $symptomsObserved = $input['symptoms_observed'] ?? null;
+    $clinicalJustification = $input['clinical_justification'] ?? null;
+    $differentialDiagnosis = $input['differential_diagnosis'] ?? null;
+    $severitySpecifiers = $input['severity_specifiers'] ?? null;
+    $functionalImpairment = $input['functional_impairment'] ?? null;
+    $durationOfSymptoms = $input['duration_of_symptoms'] ?? null;
+    $previousDiagnoses = $input['previous_diagnoses'] ?? null;
 
     // Supervision
     $supervisorReviewRequired = isset($input['supervisorReviewRequired']) ? boolval($input['supervisorReviewRequired']) : false;
@@ -148,10 +158,18 @@ try {
         presenting_concerns,
         clinical_observations,
         mental_status_exam,
+        symptoms_reported,
+        symptoms_observed,
+        clinical_justification,
+        differential_diagnosis,
+        severity_specifiers,
+        functional_impairment,
+        duration_of_symptoms,
+        previous_diagnoses,
         supervisor_review_required,
         status,
         last_autosave_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', NOW())";
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', NOW())";
 
     $params = [
         $noteUuid,
@@ -177,6 +195,14 @@ try {
         $presentingConcerns,
         $clinicalObservations,
         $mentalStatusExam,
+        $symptomsReported,
+        $symptomsObserved,
+        $clinicalJustification,
+        $differentialDiagnosis,
+        $severitySpecifiers,
+        $functionalImpairment,
+        $durationOfSymptoms,
+        $previousDiagnoses,
         $supervisorReviewRequired
     ];
 

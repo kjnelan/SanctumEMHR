@@ -264,6 +264,18 @@ export async function signNote(noteId, signatureData = null) {
 }
 
 /**
+ * Delete note (unsigned notes only)
+ * @param {number} noteId - Note ID to delete
+ */
+export async function deleteNote(noteId) {
+  console.log('Deleting note:', noteId);
+  return apiRequest('/custom/api/notes/delete_note.php', {
+    method: 'DELETE',
+    body: JSON.stringify({ note_id: noteId })
+  });
+}
+
+/**
  * Get intervention library
  * @param {object} filters - Optional filters (tier, modality, include_inactive)
  */
