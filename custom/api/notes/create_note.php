@@ -212,7 +212,23 @@ try {
     sqlStatement($sql, $params);
     $noteId = $GLOBALS['adodb']['db']->Insert_ID();
 
-    error_log("Note created successfully with ID: " . $noteId);
+    error_log("Note created with ID from Insert_ID(): " . $noteId);
+
+    // Write to custom debug log for user visibility
+    $debugLog = __DIR__ . '/../../../logs/diagnosis_note_debug.log';
+    @file_put_contents($debugLog, "[" . date('Y-m-d H:i:s') . "] Note created - ID: $noteId, UUID: $noteUuid\n", FILE_APPEND);
+
+    // VERIFICATION: Confirm the note actually exists in the database
+    $verifySql = "SELECT id, note_uuid, patient_id, template_type FROM clinical_notes WHERE id = ?";
+    $verifyResult = sqlStatement($verifySql, [$noteId]);
+    $verifiedNote = sqlFetchArray($verifyResult);
+
+    if (!$verifiedNote) {
+        error_log("CRITICAL ERROR: Note ID $noteId was returned but doesn't exist in database!");
+        throw new Exception("Note creation failed - database verification failed");
+    }
+
+    error_log("Note verified in database: ID=" . $verifiedNote['id'] . ", UUID=" . $verifiedNote['note_uuid'] . ", Patient=" . $verifiedNote['patient_id']);
 
     // If this note is linked to an appointment, update the appointment's clinical_note_id
     if ($appointmentId) {

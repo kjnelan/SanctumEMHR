@@ -181,7 +181,12 @@ try {
     $checkResult = sqlStatement($checkSql, [$noteId]);
     $note = sqlFetchArray($checkResult);
 
+    // Write to custom debug log for user visibility
+    $debugLog = __DIR__ . '/../../../logs/diagnosis_note_debug.log';
+    @file_put_contents($debugLog, "[" . date('Y-m-d H:i:s') . "] Attempting to sign note ID: $noteId - Found: " . ($note ? "YES" : "NO") . "\n", FILE_APPEND);
+
     if (!$note) {
+        @file_put_contents($debugLog, "[" . date('Y-m-d H:i:s') . "] ERROR: Note $noteId not found in database during sign operation\n", FILE_APPEND);
         throw new Exception("Note not found");
     }
 
