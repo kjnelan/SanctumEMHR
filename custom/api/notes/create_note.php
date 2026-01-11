@@ -212,14 +212,19 @@ try {
     // Execute INSERT and capture any errors
     $insertResult = sqlStatement($sql, $params);
 
-    // Check for SQL errors
-    if (!$insertResult) {
-        $sqlError = $GLOBALS['adodb']['db']->ErrorMsg();
-        error_log("CRITICAL: SQL INSERT failed - " . $sqlError);
-        throw new Exception("Database error: " . $sqlError);
+    // Check for SQL errors (OpenEMR's sqlStatement may not return false on error)
+    $sqlError = $GLOBALS['adodb']['db']->ErrorMsg();
+    $sqlErrNo = $GLOBALS['adodb']['db']->ErrorNo();
+
+    error_log("After INSERT - ErrorNo: $sqlErrNo, ErrorMsg: $sqlError");
+
+    if ($sqlErrNo != 0) {
+        error_log("CRITICAL: SQL INSERT failed - Error #$sqlErrNo: " . $sqlError);
+        throw new Exception("Database error (#$sqlErrNo): " . $sqlError);
     }
 
     $noteId = $GLOBALS['adodb']['db']->Insert_ID();
+    error_log("Insert_ID() returned: " . var_export($noteId, true));
 
     if (!$noteId || $noteId == 0) {
         error_log("CRITICAL: Insert_ID() returned invalid ID: " . var_export($noteId, true));
