@@ -209,8 +209,22 @@ try {
     error_log("Creating note with SQL: " . $sql);
     error_log("Params: " . print_r($params, true));
 
-    sqlStatement($sql, $params);
+    // Execute INSERT and capture any errors
+    $insertResult = sqlStatement($sql, $params);
+
+    // Check for SQL errors
+    if (!$insertResult) {
+        $sqlError = $GLOBALS['adodb']['db']->ErrorMsg();
+        error_log("CRITICAL: SQL INSERT failed - " . $sqlError);
+        throw new Exception("Database error: " . $sqlError);
+    }
+
     $noteId = $GLOBALS['adodb']['db']->Insert_ID();
+
+    if (!$noteId || $noteId == 0) {
+        error_log("CRITICAL: Insert_ID() returned invalid ID: " . var_export($noteId, true));
+        throw new Exception("Failed to get note ID after insert");
+    }
 
     error_log("Note created with ID from Insert_ID(): " . $noteId);
 
