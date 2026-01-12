@@ -12,7 +12,6 @@
 
 import { useState } from 'react';
 import CalendarAvailability from '../components/settings/CalendarAvailability';
-import DocumentCategories from '../components/settings/DocumentCategories';
 
 function Settings() {
   const [activeSection, setActiveSection] = useState('availability');
@@ -22,7 +21,6 @@ function Settings() {
     { id: 'preferences', label: 'Preferences', available: false },
     { id: 'calendar-settings', label: 'Calendar Settings', available: false },
     { id: 'availability', label: 'Calendar Availability', available: true },
-    { id: 'document-categories', label: 'Document Categories', available: true },
     { id: 'notifications', label: 'Notifications', available: false },
   ];
 
@@ -66,9 +64,8 @@ function Settings() {
         {/* Main Settings Panel */}
         <div className="flex-1">
           {activeSection === 'availability' && <CalendarAvailability />}
-          {activeSection === 'document-categories' && <DocumentCategories />}
 
-          {activeSection !== 'availability' && activeSection !== 'document-categories' && (
+          {activeSection !== 'availability' && (
             <div className="glass-card p-12 text-center">
               <div className="text-gray-700 text-lg font-semibold">
                 {sections.find(s => s.id === activeSection)?.label}
