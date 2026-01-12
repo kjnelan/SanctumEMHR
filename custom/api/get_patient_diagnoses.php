@@ -12,14 +12,39 @@
  * Proprietary and Confidential
  */
 
+// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
+$ignoreAuth = true;
+$ignoreAuth_onsite_portal = true;
+$ignoreAuth_onsite_portal_two = true;
+
 require_once(__DIR__ . '/../../interface/globals.php');
 
-header('Content-Type: application/json');
+error_log("Get patient diagnoses called - Session ID: " . session_id());
 
-// Verify user is authenticated
-if (!isset($_SESSION['authUser'])) {
+// Set JSON header
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+
+// Handle OPTIONS request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+// Only allow GET requests
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    http_response_code(405);
+    echo json_encode(['error' => 'Method not allowed']);
+    exit;
+}
+
+// Check if user is authenticated via session
+if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
+    error_log("Get patient diagnoses: Not authenticated");
     http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized']);
+    echo json_encode(['error' => 'Not authenticated']);
     exit;
 }
 
