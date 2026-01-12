@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import NotesList from '../notes/NotesList';
 import NoteEditor from '../notes/NoteEditor';
 import NoteViewer from '../notes/NoteViewer';
 
@@ -71,15 +70,6 @@ function AdminNotesTab({ data }) {
 
   const handleCreateAdminNote = () => {
     setView('create');
-  };
-
-  const handleNoteClick = (noteId, isDraft, noteType) => {
-    setSelectedNoteId(noteId);
-    if (isDraft) {
-      setView('edit');
-    } else {
-      setView('view');
-    }
   };
 
   const handleNoteSaved = () => {
@@ -362,12 +352,9 @@ function AdminNotesTab({ data }) {
               + New Admin Note
             </button>
           </div>
-          <NotesList
-            patientId={patient.pid}
-            onNoteClick={handleNoteClick}
-            noteTypeFilter="admin"
-            showCreateButton={false}
-          />
+          <div className="text-gray-600 text-sm">
+            Create administrative notes for this client's record
+          </div>
         </div>
       </div>
     </div>
