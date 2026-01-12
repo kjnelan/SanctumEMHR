@@ -20,10 +20,12 @@ ob_end_clean();
 // Enable error logging
 error_log("Client documents API called - Session ID: " . session_id());
 
-// Set JSON header
-header('Content-Type: application/json');
+// Set JSON header (unless uploading file, which needs multipart)
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_FILES['file'])) {
+    header('Content-Type: application/json');
+}
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
 // Handle preflight
@@ -38,6 +40,150 @@ if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
     http_response_code(401);
     echo json_encode(['error' => 'Not authenticated']);
     exit;
+}
+
+// Handle POST (file upload)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        $clientId = $_POST['patient_id'] ?? null;
+        $categoryId = $_POST['category_id'] ?? null;
+        $documentName = $_POST['name'] ?? null;
+        $documentDescription = $_POST['description'] ?? '';
+
+        if (!$clientId) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Patient ID is required']);
+            exit;
+        }
+
+        if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+            http_response_code(400);
+            echo json_encode(['error' => 'No file uploaded or upload error']);
+            exit;
+        }
+
+        $file = $_FILES['file'];
+        $uploadedFileName = $file['name'];
+        $fileSize = $file['size'];
+        $fileTmpPath = $file['tmp_name'];
+        $fileMimeType = $file['type'];
+
+        // Use provided name or fall back to uploaded filename
+        $documentName = $documentName ?: $uploadedFileName;
+
+        // Determine storage path - OpenEMR typically stores in sites/default/documents
+        $sitePath = $GLOBALS['OE_SITE_DIR'] ?? '/var/www/html/openemr/sites/default';
+        $documentsPath = $sitePath . '/documents';
+
+        // Create patient-specific directory if it doesn't exist
+        $patientDir = $documentsPath . '/patient_' . $clientId;
+        if (!is_dir($patientDir)) {
+            mkdir($patientDir, 0755, true);
+        }
+
+        // Generate unique filename to prevent overwrites
+        $fileExtension = pathinfo($uploadedFileName, PATHINFO_EXTENSION);
+        $baseFileName = pathinfo($uploadedFileName, PATHINFO_FILENAME);
+        $uniqueFileName = $baseFileName . '_' . time() . '.' . $fileExtension;
+        $destinationPath = $patientDir . '/' . $uniqueFileName;
+
+        // Move uploaded file
+        if (!move_uploaded_file($fileTmpPath, $destinationPath)) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to move uploaded file']);
+            exit;
+        }
+
+        // Store relative path for database
+        $relativeUrl = 'file://' . str_replace($sitePath . '/', '', $destinationPath);
+
+        // Insert into documents table
+        $insertSql = "INSERT INTO documents (
+            type,
+            size,
+            date,
+            url,
+            name,
+            mimetype,
+            foreign_id,
+            owner,
+            storagemethod,
+            imported,
+            deleted
+        ) VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, 0, 0, 0)";
+
+        $params = [
+            'file_url',  // type
+            $fileSize,
+            $relativeUrl,
+            $documentName,
+            $fileMimeType,
+            $clientId,  // foreign_id (patient_id)
+            $_SESSION['authUserID']  // owner
+        ];
+
+        $result = sqlInsert($insertSql, $params);
+        $documentId = $result;
+
+        // Link to category if provided
+        if ($categoryId && $documentId) {
+            $categorySql = "INSERT INTO categories_to_documents (category_id, document_id) VALUES (?, ?)";
+            sqlStatement($categorySql, [$categoryId, $documentId]);
+        }
+
+        error_log("Document uploaded successfully - ID: $documentId");
+
+        header('Content-Type: application/json');
+        http_response_code(201);
+        echo json_encode([
+            'success' => true,
+            'document_id' => $documentId,
+            'message' => 'Document uploaded successfully'
+        ]);
+        exit;
+
+    } catch (Exception $e) {
+        error_log("Error uploading document: " . $e->getMessage());
+        header('Content-Type: application/json');
+        http_response_code(500);
+        echo json_encode([
+            'error' => 'Failed to upload document',
+            'message' => $e->getMessage()
+        ]);
+        exit;
+    }
+}
+
+// Handle GET (fetch documents or categories)
+$action = $_GET['action'] ?? 'documents';
+
+// Fetch all available categories (for upload dropdown)
+if ($action === 'categories') {
+    try {
+        $categoriesSql = "SELECT id, name, parent, lft, rght
+                          FROM categories
+                          WHERE name != 'Categories'
+                          ORDER BY name";
+        $result = sqlStatement($categoriesSql);
+
+        $categories = [];
+        while ($row = sqlFetchArray($result)) {
+            $categories[] = $row;
+        }
+
+        http_response_code(200);
+        echo json_encode(['categories' => $categories]);
+        exit;
+
+    } catch (Exception $e) {
+        error_log("Error fetching categories: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode([
+            'error' => 'Failed to fetch categories',
+            'message' => $e->getMessage()
+        ]);
+        exit;
+    }
 }
 
 // Get client ID

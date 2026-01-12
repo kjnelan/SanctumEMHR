@@ -3,15 +3,25 @@ import React, { useState, useEffect } from 'react';
 function DocumentsTab({ data }) {
   const [documents, setDocuments] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadForm, setUploadForm] = useState({
+    name: '',
+    category_id: ''
+  });
 
   const clientId = data?.patient?.pid;
 
   useEffect(() => {
     if (clientId) {
       fetchDocuments();
+      fetchAllCategories();
     }
   }, [clientId]);
 
@@ -45,11 +55,100 @@ function DocumentsTab({ data }) {
     }
   };
 
+  const fetchAllCategories = async () => {
+    try {
+      const response = await fetch('/custom/api/client_documents.php?action=categories', {
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch categories');
+      }
+
+      const result = await response.json();
+      setAllCategories(result.categories || []);
+
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+    }
+  };
+
   const toggleCategory = (categoryId) => {
     setExpandedCategories(prev => ({
       ...prev,
       [categoryId]: !prev[categoryId]
     }));
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      // Auto-populate name with filename if not set
+      if (!uploadForm.name) {
+        setUploadForm(prev => ({ ...prev, name: file.name }));
+      }
+    }
+  };
+
+  const handleUploadFormChange = (field, value) => {
+    setUploadForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleOpenUploadModal = () => {
+    setShowUploadModal(true);
+    setUploadError(null);
+    setSelectedFile(null);
+    setUploadForm({ name: '', category_id: '' });
+  };
+
+  const handleCloseUploadModal = () => {
+    setShowUploadModal(false);
+    setUploadError(null);
+    setSelectedFile(null);
+    setUploadForm({ name: '', category_id: '' });
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      setUploadError('Please select a file to upload');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setUploadError(null);
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('patient_id', clientId);
+      formData.append('name', uploadForm.name || selectedFile.name);
+      if (uploadForm.category_id) {
+        formData.append('category_id', uploadForm.category_id);
+      }
+
+      const response = await fetch('/custom/api/client_documents.php', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to upload document');
+      }
+
+      // Success - refresh documents and close modal
+      await fetchDocuments();
+      handleCloseUploadModal();
+
+    } catch (err) {
+      console.error('Error uploading document:', err);
+      setUploadError(err.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const getFileIcon = (mimetype) => {
@@ -124,18 +223,26 @@ function DocumentsTab({ data }) {
     );
   }
 
-  if (documents.length === 0) {
-    return (
-      <div className="card-main">
-        <div className="card-inner text-center py-8">
-          <div className="text-gray-500">No documents on file</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
+      {/* Upload Button */}
+      <div className="flex justify-end">
+        <button
+          onClick={handleOpenUploadModal}
+          className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          📤 Upload Document
+        </button>
+      </div>
+
+      {/* Empty state */}
+      {documents.length === 0 && (
+        <div className="card-main">
+          <div className="card-inner text-center py-8">
+            <div className="text-gray-500">No documents on file</div>
+          </div>
+        </div>
+      )}
       {categories.map(category => {
         const categoryDocs = documentsByCategory[category.id] || [];
         const isExpanded = expandedCategories[category.id];
@@ -257,6 +364,94 @@ function DocumentsTab({ data }) {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Upload Document</h2>
+
+              {uploadError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {uploadError}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {/* File Selector */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select File *
+                  </label>
+                  <input
+                    type="file"
+                    onChange={handleFileSelect}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  {selectedFile && (
+                    <div className="mt-2 text-sm text-gray-600">
+                      Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+                    </div>
+                  )}
+                </div>
+
+                {/* Document Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Document Name
+                  </label>
+                  <input
+                    type="text"
+                    value={uploadForm.name}
+                    onChange={(e) => handleUploadFormChange('name', e.target.value)}
+                    placeholder="Enter document name"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <div className="mt-1 text-xs text-gray-500">
+                    Leave blank to use filename
+                  </div>
+                </div>
+
+                {/* Category Selector */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Category (Optional)
+                  </label>
+                  <select
+                    value={uploadForm.category_id}
+                    onChange={(e) => handleUploadFormChange('category_id', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select a category...</option>
+                    {allCategories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200">
+                <button
+                  onClick={handleUpload}
+                  disabled={uploading || !selectedFile}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  {uploading ? 'Uploading...' : 'Upload'}
+                </button>
+                <button
+                  onClick={handleCloseUploadModal}
+                  disabled={uploading}
+                  className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-400 transition-colors disabled:bg-gray-200 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
