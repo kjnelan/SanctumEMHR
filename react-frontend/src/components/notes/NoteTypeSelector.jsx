@@ -20,78 +20,94 @@ import React from 'react';
  * - appointment: object - Optional appointment context for smart suggestions
  */
 function NoteTypeSelector({ onSelect, preselected = null, appointment = null }) {
+  // Organized by clinical workflow - single section
   const noteTypes = [
+    // Row 1: Primary clinical workflow
+    {
+      id: 'intake',
+      label: 'Intake Assessment',
+      description: 'First session with client',
+      icon: '🤝',
+      row: 1,
+      cols: 3
+    },
     {
       id: 'diagnosis',
       label: 'Diagnosis Note',
       description: 'ICD-10 diagnosis assessment and documentation',
       icon: '🏥',
-      common: true
+      row: 1,
+      cols: 3
+    },
+    {
+      id: 'treatment_plan',
+      label: 'Treatment Plan',
+      description: 'Goals, objectives, interventions',
+      icon: '📋',
+      row: 1,
+      cols: 3
     },
     {
       id: 'progress',
       label: 'Progress Note',
       description: 'Regular therapy session',
-      icon: '📝',
-      common: true
+      icon: '📊',
+      row: 1,
+      cols: 3,
+      suggested: true
     },
+    // Row 2: Assessment & Closure
     {
-      id: 'noshow',
-      label: 'No-Show',
-      description: 'Client did not attend',
-      icon: '❌',
-      common: true,
-      quick: true
-    },
-    {
-      id: 'cancel',
-      label: 'Cancellation',
-      description: 'Session cancelled',
-      icon: '🚫',
-      common: true,
-      quick: true
-    },
-    {
-      id: 'risk_assessment',
-      label: 'Risk Assessment',
-      description: 'Safety evaluation and risk screening',
-      icon: '🛡️',
-      common: false
-    },
-    {
-      id: 'intake',
-      label: 'Intake Assessment',
-      description: 'First session with client',
-      icon: '👋',
-      common: false
-    },
-    {
-      id: 'crisis',
-      label: 'Crisis Note',
-      description: 'Emergency or high-risk session',
-      icon: '⚠️',
-      common: false
+      id: 'mse',
+      label: 'Mental Status Exam',
+      description: 'Standalone MSE assessment',
+      icon: '🧠',
+      row: 2,
+      cols: 6
     },
     {
       id: 'discharge',
       label: 'Discharge Summary',
       description: 'Final session, treatment conclusion',
       icon: '✅',
-      common: false
+      row: 2,
+      cols: 6
+    },
+    // Row 3: Crisis & Risk
+    {
+      id: 'crisis',
+      label: 'Crisis Note',
+      description: 'Emergency or high-risk session',
+      icon: '⚠️',
+      row: 3,
+      cols: 6
     },
     {
-      id: 'mse',
-      label: 'Mental Status Exam',
-      description: 'Standalone MSE assessment',
-      icon: '🧠',
-      common: false
+      id: 'risk_assessment',
+      label: 'Risk Assessment',
+      description: 'SI/HI safety evaluation',
+      icon: '🛡️',
+      row: 3,
+      cols: 6
+    },
+    // Row 4: Administrative
+    {
+      id: 'appointment_status',
+      label: 'Appointment Status',
+      description: 'No show, late cancel, cancellation',
+      icon: '📅',
+      row: 4,
+      cols: 6,
+      quick: true
     },
     {
-      id: 'admin',
-      label: 'Administrative Note',
-      description: 'Non-clinical documentation',
-      icon: '📋',
-      common: false
+      id: 'client_communication',
+      label: 'Client Communication',
+      description: 'Phone calls, emails, client contact',
+      icon: '📞',
+      row: 4,
+      cols: 6,
+      quick: true
     }
   ];
 
@@ -114,8 +130,14 @@ function NoteTypeSelector({ onSelect, preselected = null, appointment = null }) 
     onSelect(noteType);
   };
 
+  // Group by rows
+  const row1 = noteTypes.filter(t => t.row === 1);
+  const row2 = noteTypes.filter(t => t.row === 2);
+  const row3 = noteTypes.filter(t => t.row === 3);
+  const row4 = noteTypes.filter(t => t.row === 4);
+
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-6xl mx-auto p-6">
       {/* Header */}
       <div className="text-center mb-8">
         <h2 className="text-2xl font-semibold text-gray-800 mb-2">
@@ -126,61 +148,102 @@ function NoteTypeSelector({ onSelect, preselected = null, appointment = null }) 
         </p>
       </div>
 
-      {/* Common note types (larger buttons) */}
-      <div className="mb-6">
-        <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
-          Most Common
+      {/* Clinical Notes Section */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+          Clinical Notes
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {noteTypes.filter(t => t.common).map((noteType) => (
+
+        {/* Row 1: Primary Workflow */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          {row1.map((noteType) => (
             <button
               key={noteType.id}
               onClick={() => handleSelect(noteType.id)}
-              className={`card-main text-left p-5 hover:bg-blue-50 hover:border-blue-300 transition-all ${
+              className={`card-main text-left p-4 hover:bg-blue-50 hover:border-blue-300 transition-all ${
                 suggestion === noteType.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''
               }`}
             >
-              <div className="flex items-start gap-4">
-                <div className="text-4xl">{noteType.icon}</div>
+              <div className="flex items-start gap-3">
+                <div className="text-3xl">{noteType.icon}</div>
                 <div className="flex-1">
-                  <div className="text-lg font-semibold text-gray-800 mb-1">
+                  <div className="text-base font-semibold text-gray-800 mb-1">
                     {noteType.label}
-                    {suggestion === noteType.id && (
+                    {noteType.suggested && (
                       <span className="ml-2 badge-sm badge-light-success">Suggested</span>
                     )}
                   </div>
-                  <div className="text-sm text-gray-600">{noteType.description}</div>
-                  {noteType.quick && (
-                    <div className="mt-2 text-xs text-blue-600 font-medium">
-                      ⚡ Quick note (no full editor)
-                    </div>
-                  )}
+                  <div className="text-xs text-gray-600">{noteType.description}</div>
                 </div>
               </div>
             </button>
           ))}
         </div>
-      </div>
 
-      {/* Specialized note types */}
-      <div>
-        <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
-          Specialized Documentation
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {noteTypes.filter(t => !t.common).map((noteType) => (
+        {/* Row 2: Assessment & Closure */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {row2.map((noteType) => (
             <button
               key={noteType.id}
               onClick={() => handleSelect(noteType.id)}
               className="card-main text-left p-4 hover:bg-blue-50 hover:border-blue-300 transition-all"
             >
-              <div className="flex items-center gap-3 mb-2">
-                <div className="text-2xl">{noteType.icon}</div>
-                <div className="text-base font-semibold text-gray-800">
-                  {noteType.label}
+              <div className="flex items-start gap-3">
+                <div className="text-3xl">{noteType.icon}</div>
+                <div className="flex-1">
+                  <div className="text-base font-semibold text-gray-800 mb-1">
+                    {noteType.label}
+                  </div>
+                  <div className="text-xs text-gray-600">{noteType.description}</div>
                 </div>
               </div>
-              <div className="text-xs text-gray-600">{noteType.description}</div>
+            </button>
+          ))}
+        </div>
+
+        {/* Row 3: Crisis & Risk */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {row3.map((noteType) => (
+            <button
+              key={noteType.id}
+              onClick={() => handleSelect(noteType.id)}
+              className="card-main text-left p-4 hover:bg-orange-50 hover:border-orange-300 transition-all"
+            >
+              <div className="flex items-start gap-3">
+                <div className="text-3xl">{noteType.icon}</div>
+                <div className="flex-1">
+                  <div className="text-base font-semibold text-gray-800 mb-1">
+                    {noteType.label}
+                  </div>
+                  <div className="text-xs text-gray-600">{noteType.description}</div>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* Row 4: Administrative */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {row4.map((noteType) => (
+            <button
+              key={noteType.id}
+              onClick={() => handleSelect(noteType.id)}
+              className="card-main text-left p-4 hover:bg-gray-50 hover:border-gray-400 transition-all"
+            >
+              <div className="flex items-start gap-3">
+                <div className="text-3xl">{noteType.icon}</div>
+                <div className="flex-1">
+                  <div className="text-base font-semibold text-gray-800 mb-1">
+                    {noteType.label}
+                  </div>
+                  <div className="text-xs text-gray-600">{noteType.description}</div>
+                  {noteType.quick && (
+                    <div className="mt-1 text-xs text-blue-600 font-medium">
+                      ⚡ Quick note
+                    </div>
+                  )}
+                </div>
+              </div>
             </button>
           ))}
         </div>

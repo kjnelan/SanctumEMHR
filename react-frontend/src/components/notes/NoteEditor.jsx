@@ -25,6 +25,9 @@ import CrisisTemplate from './CrisisTemplate';
 import RiskAssessmentTemplate from './RiskAssessmentTemplate';
 import AdministrativeTemplate from './AdministrativeTemplate';
 import DiagnosisTemplate from './DiagnosisTemplate';
+import TreatmentPlanTemplate from './TreatmentPlanTemplate';
+import AppointmentStatusTemplate from './AppointmentStatusTemplate';
+import ClientCommunicationTemplate from './ClientCommunicationTemplate';
 import QuickNoteForm from './QuickNoteForm';
 import NoteMetadata from './NoteMetadata';
 
@@ -35,14 +38,18 @@ const getNoteTemplateType = (noteType) => {
   const mapping = {
     'progress': 'BIRP',           // Progress notes use BIRP by default
     'intake': 'Intake',           // Intake Assessment
-    'crisis': 'Crisis',           // Crisis Note
-    'discharge': 'Discharge',     // Discharge Summary
-    'mse': 'MSE',                 // Mental Status Exam
-    'risk_assessment': 'RiskAssessment',  // Risk Assessment
     'diagnosis': 'Diagnosis',     // Diagnosis Note (ICD-10)
-    'admin': 'Administrative',    // Administrative Note
-    'noshow': null,               // Uses QuickNoteForm
-    'cancel': null                // Uses QuickNoteForm
+    'treatment_plan': 'TreatmentPlan',  // Treatment Plan
+    'mse': 'MSE',                 // Mental Status Exam
+    'discharge': 'Discharge',     // Discharge Summary
+    'crisis': 'Crisis',           // Crisis Note
+    'risk_assessment': 'RiskAssessment',  // Risk Assessment
+    'appointment_status': 'AppointmentStatus',  // Appointment Status (No Show, Cancel, etc)
+    'client_communication': 'ClientCommunication',  // Client Communication (calls, emails)
+    'admin': 'Administrative',    // Administrative Note (deprecated - use Admin Notes tab)
+    // Legacy mappings (deprecated)
+    'noshow': 'AppointmentStatus',  // Redirect to new appointment_status
+    'cancel': 'AppointmentStatus'   // Redirect to new appointment_status
   };
 
   return mapping[noteType] || 'BIRP'; // Default to BIRP if unknown
@@ -507,6 +514,27 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
             note={note}
             onChange={handleFieldChange}
             disabled={note.is_locked}
+          />
+        )}
+        {note.templateType === 'TreatmentPlan' && (
+          <TreatmentPlanTemplate
+            note={note}
+            onChange={handleFieldChange}
+            autoSave={triggerAutoSave}
+          />
+        )}
+        {note.templateType === 'AppointmentStatus' && (
+          <AppointmentStatusTemplate
+            note={note}
+            onChange={handleFieldChange}
+            autoSave={triggerAutoSave}
+          />
+        )}
+        {note.templateType === 'ClientCommunication' && (
+          <ClientCommunicationTemplate
+            note={note}
+            onChange={handleFieldChange}
+            autoSave={triggerAutoSave}
           />
         )}
         {note.templateType === 'Administrative' && (
