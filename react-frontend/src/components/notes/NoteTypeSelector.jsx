@@ -53,8 +53,7 @@ function NoteTypeSelector({ onSelect, preselected = null, appointment = null }) 
       description: 'Regular therapy session',
       icon: '📊',
       row: 1,
-      cols: 3,
-      suggested: true
+      cols: 3
     },
     // Row 2: Assessment & Closure
     {
