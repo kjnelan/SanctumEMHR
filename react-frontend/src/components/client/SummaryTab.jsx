@@ -27,6 +27,21 @@ function SummaryTab({ data }) {
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
+  // Clean up ICD-10 description - remove duplicates and extra spaces
+  const cleanDiagnosisDescription = (title) => {
+    if (!title) return '';
+    // Many ICD-10 descriptions have duplicate text separated by multiple spaces
+    // Example: "abuse with intoxication, uncomplicated               Alcohol abuse with intoxication, uncomplicated"
+
+    // Split on multiple spaces (3 or more) and take the most descriptive part
+    const parts = title.split(/\s{3,}/);
+    if (parts.length > 1) {
+      // Usually the second part is more descriptive
+      return parts[1].trim();
+    }
+    return title.trim();
+  };
+
   return (
     <div className="flex gap-6">
       {/* Main Content - Two Column Layout */}
@@ -78,22 +93,41 @@ function SummaryTab({ data }) {
         <div className="space-y-6">
           {/* Diagnosis Card */}
           <div className="card-main">
-            <h2 className="card-header">Diagnosis</h2>
+            <h2 className="card-header">
+              <span className="flex items-center gap-2">
+                🏥 Diagnosis
+              </span>
+            </h2>
             {problems && problems.length > 0 ? (
               <div className="space-y-3">
                 {problems.map((problem) => (
-                  <div key={problem.id} className="card-inner">
-                    <div className="item-title">{problem.title}</div>
-                    {problem.diagnosis && (
-                      <div className="item-secondary">Code: {problem.diagnosis}</div>
-                    )}
-                    <div className="item-tertiary">
-                      Started: {formatDate(problem.begdate)}
-                      {problem.enddate && ` - Ended: ${formatDate(problem.enddate)}`}
+                  <div key={problem.id} className="card-inner border-l-4 border-blue-400">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-mono text-sm font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
+                            {problem.diagnosis}
+                          </span>
+                          {problem.enddate && (
+                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                              Retired
+                            </span>
+                          )}
+                        </div>
+                        <div className="item-title text-gray-800">
+                          {cleanDiagnosisDescription(problem.title)}
+                        </div>
+                        <div className="item-tertiary mt-1">
+                          Started: {formatDate(problem.begdate)}
+                          {problem.enddate && ` • Ended: ${formatDate(problem.enddate)}`}
+                        </div>
+                        {problem.outcome && (
+                          <div className="text-xs text-gray-600 mt-1">
+                            Outcome: {problem.outcome}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    {problem.outcome && (
-                      <div className="item-tertiary">Outcome: {problem.outcome}</div>
-                    )}
                   </div>
                 ))}
               </div>

@@ -69,6 +69,17 @@ function NoteViewer({ noteId, onClose, onEdit, onAddendum }) {
     });
   };
 
+  // Clean up ICD-10 description - remove duplicates and extra spaces
+  const cleanDiagnosisDescription = (description) => {
+    if (!description) return '';
+    // Many ICD-10 descriptions have duplicate text separated by multiple spaces
+    const parts = description.split(/\s{3,}/);
+    if (parts.length > 1) {
+      return parts[1].trim();
+    }
+    return description.trim();
+  };
+
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto p-6">
@@ -170,22 +181,29 @@ function NoteViewer({ noteId, onClose, onEdit, onAddendum }) {
                     const formattedCode = code.length >= 4 ? code.slice(0, 3) + '.' + code.slice(3) : code;
 
                     return (
-                      <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div key={idx} className="p-3 bg-gray-50 rounded-lg border-l-4 border-blue-400">
                         <div className="flex-1">
-                          <div className="font-semibold text-gray-900">
-                            {formattedCode} {description && `- ${description}`}
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-mono text-sm font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
+                              {formattedCode}
+                            </span>
+                            <div className="flex gap-2">
+                              {isPrimary && (
+                                <span className="badge-sm badge-light-primary">Primary</span>
+                              )}
+                              {isBillable && (
+                                <span className="badge-sm badge-light-success">Billable</span>
+                              )}
+                              {severity && (
+                                <span className="badge-sm badge-light-warning">{severity}</span>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex gap-2 mt-1">
-                            {isPrimary && (
-                              <span className="badge-sm badge-light-primary">Primary</span>
-                            )}
-                            {isBillable && (
-                              <span className="badge-sm badge-light-success">Billable</span>
-                            )}
-                            {severity && (
-                              <span className="badge-sm badge-light-warning">{severity}</span>
-                            )}
-                          </div>
+                          {description && (
+                            <div className="text-gray-800">
+                              {cleanDiagnosisDescription(description)}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
