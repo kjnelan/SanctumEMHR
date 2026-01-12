@@ -2,10 +2,15 @@
 /**
  * User Management API
  * Full CRUD operations for system users/providers
+ * Uses OpenEMR's existing users table schema
  */
 
 // Start output buffering
 ob_start();
+
+// Disable all error display
+ini_set('display_errors', 0);
+error_reporting(0);
 
 // IMPORTANT: Set these BEFORE loading globals.php
 $ignoreAuth = true;
@@ -17,7 +22,7 @@ require_once(__DIR__ . '/../../interface/globals.php');
 // Clear any output
 ob_end_clean();
 
-// Enable error logging
+// Enable error logging only
 error_log("Users API called - Session ID: " . session_id());
 
 // Set JSON header
@@ -40,9 +45,6 @@ if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
     exit;
 }
 
-// TODO: Check if user has admin privileges
-// For now, allowing all authenticated users
-
 $method = $_SERVER['REQUEST_METHOD'];
 $input = json_decode(file_get_contents('php://input'), true);
 
@@ -52,10 +54,9 @@ try {
             $action = $_GET['action'] ?? 'list';
 
             if ($action === 'list') {
-                // List all users with optional filters
+                // List all users
                 $search = $_GET['search'] ?? '';
                 $status = $_GET['status'] ?? ''; // active, inactive, all
-                $role = $_GET['role'] ?? ''; // provider, admin, etc.
 
                 $sql = "SELECT
                     u.id,
@@ -63,11 +64,14 @@ try {
                     u.fname,
                     u.mname,
                     u.lname,
+                    u.suffix,
+                    u.title,
                     u.npi,
                     u.federaltaxid,
-                    u.federaldrugid,
-                    u.upin,
+                    u.taxonomy,
+                    u.state_license_number,
                     u.facility,
+                    u.facility_id,
                     u.specialty,
                     u.authorized,
                     u.calendar,
@@ -75,32 +79,13 @@ try {
                     u.active,
                     u.email,
                     u.phone,
-                    u.phonew1,
                     u.phonecell,
-                    u.taxonomy,
-                    u.calendar_color,
-                    u.see_auth,
-                    u.default_warehouse,
-                    u.irnpool,
                     u.supervisor_id,
-                    u.title,
-                    u.suffix,
-                    u.valedictory,
-                    u.organization,
-                    u.street,
-                    u.streetb,
-                    u.city,
-                    u.state,
-                    u.zip,
-                    u.billname,
-                    DATE_FORMAT(u.DOB, '%Y-%m-%d') as dob,
                     u.notes,
                     sup.fname AS supervisor_fname,
-                    sup.lname AS supervisor_lname,
-                    f.name AS facility_name
+                    sup.lname AS supervisor_lname
                 FROM users u
                 LEFT JOIN users sup ON u.supervisor_id = sup.id
-                LEFT JOIN facility f ON u.facility_id = f.id
                 WHERE 1=1";
 
                 $params = [];
@@ -120,13 +105,6 @@ try {
                     $sql .= " AND u.active = 1";
                 } elseif ($status === 'inactive') {
                     $sql .= " AND u.active = 0";
-                }
-
-                // Apply role filter
-                if ($role === 'provider') {
-                    $sql .= " AND u.authorized = 1";
-                } elseif ($role === 'admin') {
-                    $sql .= " AND u.calendar = 1"; // Admin flag
                 }
 
                 $sql .= " ORDER BY u.lname, u.fname";
@@ -153,13 +131,10 @@ try {
 
                 $sql = "SELECT
                     u.*,
-                    DATE_FORMAT(u.DOB, '%Y-%m-%d') as dob,
                     sup.fname AS supervisor_fname,
-                    sup.lname AS supervisor_lname,
-                    f.name AS facility_name
+                    sup.lname AS supervisor_lname
                 FROM users u
                 LEFT JOIN users sup ON u.supervisor_id = sup.id
-                LEFT JOIN facility f ON u.facility_id = f.id
                 WHERE u.id = ?";
 
                 $user = sqlQuery($sql, [$userId]);
@@ -212,7 +187,6 @@ try {
             $password = $input['password'] ?? null;
             $fname = $input['fname'] ?? null;
             $lname = $input['lname'] ?? null;
-            $email = $input['email'] ?? null;
 
             if (!$username || !$password || !$fname || !$lname) {
                 http_response_code(400);
@@ -233,32 +207,31 @@ try {
             // Hash password
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-            // Insert user
+            // Insert user - matching OpenEMR schema exactly
             $insertSql = "INSERT INTO users (
                 username,
                 password,
                 fname,
                 mname,
                 lname,
+                suffix,
+                title,
                 email,
                 phone,
                 phonecell,
                 npi,
                 federaltaxid,
                 taxonomy,
-                title,
-                suffix,
-                DOB,
+                state_license_number,
                 supervisor_id,
                 facility_id,
-                calendar_color,
                 authorized,
                 active,
                 calendar,
                 portal_user,
                 see_auth,
                 notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             $params = [
                 $username,
@@ -266,18 +239,17 @@ try {
                 $fname,
                 $input['mname'] ?? '',
                 $lname,
-                $email ?? '',
+                $input['suffix'] ?? '',
+                $input['title'] ?? '', // Professional credentials
+                $input['email'] ?? '',
                 $input['phone'] ?? '',
                 $input['phonecell'] ?? '',
                 $input['npi'] ?? '',
                 $input['federaltaxid'] ?? '',
-                $input['taxonomy'] ?? '',
-                $input['title'] ?? '', // Professional credentials
-                $input['suffix'] ?? '',
-                $input['dob'] ?? null,
-                $input['supervisor_id'] ?? null,
-                $input['facility_id'] ?? null,
-                $input['calendar_color'] ?? '#3b82f6',
+                $input['taxonomy'] ?? '207Q00000X', // Default taxonomy
+                $input['state_license_number'] ?? '',
+                $input['supervisor_id'] ?? 0,
+                $input['facility_id'] ?? 0,
                 $input['authorized'] ?? 0, // Is provider
                 $input['active'] ?? 1,
                 $input['calendar'] ?? 0, // Is admin
@@ -318,23 +290,22 @@ try {
                 exit;
             }
 
-            // Build update query
+            // Build update query - matching OpenEMR schema
             $updateSql = "UPDATE users SET
                 fname = ?,
                 mname = ?,
                 lname = ?,
+                suffix = ?,
+                title = ?,
                 email = ?,
                 phone = ?,
                 phonecell = ?,
                 npi = ?,
                 federaltaxid = ?,
                 taxonomy = ?,
-                title = ?,
-                suffix = ?,
-                DOB = ?,
+                state_license_number = ?,
                 supervisor_id = ?,
                 facility_id = ?,
-                calendar_color = ?,
                 authorized = ?,
                 active = ?,
                 calendar = ?,
@@ -347,18 +318,17 @@ try {
                 $input['fname'],
                 $input['mname'] ?? '',
                 $input['lname'],
+                $input['suffix'] ?? '',
+                $input['title'] ?? '',
                 $input['email'] ?? '',
                 $input['phone'] ?? '',
                 $input['phonecell'] ?? '',
                 $input['npi'] ?? '',
                 $input['federaltaxid'] ?? '',
-                $input['taxonomy'] ?? '',
-                $input['title'] ?? '',
-                $input['suffix'] ?? '',
-                $input['dob'] ?? null,
-                $input['supervisor_id'] ?? null,
-                $input['facility_id'] ?? null,
-                $input['calendar_color'] ?? '#3b82f6',
+                $input['taxonomy'] ?? '207Q00000X',
+                $input['state_license_number'] ?? '',
+                $input['supervisor_id'] ?? 0,
+                $input['facility_id'] ?? 0,
                 $input['authorized'] ?? 0,
                 $input['active'] ?? 1,
                 $input['calendar'] ?? 0,

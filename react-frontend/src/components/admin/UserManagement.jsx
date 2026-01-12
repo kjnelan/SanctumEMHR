@@ -39,13 +39,12 @@ function UserManagement() {
     email: '',
     phone: '',
     phonecell: '',
-    dob: '',
     npi: '',
     federaltaxid: '',
     taxonomy: '',
+    state_license_number: '',
     supervisor_id: '',
     facility_id: '',
-    calendar_color: '#3b82f6',
     authorized: false, // Is provider
     active: true,
     calendar: false, // Is admin
@@ -126,13 +125,12 @@ function UserManagement() {
       email: '',
       phone: '',
       phonecell: '',
-      dob: '',
       npi: '',
       federaltaxid: '',
       taxonomy: '',
+      state_license_number: '',
       supervisor_id: '',
       facility_id: '',
-      calendar_color: '#3b82f6',
       authorized: false,
       active: true,
       calendar: false,
@@ -174,13 +172,12 @@ function UserManagement() {
         email: userData.email || '',
         phone: userData.phone || '',
         phonecell: userData.phonecell || '',
-        dob: userData.dob || '',
         npi: userData.npi || '',
         federaltaxid: userData.federaltaxid || '',
         taxonomy: userData.taxonomy || '',
+        state_license_number: userData.state_license_number || '',
         supervisor_id: userData.supervisor_id || '',
         facility_id: userData.facility_id || '',
-        calendar_color: userData.calendar_color || '#3b82f6',
         authorized: userData.authorized === '1' || userData.authorized === 1,
         active: userData.active === '1' || userData.active === 1,
         calendar: userData.calendar === '1' || userData.calendar === 1,
@@ -387,8 +384,7 @@ function UserManagement() {
             >
               <div className="flex items-center gap-4 flex-1">
                 <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold"
-                  style={{ backgroundColor: user.calendar_color || '#3b82f6' }}
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold bg-blue-600"
                 >
                   {user.fname?.[0]}{user.lname?.[0]}
                 </div>
@@ -585,12 +581,12 @@ function UserFormModal({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Date of Birth
+                    State License Number
                   </label>
                   <input
-                    type="date"
-                    value={formData.dob}
-                    onChange={(e) => onFormChange('dob', e.target.value)}
+                    type="text"
+                    value={formData.state_license_number}
+                    onChange={(e) => onFormChange('state_license_number', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -640,7 +636,7 @@ function UserFormModal({
             {/* Professional Information */}
             <div className="border-b border-gray-200 pb-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-3">Professional Information</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     NPI
@@ -671,18 +667,8 @@ function UserFormModal({
                     type="text"
                     value={formData.taxonomy}
                     onChange={(e) => onFormChange('taxonomy', e.target.value)}
+                    placeholder="207Q00000X"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Calendar Color
-                  </label>
-                  <input
-                    type="color"
-                    value={formData.calendar_color}
-                    onChange={(e) => onFormChange('calendar_color', e.target.value)}
-                    className="w-full h-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
               </div>
