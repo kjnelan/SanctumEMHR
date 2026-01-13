@@ -17,9 +17,6 @@ require_once(__DIR__ . '/../../interface/globals.php');
 // Clear any output that globals.php might have generated
 ob_end_clean();
 
-// Enable error logging
-error_log("Document categories API called - Session ID: " . session_id());
-
 // Set JSON header
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
