@@ -370,13 +370,26 @@ function DocumentsTab({ data }) {
 
       {/* Upload Modal */}
       {showUploadModal && createPortal(
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="p-6">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Upload Document</h2>
+        <div className="modal-backdrop">
+          <div className="modal-container max-w-lg">
+            {/* Modal Header */}
+            <div className="modal-header">
+              <h3 className="text-xl font-bold text-gray-800">Upload Document</h3>
+              <button
+                onClick={handleCloseUploadModal}
+                disabled={uploading}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
+            {/* Modal Body */}
+            <div className="modal-body">
               {uploadError && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                <div className="error-message mb-4">
                   {uploadError}
                 </div>
               )}
@@ -384,13 +397,13 @@ function DocumentsTab({ data }) {
               <div className="space-y-4">
                 {/* File Selector */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select File *
+                  <label className="block text-gray-700 font-semibold mb-2">
+                    Select File <span className="text-red-600">*</span>
                   </label>
                   <input
                     type="file"
                     onChange={handleFileSelect}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="input-field"
                   />
                   {selectedFile && (
                     <div className="mt-2 text-sm text-gray-600">
@@ -401,7 +414,7 @@ function DocumentsTab({ data }) {
 
                 {/* Document Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-gray-700 font-semibold mb-2">
                     Document Name
                   </label>
                   <input
@@ -409,7 +422,7 @@ function DocumentsTab({ data }) {
                     value={uploadForm.name}
                     onChange={(e) => handleUploadFormChange('name', e.target.value)}
                     placeholder="Enter document name"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="input-field"
                   />
                   <div className="mt-1 text-xs text-gray-500">
                     Leave blank to use filename
@@ -418,13 +431,13 @@ function DocumentsTab({ data }) {
 
                 {/* Category Selector */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-gray-700 font-semibold mb-2">
                     Category (Optional)
                   </label>
                   <select
                     value={uploadForm.category_id}
                     onChange={(e) => handleUploadFormChange('category_id', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="input-field"
                   >
                     <option value="">Select a category...</option>
                     {allCategories.map(cat => (
@@ -434,23 +447,27 @@ function DocumentsTab({ data }) {
                 </div>
               </div>
 
-              {/* Modal Actions */}
-              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200">
-                <button
-                  onClick={handleUpload}
-                  disabled={uploading || !selectedFile}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-                >
-                  {uploading ? 'Uploading...' : 'Upload'}
-                </button>
-                <button
-                  onClick={handleCloseUploadModal}
-                  disabled={uploading}
-                  className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-400 transition-colors disabled:bg-gray-200 disabled:cursor-not-allowed"
-                >
-                  Cancel
-                </button>
-              </div>
+              <p className="text-sm text-gray-600 mt-4">
+                <span className="text-red-600">*</span> Required
+              </p>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="modal-footer">
+              <button
+                onClick={handleCloseUploadModal}
+                disabled={uploading}
+                className="btn-action btn-cancel"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpload}
+                disabled={uploading || !selectedFile}
+                className="btn-action btn-primary"
+              >
+                {uploading ? 'Uploading...' : 'Upload'}
+              </button>
             </div>
           </div>
         </div>,
