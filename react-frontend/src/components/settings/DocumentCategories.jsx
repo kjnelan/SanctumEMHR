@@ -392,7 +392,13 @@ function DocumentCategories() {
                 </label>
                 <select
                   value={formData.parent_id || ''}
-                  onChange={(e) => setFormData({ ...formData, parent_id: e.target.value ? parseInt(e.target.value) : null })}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData({
+                      ...formData,
+                      parent_id: value ? parseInt(value, 10) : null
+                    });
+                  }}
                   className="input-field"
                 >
                   <option value="">None (Top Level)</option>
@@ -474,7 +480,13 @@ function DocumentCategories() {
                 </label>
                 <select
                   value={formData.parent_id || ''}
-                  onChange={(e) => setFormData({ ...formData, parent_id: e.target.value ? parseInt(e.target.value) : null })}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData({
+                      ...formData,
+                      parent_id: value ? parseInt(value, 10) : null
+                    });
+                  }}
                   className="input-field"
                 >
                   <option value="">None (Top Level)</option>

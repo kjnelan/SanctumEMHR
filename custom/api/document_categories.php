@@ -35,7 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // Check if user is authenticated via session
 if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Document categories: Not authenticated - authUserID not set");
     http_response_code(401);
     echo json_encode(['error' => 'Not authenticated']);
     exit;
@@ -251,8 +250,6 @@ try {
     }
 
 } catch (Exception $e) {
-    error_log("Error in document categories API: " . $e->getMessage());
-    error_log("Stack trace: " . $e->getTraceAsString());
     http_response_code(500);
     echo json_encode([
         'error' => 'Server error',
