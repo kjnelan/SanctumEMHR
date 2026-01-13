@@ -44,7 +44,8 @@ function UserManagement() {
     federaltaxid: '',
     taxonomy: '',
     state_license_number: '',
-    supervisor_id: '',
+    supervisor_id: '', // Legacy field - kept for compatibility
+    supervisor_ids: [], // Array of supervisor IDs for multi-supervisor support
     facility_id: '',
     authorized: false, // Is provider
     is_supervisor: false, // Is supervisor
@@ -132,6 +133,7 @@ function UserManagement() {
       taxonomy: '',
       state_license_number: '',
       supervisor_id: '',
+      supervisor_ids: [],
       facility_id: '',
       authorized: false,
       is_supervisor: false,
@@ -190,6 +192,17 @@ function UserManagement() {
         throw new Error('No user data in response');
       }
 
+      // Fetch supervisors for this user from junction table
+      const supervisorsResponse = await fetch(`/custom/api/users.php?action=user_supervisors&id=${user.id}`, {
+        credentials: 'include'
+      });
+
+      let supervisor_ids = [];
+      if (supervisorsResponse.ok) {
+        const supervisorsResult = await supervisorsResponse.json();
+        supervisor_ids = supervisorsResult.supervisor_ids || [];
+      }
+
       setFormData({
         id: userData.id,
         username: userData.username || '',
@@ -206,7 +219,8 @@ function UserManagement() {
         federaltaxid: userData.federaltaxid || '',
         taxonomy: userData.taxonomy || '',
         state_license_number: userData.state_license_number || '',
-        supervisor_id: userData.supervisor_id || '',
+        supervisor_id: userData.supervisor_id || '', // Legacy field
+        supervisor_ids: supervisor_ids, // Multi-supervisor support
         facility_id: userData.facility_id || '',
         authorized: userData.authorized === '1' || userData.authorized === 1,
         is_supervisor: userData.is_supervisor === '1' || userData.is_supervisor === 1,
@@ -252,6 +266,7 @@ function UserManagement() {
       }
 
       await fetchUsers();
+      await fetchSupervisors(); // Refetch in case new user is a supervisor
       setShowAddModal(false);
       resetForm();
 
@@ -290,6 +305,7 @@ function UserManagement() {
       }
 
       await fetchUsers();
+      await fetchSupervisors(); // Refetch in case supervisor status changed
       setShowEditModal(false);
       resetForm();
 
@@ -329,6 +345,20 @@ function UserManagement() {
 
   const handleFormChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const toggleSupervisor = (supervisorId) => {
+    setFormData(prev => {
+      const currentIds = prev.supervisor_ids || [];
+      const isSelected = currentIds.includes(supervisorId);
+
+      return {
+        ...prev,
+        supervisor_ids: isSelected
+          ? currentIds.filter(id => id !== supervisorId)
+          : [...currentIds, supervisorId]
+      };
+    });
   };
 
   const filteredUsers = users.filter(user => {
@@ -786,20 +816,31 @@ function UserFormModal({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Supervisor
+                    Supervisors (select one or more)
                   </label>
-                  <select
-                    value={formData.supervisor_id}
-                    onChange={(e) => onFormChange('supervisor_id', e.target.value)}
-                    className="input-field"
-                  >
-                    <option value="">None</option>
-                    {supervisors.map(sup => (
-                      <option key={sup.id} value={sup.id}>
-                        {sup.fname} {sup.lname} {sup.title && `(${sup.title})`}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto bg-white">
+                    {supervisors.length === 0 ? (
+                      <div className="text-sm text-gray-500 italic">
+                        No supervisors available. Mark users as supervisors in Access Control.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {supervisors.map(sup => (
+                          <label key={sup.id} className="flex items-center gap-2 hover:bg-gray-50 p-1 rounded cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formData.supervisor_ids.includes(sup.id)}
+                              onChange={() => toggleSupervisor(sup.id)}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <span className="text-sm text-gray-700">
+                              {sup.fname} {sup.lname} {sup.title && `(${sup.title})`}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">

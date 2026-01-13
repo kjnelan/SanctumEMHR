@@ -178,6 +178,29 @@ try {
                 http_response_code(200);
                 echo json_encode(['user' => $user]);
 
+            } elseif ($action === 'user_supervisors') {
+                // Get supervisors for a specific user from junction table
+                $userId = $_GET['id'] ?? null;
+
+                if (!$userId) {
+                    http_response_code(400);
+                    echo json_encode(['error' => 'User ID required']);
+                    exit;
+                }
+
+                $sql = "SELECT supervisor_id
+                        FROM user_supervisors
+                        WHERE user_id = ?";
+
+                $result = sqlStatement($sql, [$userId]);
+                $supervisor_ids = [];
+                while ($row = sqlFetchArray($result)) {
+                    $supervisor_ids[] = $row['supervisor_id'];
+                }
+
+                http_response_code(200);
+                echo json_encode(['supervisor_ids' => $supervisor_ids]);
+
             } elseif ($action === 'supervisors') {
                 // Get list of potential supervisors (users marked as supervisors)
                 $sql = "SELECT id, fname, lname, title
@@ -292,6 +315,16 @@ try {
 
             $userId = sqlInsert($insertSql, $params);
 
+            // Handle supervisor assignments (multi-supervisor support)
+            if (isset($input['supervisor_ids']) && is_array($input['supervisor_ids'])) {
+                foreach ($input['supervisor_ids'] as $supervisorId) {
+                    if ($supervisorId > 0) {
+                        $supSql = "INSERT INTO user_supervisors (user_id, supervisor_id) VALUES (?, ?)";
+                        sqlStatement($supSql, [$userId, $supervisorId]);
+                    }
+                }
+            }
+
             error_log("User created - ID: $userId, Username: $username");
 
             http_response_code(201);
@@ -379,6 +412,21 @@ try {
                 $hashedPassword = password_hash($input['password'], PASSWORD_DEFAULT);
                 $pwdSql = "UPDATE users SET password = ? WHERE id = ?";
                 sqlStatement($pwdSql, [$hashedPassword, $userId]);
+            }
+
+            // Update supervisor assignments (multi-supervisor support)
+            if (isset($input['supervisor_ids']) && is_array($input['supervisor_ids'])) {
+                // Remove all existing supervisor relationships
+                $deleteSql = "DELETE FROM user_supervisors WHERE user_id = ?";
+                sqlStatement($deleteSql, [$userId]);
+
+                // Add new supervisor relationships
+                foreach ($input['supervisor_ids'] as $supervisorId) {
+                    if ($supervisorId > 0) {
+                        $supSql = "INSERT INTO user_supervisors (user_id, supervisor_id) VALUES (?, ?)";
+                        sqlStatement($supSql, [$userId, $supervisorId]);
+                    }
+                }
             }
 
             error_log("User updated - ID: $userId");
