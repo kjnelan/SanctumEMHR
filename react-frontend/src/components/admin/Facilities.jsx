@@ -604,16 +604,6 @@ function FacilityFormModal({
                     />
                   </div>
                 </div>
-                <div>
-                  <label className="block text-gray-700 font-semibold mb-2">Country</label>
-                  <input
-                    type="text"
-                    value={formData.country_code || ''}
-                    onChange={(e) => onFormChange('country_code', e.target.value)}
-                    className="input-field"
-                    placeholder="United States"
-                  />
-                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4">
@@ -745,11 +735,12 @@ function FacilityFormModal({
             </div>
             <div>
               <label className="block text-gray-700 font-semibold mb-2">Tax ID</label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <select
                   value={formData.tax_id_type || 'EIN'}
                   onChange={(e) => onFormChange('tax_id_type', e.target.value)}
-                  className="input-field w-24"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  style={{ width: '90px' }}
                 >
                   <option value="EIN">EIN</option>
                   <option value="SSN">SSN</option>
