@@ -47,6 +47,7 @@ function UserManagement() {
     supervisor_id: '',
     facility_id: '',
     authorized: false, // Is provider
+    is_supervisor: false, // Is supervisor
     active: true,
     calendar: false, // Is admin
     portal_user: false,
@@ -133,6 +134,7 @@ function UserManagement() {
       supervisor_id: '',
       facility_id: '',
       authorized: false,
+      is_supervisor: false,
       active: true,
       calendar: false,
       portal_user: false,
@@ -207,6 +209,7 @@ function UserManagement() {
         supervisor_id: userData.supervisor_id || '',
         facility_id: userData.facility_id || '',
         authorized: userData.authorized === '1' || userData.authorized === 1,
+        is_supervisor: userData.is_supervisor === '1' || userData.is_supervisor === 1,
         active: userData.active === '1' || userData.active === 1,
         calendar: userData.calendar === '1' || userData.calendar === 1,
         portal_user: userData.portal_user === '1' || userData.portal_user === 1,
@@ -715,6 +718,68 @@ function UserFormModal({
               </div>
             </div>
 
+            {/* Access Control */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Access Control</h3>
+              <div className="space-y-3">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.authorized}
+                    onChange={(e) => onFormChange('authorized', e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Provider (Can create clinical notes)
+                  </span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.is_supervisor}
+                    onChange={(e) => onFormChange('is_supervisor', e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Supervisor (Can supervise other providers)
+                  </span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.calendar}
+                    onChange={(e) => onFormChange('calendar', e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Administrator (Access to Settings)
+                  </span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.portal_user}
+                    onChange={(e) => onFormChange('portal_user', e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Portal Access
+                  </span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.active}
+                    onChange={(e) => onFormChange('active', e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Active
+                  </span>
+                </label>
+              </div>
+            </div>
+
             {/* Organization */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Organization</h3>
@@ -753,57 +818,6 @@ function UserFormModal({
                     ))}
                   </select>
                 </div>
-              </div>
-            </div>
-
-            {/* Access Control */}
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Access Control</h3>
-              <div className="space-y-3">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.authorized}
-                    onChange={(e) => onFormChange('authorized', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700">
-                    Provider (Can create clinical notes)
-                  </span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.calendar}
-                    onChange={(e) => onFormChange('calendar', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700">
-                    Administrator (Access to Settings)
-                  </span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.portal_user}
-                    onChange={(e) => onFormChange('portal_user', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700">
-                    Portal Access
-                  </span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.active}
-                    onChange={(e) => onFormChange('active', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700">
-                    Active
-                  </span>
-                </label>
               </div>
             </div>
 

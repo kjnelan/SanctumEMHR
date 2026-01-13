@@ -152,6 +152,7 @@ try {
                     u.supervisor_id,
                     u.facility_id,
                     u.authorized,
+                    u.is_supervisor,
                     u.active,
                     u.calendar,
                     u.portal_user,
@@ -178,10 +179,10 @@ try {
                 echo json_encode(['user' => $user]);
 
             } elseif ($action === 'supervisors') {
-                // Get list of potential supervisors (active providers)
+                // Get list of potential supervisors (users marked as supervisors)
                 $sql = "SELECT id, fname, lname, title
                         FROM users
-                        WHERE active = 1 AND authorized = 1
+                        WHERE active = 1 AND is_supervisor = 1
                         ORDER BY lname, fname";
 
                 $result = sqlStatement($sql);
@@ -255,12 +256,13 @@ try {
                 supervisor_id,
                 facility_id,
                 authorized,
+                is_supervisor,
                 active,
                 calendar,
                 portal_user,
                 see_auth,
                 notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             $params = [
                 $username,
@@ -280,6 +282,7 @@ try {
                 $input['supervisor_id'] ?? 0,
                 $input['facility_id'] ?? 0,
                 $input['authorized'] ?? 0, // Is provider
+                $input['is_supervisor'] ?? 0, // Is supervisor
                 $input['active'] ?? 1,
                 $input['calendar'] ?? 0, // Is admin
                 $input['portal_user'] ?? 0,
@@ -336,6 +339,7 @@ try {
                 supervisor_id = ?,
                 facility_id = ?,
                 authorized = ?,
+                is_supervisor = ?,
                 active = ?,
                 calendar = ?,
                 portal_user = ?,
@@ -359,6 +363,7 @@ try {
                 $input['supervisor_id'] ?? 0,
                 $input['facility_id'] ?? 0,
                 $input['authorized'] ?? 0,
+                $input['is_supervisor'] ?? 0,
                 $input['active'] ?? 1,
                 $input['calendar'] ?? 0,
                 $input['portal_user'] ?? 0,
