@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 function DocumentCategories() {
   const [categories, setCategories] = useState([]);
@@ -258,7 +259,7 @@ function DocumentCategories() {
       )}
 
       {/* Add Modal */}
-      {showAddModal && (
+      {showAddModal && createPortal(
         <div className="modal-backdrop">
           <div className="modal-container">
             {/* Header */}
@@ -317,11 +318,12 @@ function DocumentCategories() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Edit Modal */}
-      {showEditModal && (
+      {showEditModal && createPortal(
         <div className="modal-backdrop">
           <div className="modal-container">
             {/* Header */}
@@ -379,11 +381,12 @@ function DocumentCategories() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
+      {showDeleteModal && createPortal(
         <div className="modal-backdrop">
           <div className="modal-container">
             {/* Header */}
@@ -438,7 +441,8 @@ function DocumentCategories() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
