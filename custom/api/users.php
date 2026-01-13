@@ -8,9 +8,10 @@
 // Start output buffering
 ob_start();
 
-// Disable all error display
-ini_set('display_errors', 0);
-error_reporting(0);
+// TEMPORARY: Enable error display for debugging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 // IMPORTANT: Set these BEFORE loading globals.php
 $ignoreAuth = true;
@@ -132,8 +133,30 @@ try {
                     exit;
                 }
 
+                // Be explicit about columns instead of SELECT * to avoid binary/problematic data
                 $sql = "SELECT
-                    u.*,
+                    u.id,
+                    u.username,
+                    u.fname,
+                    u.mname,
+                    u.lname,
+                    u.suffix,
+                    u.title,
+                    u.email,
+                    u.phone,
+                    u.phonecell,
+                    u.npi,
+                    u.federaltaxid,
+                    u.taxonomy,
+                    u.state_license_number,
+                    u.supervisor_id,
+                    u.facility_id,
+                    u.authorized,
+                    u.active,
+                    u.calendar,
+                    u.portal_user,
+                    u.see_auth,
+                    u.notes,
                     sup.fname AS supervisor_fname,
                     sup.lname AS supervisor_lname
                 FROM users u
@@ -150,7 +173,7 @@ try {
                     exit;
                 }
 
-                error_log("Users API: User found - ID: $userId, Username: " . $user['username']);
+                error_log("Users API: User found - ID: $userId, Username: " . ($user['username'] ?? 'unknown'));
                 http_response_code(200);
                 echo json_encode(['user' => $user]);
 
