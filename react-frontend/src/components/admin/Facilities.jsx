@@ -1,0 +1,818 @@
+/**
+ * Mindline EMHR - Facilities Management
+ * Manage practice facilities/locations
+ *
+ * Author: Kenneth J. Nelan
+ * License: Proprietary and Confidential
+ * Version: ALPHA
+ *
+ * Copyright © 2026 Sacred Wandering
+ * Proprietary and Confidential
+ */
+
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+
+function Facilities() {
+  const [facilities, setFacilities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('active');
+
+  // Modal states
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [formData, setFormData] = useState({
+    id: null,
+    name: '',
+    phone: '',
+    fax: '',
+    website: '',
+    email: '',
+    street: '',
+    city: '',
+    state: '',
+    postal_code: '',
+    country_code: 'United States',
+    color: '#99FFFF',
+    pos_code: '11',
+    facility_npi: '',
+    federal_ein: '',
+    tax_id_type: 'EIN',
+    facility_taxonomy: '',
+    billing_attn: '',
+    info: '',
+    billing_location: 0,
+    accepts_assignment: 0,
+    service_location: 1,
+    primary_business_entity: 0,
+    inactive: 0
+  });
+  const [formError, setFormError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [addressTab, setAddressTab] = useState('physical');
+
+  // POS Code options (common ones for healthcare)
+  const posCodeOptions = [
+    { value: '11', label: '11: Office' },
+    { value: '02', label: '02: Telehealth' },
+    { value: '10', label: '10: Telehealth (Patient Home)' },
+    { value: '12', label: '12: Home' },
+    { value: '21', label: '21: Inpatient Hospital' },
+    { value: '22', label: '22: Outpatient Hospital' },
+    { value: '23', label: '23: Emergency Room' },
+    { value: '31', label: '31: Skilled Nursing Facility' },
+    { value: '32', label: '32: Nursing Facility' },
+    { value: '49', label: '49: Independent Clinic' },
+    { value: '50', label: '50: Federally Qualified Health Center' },
+    { value: '71', label: '71: State/Local Public Health Clinic' },
+    { value: '81', label: '81: Independent Laboratory' }
+  ];
+
+  useEffect(() => {
+    fetchFacilities();
+  }, []);
+
+  const fetchFacilities = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/custom/api/facilities.php', {
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch facilities');
+      }
+
+      const data = await response.json();
+      setFacilities(data.facilities || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdd = () => {
+    setFormData({
+      id: null,
+      name: '',
+      phone: '',
+      fax: '',
+      website: '',
+      email: '',
+      street: '',
+      city: '',
+      state: '',
+      postal_code: '',
+      country_code: 'United States',
+      color: '#99FFFF',
+      pos_code: '11',
+      facility_npi: '',
+      federal_ein: '',
+      tax_id_type: 'EIN',
+      facility_taxonomy: '',
+      billing_attn: '',
+      info: '',
+      billing_location: 0,
+      accepts_assignment: 0,
+      service_location: 1,
+      primary_business_entity: 0,
+      inactive: 0
+    });
+    setFormError('');
+    setAddressTab('physical');
+    setShowAddModal(true);
+  };
+
+  const handleEdit = async (facility) => {
+    try {
+      const response = await fetch(`/custom/api/facilities.php?action=get&id=${facility.id}`, {
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load facility details');
+      }
+
+      const data = await response.json();
+      setFormData({
+        ...data,
+        billing_location: data.billing_location === '1' || data.billing_location === 1 ? 1 : 0,
+        accepts_assignment: data.accepts_assignment === '1' || data.accepts_assignment === 1 ? 1 : 0,
+        service_location: data.service_location === '1' || data.service_location === 1 ? 1 : 0,
+        primary_business_entity: data.primary_business_entity === '1' || data.primary_business_entity === 1 ? 1 : 0,
+        inactive: data.inactive === '1' || data.inactive === 1 ? 1 : 0
+      });
+      setFormError('');
+      setAddressTab('physical');
+      setShowEditModal(true);
+    } catch (err) {
+      alert('Failed to load facility details: ' + err.message);
+    }
+  };
+
+  const handleSaveNew = async () => {
+    if (!formData.name?.trim()) {
+      setFormError('Facility name is required');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setFormError('');
+
+      const response = await fetch('/custom/api/facilities.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create facility');
+      }
+
+      await fetchFacilities();
+      setShowAddModal(false);
+    } catch (err) {
+      setFormError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!formData.name?.trim()) {
+      setFormError('Facility name is required');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setFormError('');
+
+      const response = await fetch('/custom/api/facilities.php', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update facility');
+      }
+
+      await fetchFacilities();
+      setShowEditModal(false);
+    } catch (err) {
+      setFormError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeactivate = async (facilityId) => {
+    if (!confirm('Are you sure you want to deactivate this facility?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/custom/api/facilities.php?id=${facilityId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to deactivate facility');
+      }
+
+      await fetchFacilities();
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  };
+
+  const handleCloseModals = () => {
+    setShowAddModal(false);
+    setShowEditModal(false);
+    setFormError('');
+  };
+
+  const handleFormChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleToggle = (field) => {
+    setFormData(prev => ({ ...prev, [field]: prev[field] ? 0 : 1 }));
+  };
+
+  const filteredFacilities = facilities.filter(facility => {
+    // Status filter
+    const isActive = facility.inactive === '0' || facility.inactive === 0;
+    if (statusFilter === 'active' && !isActive) return false;
+    if (statusFilter === 'inactive' && isActive) return false;
+
+    // Search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        facility.name?.toLowerCase().includes(searchLower) ||
+        facility.city?.toLowerCase().includes(searchLower) ||
+        facility.state?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return true;
+  });
+
+  if (loading) {
+    return (
+      <div className="glass-card p-8">
+        <div className="text-center text-gray-700">Loading facilities...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="glass-card p-8">
+        <div className="text-center text-red-600">Error: {error}</div>
+        <div className="text-center mt-4">
+          <button
+            onClick={fetchFacilities}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="glass-card p-6">
+      {/* Header Section */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-800">Facilities</h2>
+          <p className="text-gray-600 mt-1">Manage practice locations and facilities</p>
+        </div>
+        <button
+          onClick={handleAdd}
+          className="btn-solid btn-solid-green btn-icon"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Add Facility
+        </button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder="Search by name, city, or state..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="input-lg"
+        />
+      </div>
+
+      {/* Filter Buttons */}
+      <div className="flex gap-3 mb-6">
+        <button
+          onClick={() => setStatusFilter('active')}
+          className={`filter-btn-enhanced ${
+            statusFilter === 'active'
+              ? 'filter-btn-active-base bg-green-500'
+              : 'filter-btn-inactive'
+          }`}
+        >
+          Active
+        </button>
+        <button
+          onClick={() => setStatusFilter('inactive')}
+          className={`filter-btn-enhanced ${
+            statusFilter === 'inactive'
+              ? 'filter-btn-active-base bg-red-500'
+              : 'filter-btn-inactive'
+          }`}
+        >
+          Inactive
+        </button>
+        <button
+          onClick={() => setStatusFilter('all')}
+          className={`filter-btn-enhanced ${
+            statusFilter === 'all'
+              ? 'filter-btn-active-base bg-blue-500'
+              : 'filter-btn-inactive'
+          }`}
+        >
+          All Facilities
+        </button>
+      </div>
+
+      {/* Facility Count */}
+      {filteredFacilities.length > 0 && (
+        <div className="mb-4">
+          <p className="text-gray-700 font-semibold">
+            {filteredFacilities.length} {statusFilter !== 'all' ? statusFilter : ''} facilit{filteredFacilities.length !== 1 ? 'ies' : 'y'}
+          </p>
+        </div>
+      )}
+
+      {/* Facility List */}
+      {filteredFacilities.length === 0 ? (
+        <div className="text-center py-12">
+          <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          <p className="text-gray-600 text-lg">No {statusFilter !== 'all' ? statusFilter : ''} facilities found</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredFacilities.map(facility => (
+            <div
+              key={facility.id}
+              className="card-item"
+            >
+              {/* Card Header with Name and Status */}
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <h4 className="text-base font-bold text-gray-800 leading-tight">
+                    {facility.name}
+                  </h4>
+                </div>
+                <span className={(facility.inactive === '0' || facility.inactive === 0) ? 'badge-solid-success' : 'badge-solid-danger'}>
+                  {(facility.inactive === '0' || facility.inactive === 0) ? 'ACTIVE' : 'INACTIVE'}
+                </span>
+              </div>
+
+              {/* Card Body with Facility Details */}
+              <div className="space-y-0.5 text-sm text-gray-600 mb-2">
+                {facility.street && (
+                  <div>
+                    <span className="font-semibold">Address:</span> {facility.street}, {facility.city}, {facility.state} {facility.postal_code}
+                  </div>
+                )}
+                {facility.phone && (
+                  <div>
+                    <span className="font-semibold">Phone:</span> {facility.phone}
+                  </div>
+                )}
+                {facility.fax && (
+                  <div>
+                    <span className="font-semibold">Fax:</span> {facility.fax}
+                  </div>
+                )}
+                {/* Role Badges */}
+                <div className="flex gap-2 mt-1.5 flex-wrap">
+                  {(facility.billing_location === '1' || facility.billing_location === 1) && (
+                    <span className="badge-outline-info text-xs">Billing</span>
+                  )}
+                  {(facility.service_location === '1' || facility.service_location === 1) && (
+                    <span className="badge-outline-success text-xs">Service</span>
+                  )}
+                  {(facility.primary_business_entity === '1' || facility.primary_business_entity === 1) && (
+                    <span className="badge-outline-warning text-xs">Primary</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Card Footer with Action Buttons */}
+              <div className="flex gap-2 pt-2 border-t border-gray-200">
+                <button
+                  onClick={() => handleEdit(facility)}
+                  className="flex-1 px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                >
+                  Edit
+                </button>
+                {(facility.inactive === '0' || facility.inactive === 0) && (
+                  <button
+                    onClick={() => handleDeactivate(facility.id)}
+                    className="flex-1 px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    Deactivate
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add/Edit Modal */}
+      {(showAddModal || showEditModal) && createPortal(
+        <FacilityFormModal
+          isEdit={showEditModal}
+          formData={formData}
+          formError={formError}
+          saving={saving}
+          addressTab={addressTab}
+          setAddressTab={setAddressTab}
+          posCodeOptions={posCodeOptions}
+          onFormChange={handleFormChange}
+          onToggle={handleToggle}
+          onSave={showEditModal ? handleSaveEdit : handleSaveNew}
+          onClose={handleCloseModals}
+        />,
+        document.body
+      )}
+    </div>
+  );
+}
+
+// Separate modal component
+function FacilityFormModal({
+  isEdit,
+  formData,
+  formError,
+  saving,
+  addressTab,
+  setAddressTab,
+  posCodeOptions,
+  onFormChange,
+  onToggle,
+  onSave,
+  onClose
+}) {
+  return (
+    <div className="modal-backdrop">
+      <div className="modal-container max-w-4xl">
+        {/* Modal Header */}
+        <div className="modal-header">
+          <h3 className="text-xl font-bold text-gray-800">
+            {isEdit ? 'Edit Facility' : 'Add New Facility'}
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Modal Body */}
+        <div className="modal-body">
+          {formError && (
+            <div className="error-message mb-4">
+              {formError}
+            </div>
+          )}
+
+          {/* Facility Name */}
+          <div className="mb-4">
+            <label className="block text-gray-700 font-semibold mb-2">
+              Facility Name <span className="text-red-600">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.name || ''}
+              onChange={(e) => onFormChange('name', e.target.value)}
+              className="input-field"
+              placeholder="Enter facility name"
+            />
+          </div>
+
+          {/* Address Tabs */}
+          <div className="mb-4">
+            <div className="flex border-b border-gray-300 mb-4">
+              <button
+                onClick={() => setAddressTab('physical')}
+                className={`px-4 py-2 font-semibold ${
+                  addressTab === 'physical'
+                    ? 'border-b-2 border-blue-600 text-blue-600'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                Physical Address
+              </button>
+              <button
+                onClick={() => setAddressTab('mailing')}
+                className={`px-4 py-2 font-semibold ${
+                  addressTab === 'mailing'
+                    ? 'border-b-2 border-blue-600 text-blue-600'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                Mailing Address
+              </button>
+            </div>
+
+            {/* Address Fields */}
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">Street Address</label>
+                <input
+                  type="text"
+                  value={formData.street || ''}
+                  onChange={(e) => onFormChange('street', e.target.value)}
+                  className="input-field"
+                  placeholder="Enter street address"
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">City</label>
+                  <input
+                    type="text"
+                    value={formData.city || ''}
+                    onChange={(e) => onFormChange('city', e.target.value)}
+                    className="input-field"
+                    placeholder="City"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">State</label>
+                  <input
+                    type="text"
+                    value={formData.state || ''}
+                    onChange={(e) => onFormChange('state', e.target.value)}
+                    className="input-field"
+                    placeholder="WI"
+                    maxLength={2}
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">Zip Code</label>
+                  <input
+                    type="text"
+                    value={formData.postal_code || ''}
+                    onChange={(e) => onFormChange('postal_code', e.target.value)}
+                    className="input-field"
+                    placeholder="53092"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">Country</label>
+                <input
+                  type="text"
+                  value={formData.country_code || ''}
+                  onChange={(e) => onFormChange('country_code', e.target.value)}
+                  className="input-field"
+                  placeholder="United States"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">Phone</label>
+              <input
+                type="tel"
+                value={formData.phone || ''}
+                onChange={(e) => onFormChange('phone', e.target.value)}
+                className="input-field"
+                placeholder="262-345-7229"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">Fax</label>
+              <input
+                type="tel"
+                value={formData.fax || ''}
+                onChange={(e) => onFormChange('fax', e.target.value)}
+                className="input-field"
+                placeholder="262-345-7229"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">Website</label>
+              <input
+                type="url"
+                value={formData.website || ''}
+                onChange={(e) => onFormChange('website', e.target.value)}
+                className="input-field"
+                placeholder="https://example.com"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">Email</label>
+              <input
+                type="email"
+                value={formData.email || ''}
+                onChange={(e) => onFormChange('email', e.target.value)}
+                className="input-field"
+                placeholder="contact@example.com"
+              />
+            </div>
+          </div>
+
+          {/* Administrative Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">Color</label>
+              <input
+                type="color"
+                value={formData.color || '#99FFFF'}
+                onChange={(e) => onFormChange('color', e.target.value)}
+                className="input-field h-10"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">POS Code</label>
+              <select
+                value={formData.pos_code || '11'}
+                onChange={(e) => onFormChange('pos_code', e.target.value)}
+                className="input-field"
+              >
+                {posCodeOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">Facility NPI</label>
+              <input
+                type="text"
+                value={formData.facility_npi || ''}
+                onChange={(e) => onFormChange('facility_npi', e.target.value)}
+                className="input-field"
+                placeholder="1811342058"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">Tax ID</label>
+              <div className="flex gap-2">
+                <select
+                  value={formData.tax_id_type || 'EIN'}
+                  onChange={(e) => onFormChange('tax_id_type', e.target.value)}
+                  className="input-field w-24"
+                >
+                  <option value="EIN">EIN</option>
+                  <option value="SSN">SSN</option>
+                </select>
+                <input
+                  type="text"
+                  value={formData.federal_ein || ''}
+                  onChange={(e) => onFormChange('federal_ein', e.target.value)}
+                  className="input-field flex-1"
+                  placeholder="566611885"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">Facility Taxonomy</label>
+              <input
+                type="text"
+                value={formData.facility_taxonomy || ''}
+                onChange={(e) => onFormChange('facility_taxonomy', e.target.value)}
+                className="input-field"
+                placeholder="101YP2500X"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">Billing Attn</label>
+              <input
+                type="text"
+                value={formData.billing_attn || ''}
+                onChange={(e) => onFormChange('billing_attn', e.target.value)}
+                className="input-field"
+                placeholder="Kenneth J Nelan"
+              />
+            </div>
+          </div>
+
+          {/* Toggles */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.billing_location === 1}
+                onChange={() => onToggle('billing_location')}
+                className="w-5 h-5 rounded border-gray-300"
+              />
+              <span className="text-gray-700 font-semibold">Billing Location</span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.accepts_assignment === 1}
+                onChange={() => onToggle('accepts_assignment')}
+                className="w-5 h-5 rounded border-gray-300"
+              />
+              <span className="text-gray-700 font-semibold">Accepts Assignment</span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.service_location === 1}
+                onChange={() => onToggle('service_location')}
+                className="w-5 h-5 rounded border-gray-300"
+              />
+              <span className="text-gray-700 font-semibold">Service Location</span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.primary_business_entity === 1}
+                onChange={() => onToggle('primary_business_entity')}
+                className="w-5 h-5 rounded border-gray-300"
+              />
+              <span className="text-gray-700 font-semibold">Primary Business Entity</span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.inactive === 1}
+                onChange={() => onToggle('inactive')}
+                className="w-5 h-5 rounded border-gray-300"
+              />
+              <span className="text-gray-700 font-semibold">Facility Inactive</span>
+            </label>
+          </div>
+
+          {/* Info Textarea */}
+          <div className="mb-4">
+            <label className="block text-gray-700 font-semibold mb-2">Info</label>
+            <textarea
+              value={formData.info || ''}
+              onChange={(e) => onFormChange('info', e.target.value)}
+              className="input-field"
+              rows={4}
+              placeholder="Additional information about this facility..."
+            />
+          </div>
+
+          <p className="text-sm text-gray-600"><span className="text-red-600">*</span> Required</p>
+        </div>
+
+        {/* Modal Footer */}
+        <div className="modal-footer">
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className="btn-action btn-cancel"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onSave}
+            disabled={saving}
+            className="btn-action btn-primary"
+          >
+            {saving ? 'Saving...' : (isEdit ? 'Save Changes' : 'Add Facility')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default Facilities;
