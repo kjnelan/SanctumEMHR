@@ -5,7 +5,7 @@
 # Based on custom code dependency analysis
 #
 # This script removes directories that are NOT used by custom code.
-# Total space savings: ~60MB
+# Total space savings: ~57MB
 #
 
 set -e  # Exit on error
@@ -77,9 +77,6 @@ echo "=========================================="
 echo ""
 echo "Removed directories successfully."
 echo ""
-echo "Optional: Remove React source code (if you won't modify frontend):"
-echo "  rm -rf react-frontend/  # Saves additional 2.6MB"
-echo ""
 echo "REQUIRED directories are still intact:"
 echo "  ✓ vendor/ (to be installed)"
 echo "  ✓ src/"
@@ -91,8 +88,9 @@ echo "  ✓ public/"
 echo "  ✓ gacl/"
 echo "  ✓ templates/"
 echo "  ✓ config/"
-echo "  ✓ custom/"
-echo "  ✓ app/"
+echo "  ✓ custom/ (YOUR backend API code)"
+echo "  ✓ react-frontend/ (YOUR React source code)"
+echo "  ✓ app/ (YOUR built React app)"
 echo "  ✓ apis/"
 echo ""
 echo "Next steps:"
