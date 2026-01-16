@@ -217,6 +217,14 @@ class UserService
             }
         }
 
+        // Convert boolean values to integers for MySQL
+        if (isset($data['is_active'])) {
+            $data['is_active'] = (int) $data['is_active'];
+        }
+        if (isset($data['is_provider'])) {
+            $data['is_provider'] = (int) $data['is_provider'];
+        }
+
         try {
             $this->db->updateArray('users', $data, 'id = ?', [$userId]);
 
@@ -332,7 +340,7 @@ class UserService
     {
         try {
             $sql = "UPDATE users SET is_active = ? WHERE id = ?";
-            $this->db->execute($sql, [$isActive, $userId]);
+            $this->db->execute($sql, [(int) $isActive, $userId]);
 
             $status = $isActive ? 'activated' : 'deactivated';
             $this->logAudit($userId, 'user_' . $status, 'user', $userId, "User $status");

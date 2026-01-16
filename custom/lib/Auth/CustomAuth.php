@@ -409,6 +409,14 @@ class CustomAuth
         // Generate UUID
         $userData['uuid'] = $this->generateUuid();
 
+        // Convert boolean values to integers for MySQL
+        if (isset($userData['is_active'])) {
+            $userData['is_active'] = (int) $userData['is_active'];
+        }
+        if (isset($userData['is_provider'])) {
+            $userData['is_provider'] = (int) $userData['is_provider'];
+        }
+
         // Insert user
         try {
             $userId = $this->db->insertArray('users', $userData);
