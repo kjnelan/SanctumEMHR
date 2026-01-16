@@ -3,6 +3,7 @@
 namespace Custom\Lib\Session;
 
 use Custom\Lib\Database\Database;
+use SessionHandlerInterface;
 
 /**
  * Session Manager for MINDLINE
@@ -11,7 +12,7 @@ use Custom\Lib\Database\Database;
  *
  * Handles session management with database storage for security and scalability.
  */
-class SessionManager
+class SessionManager implements SessionHandlerInterface
 {
     private static ?SessionManager $instance = null;
     private Database $db;
@@ -57,15 +58,8 @@ class SessionManager
         // Set session name
         session_name(self::SESSION_NAME);
 
-        // Set custom session handler (database storage)
-        session_set_save_handler(
-            [$this, 'sessionOpen'],
-            [$this, 'sessionClose'],
-            [$this, 'sessionRead'],
-            [$this, 'sessionWrite'],
-            [$this, 'sessionDestroy'],
-            [$this, 'sessionGarbageCollection']
-        );
+        // Set custom session handler (database storage) - use object implementing SessionHandlerInterface
+        session_set_save_handler($this, true);
 
         // Start the session
         if (session_status() === PHP_SESSION_NONE) {
@@ -80,24 +74,27 @@ class SessionManager
 
     /**
      * Session open handler
+     * Required by SessionHandlerInterface
      */
-    public function sessionOpen($savePath, $sessionName): bool
+    public function open(string $savePath, string $sessionName): bool
     {
         return true;
     }
 
     /**
      * Session close handler
+     * Required by SessionHandlerInterface
      */
-    public function sessionClose(): bool
+    public function close(): bool
     {
         return true;
     }
 
     /**
      * Session read handler
+     * Required by SessionHandlerInterface
      */
-    public function sessionRead($sessionId): string
+    public function read(string $sessionId): string|false
     {
         try {
             $sql = "SELECT payload FROM sessions WHERE id = ? LIMIT 1";
@@ -121,8 +118,9 @@ class SessionManager
 
     /**
      * Session write handler
+     * Required by SessionHandlerInterface
      */
-    public function sessionWrite($sessionId, $data): bool
+    public function write(string $sessionId, string $data): bool
     {
         try {
             $userId = $_SESSION['user_id'] ?? null;
@@ -150,8 +148,9 @@ class SessionManager
 
     /**
      * Session destroy handler
+     * Required by SessionHandlerInterface
      */
-    public function sessionDestroy($sessionId): bool
+    public function destroy(string $sessionId): bool
     {
         try {
             $sql = "DELETE FROM sessions WHERE id = ?";
@@ -165,8 +164,9 @@ class SessionManager
 
     /**
      * Session garbage collection handler
+     * Required by SessionHandlerInterface
      */
-    public function sessionGarbageCollection($maxLifetime): int
+    public function gc(int $maxLifetime): int|false
     {
         try {
             $expiredTime = time() - $maxLifetime;
@@ -174,7 +174,7 @@ class SessionManager
             return $this->db->execute($sql, [$expiredTime]);
         } catch (\Exception $e) {
             error_log("Session GC error: " . $e->getMessage());
-            return 0;
+            return false;
         }
     }
 
