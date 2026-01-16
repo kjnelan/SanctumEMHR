@@ -11,9 +11,11 @@
 // Load autoloader
 require_once dirname(__FILE__, 2) . "/vendor/autoload.php";
 require_once dirname(__FILE__, 2) . "/custom/lib/Database/Database.php";
+require_once dirname(__FILE__, 2) . "/custom/lib/Session/SessionManager.php";
 require_once dirname(__FILE__, 2) . "/custom/lib/Auth/CustomAuth.php";
 
 use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 use Custom\Lib\Auth\CustomAuth;
 
 echo "\n==============================================\n";
