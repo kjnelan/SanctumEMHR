@@ -1,69 +1,70 @@
 <?php
-
 /**
- * Session logout endpoint for React frontend
+ * MINDLINE Logout API
  *
- * This endpoint destroys the current session and logs out the user.
+ * Destroys user session and logs them out.
  *
- * @package   OpenEMR
- * @link      https://www.open-emr.org
- * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
+ * @package MINDLINE
  */
 
-// Set the site ID before loading OpenEMR globals
-$_GET['site'] = 'default';
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-// Load autoloader first
-$GLOBALS['already_autoloaded'] = true;
+// Load Composer autoloader
 require_once dirname(__FILE__, 3) . "/vendor/autoload.php";
 
-// Set webroot and start core session
-$GLOBALS['webroot'] = '';
-use OpenEMR\Common\Session\SessionUtil;
-SessionUtil::coreSessionStart($GLOBALS['webroot']);
+// Load custom classes
+require_once dirname(__FILE__, 2) . "/lib/Database/Database.php";
+require_once dirname(__FILE__, 2) . "/lib/Session/SessionManager.php";
 
-// Skip authentication checks - we'll handle logout manually
-$ignoreAuth_onsite_portal_two = true;
-$ignoreAuth = true;
+use Custom\Lib\Session\SessionManager;
 
-// Set up OpenEMR environment
-require_once dirname(__FILE__, 3) . "/interface/globals.php";
-
-use OpenEMR\Common\Logging\EventAuditLogger;
-
-// Enable CORS for React app
+// CORS headers
 header('Access-Control-Allow-Origin: ' . ($_SERVER['HTTP_ORIGIN'] ?? '*'));
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 header('Content-Type: application/json');
 
-// Handle preflight OPTIONS request
+// Handle preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// Only accept POST requests
+// Only POST allowed
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
     exit;
 }
 
-// Log the logout event if user is authenticated
-if (!empty($_SESSION['authUser']) && !empty($_SESSION['authProvider'])) {
-    EventAuditLogger::instance()->newEvent(
-        "logout",
-        $_SESSION['authUser'],
-        $_SESSION['authProvider'],
-        1,
-        "User logged out from React frontend"
-    );
+try {
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    // Get user info before logout for logging
+    $userId = $session->getUserId();
+    $username = $session->getUsername();
+
+    // Log the logout if user was logged in
+    if ($userId) {
+        // Note: We could add audit logging here if needed
+        error_log("User $username (ID: $userId) logged out");
+    }
+
+    // Destroy session
+    $session->logout();
+
+    http_response_code(200);
+    echo json_encode([
+        'success' => true,
+        'message' => 'Logged out successfully'
+    ]);
+
+} catch (\Exception $e) {
+    error_log("Logout error: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['error' => 'Failed to logout']);
 }
-
-// Destroy the session
-SessionUtil::coreSessionDestroy();
-
-http_response_code(200);
-echo json_encode(['success' => true]);

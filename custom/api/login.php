@@ -1,24 +1,29 @@
 <?php
 /**
- * Simple JSON login wrapper for OpenEMR's existing authentication
+ * MINDLINE Login API
  *
- * This is just a thin API wrapper - all actual authentication
- * is handled by OpenEMR's existing auth.inc.php system.
+ * Handles user authentication using the new MINDLINE database and auth system.
+ *
+ * @package MINDLINE
  */
 
-// Enable error display for debugging
+// Enable error reporting for debugging
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Set site before including anything
-$_GET['site'] = 'default';
+// Load Composer autoloader
+require_once dirname(__FILE__, 3) . "/vendor/autoload.php";
 
-// Allow auth.inc.php to run without redirecting
-$ignoreAuth = true;
-$sessionAllowWrite = true;
+// Load custom classes
+require_once dirname(__FILE__, 2) . "/lib/Database/Database.php";
+require_once dirname(__FILE__, 2) . "/lib/Auth/CustomAuth.php";
+require_once dirname(__FILE__, 2) . "/lib/Session/SessionManager.php";
+require_once dirname(__FILE__, 2) . "/lib/Services/UserService.php";
 
-// Include OpenEMR's auth system
-require_once dirname(__FILE__, 3) . "/interface/globals.php";
+use Custom\Lib\Database\Database;
+use Custom\Lib\Auth\CustomAuth;
+use Custom\Lib\Session\SessionManager;
+use Custom\Lib\Services\UserService;
 
 // CORS headers
 header('Access-Control-Allow-Origin: ' . ($_SERVER['HTTP_ORIGIN'] ?? '*'));
@@ -29,6 +34,7 @@ header('Content-Type: application/json');
 
 // Handle preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
     exit;
 }
 
@@ -41,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Get JSON input
 $input = json_decode(file_get_contents('php://input'), true);
-$username = $input['username'] ?? '';
+$username = trim($input['username'] ?? '');
 $password = $input['password'] ?? '';
 
 if (empty($username) || empty($password)) {
@@ -50,56 +56,52 @@ if (empty($username) || empty($password)) {
     exit;
 }
 
-// Use OpenEMR's existing auth system
-use OpenEMR\Common\Auth\AuthUtils;
-use OpenEMR\Common\Logging\EventAuditLogger;
-use OpenEMR\Services\UserService;
+try {
+    // Initialize services
+    $db = Database::getInstance();
+    $auth = new CustomAuth($db);
+    $session = SessionManager::getInstance();
+    $userService = new UserService($db, $auth);
 
-$authUtils = new AuthUtils('login');
-$loginSuccess = $authUtils->confirmPassword($username, $password);
+    // Start session
+    $session->start();
 
-if ($loginSuccess !== true) {
-    EventAuditLogger::instance()->newEvent("login", $username, '', 0, "Failed login from React app");
+    // Authenticate user
+    $user = $auth->authenticate($username, $password);
 
-    http_response_code(401);
-    echo json_encode(['error' => 'Invalid username or password']);
-    exit;
+    if (!$user) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Invalid username or password']);
+        exit;
+    }
+
+    // Login successful - set session
+    $session->login($user);
+
+    // Get full user details for response
+    $userDetails = $userService->getUserWithFormattedName($user['id']);
+
+    // Return success response
+    http_response_code(200);
+    echo json_encode([
+        'success' => true,
+        'user' => [
+            'id' => $userDetails['id'],
+            'username' => $userDetails['username'],
+            'email' => $userDetails['email'],
+            'firstName' => $userDetails['first_name'],
+            'lastName' => $userDetails['last_name'],
+            'fullName' => $userDetails['full_name'],
+            'displayName' => $userDetails['display_name'],
+            'userType' => $userDetails['user_type'],
+            'isProvider' => (bool) $userDetails['is_provider'],
+            'isAdmin' => $userDetails['user_type'] === 'admin',
+            'npi' => $userDetails['npi'] ?? null
+        ]
+    ]);
+
+} catch (\Exception $e) {
+    error_log("Login error: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['error' => 'An error occurred during login. Please try again.']);
 }
-
-// Get user details FIRST to ensure we have valid user data
-$userService = new UserService();
-$userRecord = $userService->getUserByUsername($username);
-
-if (!$userRecord) {
-    http_response_code(401);
-    echo json_encode(['error' => 'User not found']);
-    exit;
-}
-
-// EXPLICITLY set all required session variables
-// confirmPassword may have set some, but let's ensure they're ALL set
-$_SESSION['authUser'] = $username;
-$_SESSION['authUserID'] = $userRecord['id'];
-$_SESSION['authProvider'] = $userRecord['authorized'] ?? 0;
-$_SESSION['calendar'] = $userRecord['calendar'] ?? 0;
-$_SESSION['userauthorized'] = $userRecord['authorized'] ?? 0;
-
-// Write session to ensure it persists
-session_write_close();
-session_start(); // Restart for reading
-
-// Login successful
-EventAuditLogger::instance()->newEvent("login", $_SESSION['authUser'], $_SESSION['authProvider'] ?? '', 1, "Successful login from React app");
-
-echo json_encode([
-    'success' => true,
-    'user' => [
-        'id' => $_SESSION['authUserID'],
-        'username' => $_SESSION['authUser'],
-        'fname' => $userRecord['fname'] ?? '',
-        'lname' => $userRecord['lname'] ?? '',
-        'fullName' => trim(($userRecord['fname'] ?? '') . ' ' . ($userRecord['lname'] ?? '')),
-        'authorized' => $_SESSION['authProvider'] ?? 0,
-        'admin' => ($userRecord['calendar'] ?? 0) == 1 // Only calendar admins have admin access
-    ]
-]);
