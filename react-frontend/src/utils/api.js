@@ -86,20 +86,18 @@ export async function getUserDetails() {
     console.log('Session user response:', response);
 
     if (response && response.username) {
-      // Update localStorage with latest user info
+      // Store the raw response for compatibility
       localStorage.setItem('user', JSON.stringify(response));
 
+      // Return in format the React app expects, mapping new API fields to old field names
       return {
         id: response.id || null,
-        firstName: response.firstName || '',
-        lastName: response.lastName || '',
-        fullName: response.fullName,
-        displayName: response.displayName,
-        userType: response.userType,
-        isAdmin: response.isAdmin || false,
-        isProvider: response.isProvider || false,
-        username: response.username || null,
-        email: response.email || null
+        fname: response.firstName || response.fname || '',
+        lname: response.lastName || response.lname || '',
+        fullName: response.fullName || response.fullName || '',
+        displayName: response.displayName || response.fullName || '',
+        admin: response.isAdmin || response.admin || false,
+        username: response.username || null
       };
     }
   } catch (error) {
