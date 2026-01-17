@@ -1,7 +1,7 @@
 <?php
 /**
  * Mindline EMHR
- * Delete Note API - Session-based authentication
+ * Delete Note API - Session-based authentication (MIGRATED TO MINDLINE)
  * Deletes unsigned clinical notes only
  *
  * Author: Kenneth J. Nelan
@@ -12,18 +12,12 @@
  * Proprietary and Confidential
  */
 
-// Start output buffering
-ob_start();
+require_once(__DIR__ . '/../../init.php');
 
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
-require_once(__DIR__ . '/../../../interface/globals.php');
-
-ob_end_clean();
-
-error_log("Delete note API called - Session ID: " . session_id());
+error_log("Delete note API called");
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -41,55 +35,64 @@ if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
     exit;
 }
 
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Delete note: Not authenticated");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-// Get request body
-$input = file_get_contents('php://input');
-$data = json_decode($input, true);
-
-$noteId = $data['note_id'] ?? null;
-
-if (!$noteId) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Note ID required']);
-    exit;
-}
-
-error_log("Delete note: User " . $_SESSION['authUserID'] . " attempting to delete note " . $noteId);
-
 try {
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    if (!$session->isAuthenticated()) {
+        error_log("Delete note: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    $userId = $session->getUserId();
+
+    // Initialize database
+    $db = Database::getInstance();
+
+    // Get request body
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+
+    $noteId = $data['note_id'] ?? null;
+
+    if (!$noteId) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Note ID required']);
+        exit;
+    }
+
+    error_log("Delete note: User $userId attempting to delete note $noteId");
+
     // Get note details
-    $noteSql = "SELECT id, provider_id, status, is_locked, signed_at
+    $noteSql = "SELECT id, created_by, status, is_locked, signed_at
                 FROM clinical_notes
                 WHERE id = ?";
-    $noteResult = sqlQuery($noteSql, [$noteId]);
+    $note = $db->query($noteSql, [$noteId]);
 
-    if (!$noteResult) {
+    if (!$note) {
         http_response_code(404);
         echo json_encode(['error' => 'Note not found']);
         exit;
     }
 
     // Check if note is signed or locked
-    if ($noteResult['is_locked'] || $noteResult['status'] === 'signed' || !empty($noteResult['signed_at'])) {
-        error_log("Delete note: Note " . $noteId . " is signed/locked - cannot delete");
+    if ($note['is_locked'] || $note['status'] === 'signed' || !empty($note['signed_at'])) {
+        error_log("Delete note: Note $noteId is signed/locked - cannot delete");
         http_response_code(403);
         echo json_encode(['error' => 'Cannot delete signed or locked notes']);
         exit;
     }
 
     // Check if user is the provider (or admin)
-    $userSql = "SELECT calendar FROM users WHERE id = ?";
-    $userResult = sqlQuery($userSql, [$_SESSION['authUserID']]);
-    $isAdmin = ($userResult && $userResult['calendar'] == 1);
+    $userSql = "SELECT is_admin FROM users WHERE id = ?";
+    $user = $db->query($userSql, [$userId]);
+    $isAdmin = ($user && $user['is_admin'] == 1);
 
-    if (!$isAdmin && $noteResult['provider_id'] != $_SESSION['authUserID']) {
-        error_log("Delete note: User " . $_SESSION['authUserID'] . " is not authorized to delete note " . $noteId);
+    if (!$isAdmin && $note['created_by'] != $userId) {
+        error_log("Delete note: User $userId is not authorized to delete note $noteId");
         http_response_code(403);
         echo json_encode(['error' => 'Not authorized to delete this note']);
         exit;
@@ -97,13 +100,13 @@ try {
 
     // Delete related drafts first
     $deleteDraftsSql = "DELETE FROM note_drafts WHERE note_id = ?";
-    sqlStatement($deleteDraftsSql, [$noteId]);
+    $db->execute($deleteDraftsSql, [$noteId]);
 
     // Delete the note
     $deleteNoteSql = "DELETE FROM clinical_notes WHERE id = ?";
-    sqlStatement($deleteNoteSql, [$noteId]);
+    $db->execute($deleteNoteSql, [$noteId]);
 
-    error_log("Delete note: Successfully deleted note " . $noteId);
+    error_log("Delete note: Successfully deleted note $noteId");
 
     http_response_code(200);
     echo json_encode([
