@@ -1,27 +1,15 @@
 <?php
 /**
- * Document Categories Management API
+ * Document Categories Management API (MIGRATED TO MINDLINE)
  * CRUD operations for document categories
  */
 
-// Start output buffering FIRST to catch any output
-ob_start();
+require_once(__DIR__ . '/../init.php');
 
-// Suppress any PHP warnings/notices that might break JSON
-error_reporting(E_ERROR | E_PARSE);
-ini_set('display_errors', '0');
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
-
-require_once(__DIR__ . '/../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Set JSON header - no more buffering, send directly
+// Set JSON header
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -33,36 +21,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
+try {
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
 
-// Close session to prevent any session-related output
-session_write_close();
+    if (!$session->isAuthenticated()) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
 
-// TODO: Check if user has admin privileges
-// For now, allowing all authenticated users
+    // Initialize database
+    $db = Database::getInstance();
 
-$method = $_SERVER['REQUEST_METHOD'];
+    // TODO: Check if user has admin privileges
+    // For now, allowing all authenticated users
 
-// Parse JSON input for POST/PUT requests
-$input = null;
-if (in_array($method, ['POST', 'PUT'])) {
-    $rawInput = file_get_contents('php://input');
-    if ($rawInput) {
-        $input = json_decode($rawInput, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Invalid JSON input: ' . json_last_error_msg()]);
-            exit;
+    $method = $_SERVER['REQUEST_METHOD'];
+
+    // Parse JSON input for POST/PUT requests
+    $input = null;
+    if (in_array($method, ['POST', 'PUT'])) {
+        $rawInput = file_get_contents('php://input');
+        if ($rawInput) {
+            $input = json_decode($rawInput, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Invalid JSON input: ' . json_last_error_msg()]);
+                exit;
+            }
         }
     }
-}
 
-try {
     switch ($method) {
         case 'GET':
             // List all document categories
@@ -70,10 +61,10 @@ try {
                               FROM categories
                               WHERE name != 'Categories'
                               ORDER BY name";
-            $result = sqlStatement($categoriesSql);
+            $rows = $db->queryAll($categoriesSql);
 
             $categories = [];
-            while ($row = sqlFetchArray($result)) {
+            foreach ($rows as $row) {
                 // Ensure numeric fields are integers, convert parent=0 to null
                 $categories[] = [
                     'id' => (int)$row['id'],
@@ -109,7 +100,7 @@ try {
 
             // Check if category already exists
             $checkSql = "SELECT id FROM categories WHERE name = ?";
-            $existing = sqlQuery($checkSql, [trim($name)]);
+            $existing = $db->query($checkSql, [trim($name)]);
 
             if ($existing) {
                 http_response_code(409);
@@ -119,7 +110,7 @@ try {
 
             // Get the highest rght value to append new category
             $maxRghtSql = "SELECT MAX(rght) as max_rght FROM categories";
-            $maxRghtResult = sqlQuery($maxRghtSql);
+            $maxRghtResult = $db->query($maxRghtSql);
             $maxRght = intval($maxRghtResult['max_rght'] ?? 1);
 
             // Insert new category
@@ -128,32 +119,24 @@ try {
             $newLft = $maxRght + 1;
             $newRght = $maxRght + 2;
 
-            try {
-                $categoryId = sqlInsert($insertSql, [
-                    trim($name),
-                    $parentId,
-                    $newLft,
-                    $newRght,
-                    'patients|docs'
-                ]);
+            $categoryId = $db->insert($insertSql, [
+                trim($name),
+                $parentId,
+                $newLft,
+                $newRght,
+                'patients|docs'
+            ]);
 
-                if (!$categoryId) {
-                    throw new Exception('Failed to insert category');
-                }
-
-                http_response_code(201);
-                echo json_encode([
-                    'success' => true,
-                    'category_id' => $categoryId,
-                    'message' => 'Category created successfully'
-                ]);
-            } catch (Exception $e) {
-                http_response_code(500);
-                echo json_encode([
-                    'error' => 'Database error',
-                    'message' => $e->getMessage()
-                ]);
+            if (!$categoryId) {
+                throw new Exception('Failed to insert category');
             }
+
+            http_response_code(201);
+            echo json_encode([
+                'success' => true,
+                'category_id' => $categoryId,
+                'message' => 'Category created successfully'
+            ]);
             break;
 
         case 'PUT':
@@ -181,7 +164,7 @@ try {
 
             // Check if new name conflicts with existing category
             $checkSql = "SELECT id FROM categories WHERE name = ? AND id != ?";
-            $existing = sqlQuery($checkSql, [trim($name), $categoryId]);
+            $existing = $db->query($checkSql, [trim($name), $categoryId]);
 
             if ($existing) {
                 http_response_code(409);
@@ -198,22 +181,13 @@ try {
 
             // Update category
             $updateSql = "UPDATE categories SET name = ?, parent = ? WHERE id = ?";
+            $db->execute($updateSql, [trim($name), $parentId, $categoryId]);
 
-            try {
-                sqlStatement($updateSql, [trim($name), $parentId, $categoryId]);
-
-                http_response_code(200);
-                echo json_encode([
-                    'success' => true,
-                    'message' => 'Category updated successfully'
-                ]);
-            } catch (Exception $e) {
-                http_response_code(500);
-                echo json_encode([
-                    'error' => 'Database error',
-                    'message' => $e->getMessage()
-                ]);
-            }
+            http_response_code(200);
+            echo json_encode([
+                'success' => true,
+                'message' => 'Category updated successfully'
+            ]);
             break;
 
         case 'DELETE':
@@ -228,7 +202,7 @@ try {
 
             // Check if category has subcategories
             $checkSubcatsSql = "SELECT COUNT(*) as subcat_count FROM categories WHERE parent = ?";
-            $subcatCheck = sqlQuery($checkSubcatsSql, [$categoryId]);
+            $subcatCheck = $db->query($checkSubcatsSql, [$categoryId]);
 
             if ($subcatCheck && $subcatCheck['subcat_count'] > 0) {
                 http_response_code(409);
@@ -243,7 +217,7 @@ try {
             $checkDocsSql = "SELECT COUNT(*) as doc_count
                              FROM categories_to_documents
                              WHERE category_id = ?";
-            $docCheck = sqlQuery($checkDocsSql, [$categoryId]);
+            $docCheck = $db->query($checkDocsSql, [$categoryId]);
 
             if ($docCheck && $docCheck['doc_count'] > 0) {
                 http_response_code(409);
@@ -256,7 +230,7 @@ try {
 
             // Delete category
             $deleteSql = "DELETE FROM categories WHERE id = ?";
-            sqlStatement($deleteSql, [$categoryId]);
+            $db->execute($deleteSql, [$categoryId]);
 
             http_response_code(200);
             echo json_encode([
@@ -271,6 +245,7 @@ try {
     }
 
 } catch (Exception $e) {
+    error_log("Document categories error: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'error' => 'Server error',

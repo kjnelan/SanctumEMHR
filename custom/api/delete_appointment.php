@@ -1,7 +1,7 @@
 <?php
 /**
  * Mindline EMHR
- * Delete Appointment API - Session-based authentication
+ * Delete Appointment API - Session-based authentication (MIGRATED TO MINDLINE)
  * Deletes an appointment or availability block from the calendar
  *
  * Author: Kenneth J. Nelan
@@ -12,21 +12,10 @@
  * Proprietary and Confidential
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+require_once(__DIR__ . '/../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
-
-require_once(__DIR__ . '/../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("Delete appointment API called - Session ID: " . session_id());
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -48,17 +37,23 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $_SERVER['REQUEST_METHOD'] !== 'DEL
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Delete appointment: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-error_log("Delete appointment: User authenticated - " . $_SESSION['authUserID']);
-
 try {
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    if (!$session->isAuthenticated()) {
+        error_log("Delete appointment: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    error_log("Delete appointment: User authenticated - " . $session->getUserId());
+
+    // Initialize database
+    $db = Database::getInstance();
+
     // Get JSON input
     $input = json_decode(file_get_contents('php://input'), true);
 
@@ -81,10 +76,10 @@ try {
     $recurrenceId = $seriesData ? $seriesData['recurrenceId'] : null;
 
     // Verify the appointment exists and belongs to the current user (for provider blocks)
-    $existing = sqlQuery(
-        "SELECT pc_eid, pc_pid, pc_aid, pc_catid, pc_eventDate, pc_recurrspec
-         FROM openemr_postcalendar_events
-         WHERE pc_eid = ?",
+    $existing = $db->query(
+        "SELECT id, client_id, provider_id, category_id, start_datetime, recurrence_group_id
+         FROM appointments
+         WHERE id = ?",
         [$appointmentId]
     );
 
@@ -92,47 +87,38 @@ try {
         throw new Exception('Appointment not found');
     }
 
-    // For provider availability blocks (pc_pid = 0), verify it belongs to current user
-    if ($existing['pc_pid'] == 0 && $existing['pc_aid'] != $_SESSION['authUserID']) {
-        error_log("Delete appointment: User " . $_SESSION['authUserID'] . " tried to delete block belonging to user " . $existing['pc_aid']);
+    // For provider availability blocks (client_id = 0), verify it belongs to current user
+    if ($existing['client_id'] == 0 && $existing['provider_id'] != $session->getUserId()) {
+        error_log("Delete appointment: User " . $session->getUserId() . " tried to delete block belonging to user " . $existing['provider_id']);
         throw new Exception('You can only delete your own availability blocks');
     }
 
     // Determine what to delete based on scope
-    $whereClause = "pc_eid = ?";
+    $whereClause = "id = ?";
     $whereParams = [$appointmentId];
 
     if ($seriesData && $deleteScope !== 'single') {
         if ($deleteScope === 'all') {
             // Delete all occurrences in the series
-            $whereClause = "pc_recurrspec = ?";
+            $whereClause = "recurrence_group_id = ?";
             $whereParams = [$recurrenceId];
             error_log("Delete appointment: Deleting ALL occurrences with recurrence ID: $recurrenceId");
         } elseif ($deleteScope === 'future') {
             // Delete this and future occurrences
-            $splitDate = $existing['pc_eventDate'];
-            $whereClause = "pc_recurrspec = ? AND pc_eventDate >= ?";
+            $splitDate = $existing['start_datetime'];
+            $whereClause = "recurrence_group_id = ? AND start_datetime >= ?";
             $whereParams = [$recurrenceId, $splitDate];
             error_log("Delete appointment: Deleting this and future occurrences with recurrence ID: $recurrenceId from date: $splitDate");
         }
     }
 
     // Delete the appointment(s)
-    $sql = "DELETE FROM openemr_postcalendar_events WHERE $whereClause";
+    $sql = "DELETE FROM appointments WHERE $whereClause";
 
     error_log("Delete appointment SQL: " . $sql);
     error_log("Delete appointment params: " . print_r($whereParams, true));
 
-    $result = sqlStatement($sql, $whereParams);
-
-    if ($result === false) {
-        throw new Exception('Failed to delete appointment');
-    }
-
-    $deletedCount = sqlNumRows($result);
-    if ($deletedCount === 0) {
-        $deletedCount = 1; // At least one was deleted
-    }
+    $deletedCount = $db->execute($sql, $whereParams);
 
     error_log("Delete appointment: Successfully deleted $deletedCount appointment(s)");
 
