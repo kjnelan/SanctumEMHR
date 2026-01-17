@@ -1,24 +1,14 @@
 <?php
 /**
- * Get Providers API - Session-based
+ * Get Providers API - Session-based (MIGRATED TO MINDLINE)
  * Returns list of active providers/clinicians
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+// Load Mindline initialization
+require_once(__DIR__ . '/../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
-
-require_once(__DIR__ . '/../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("Get providers API called - Session ID: " . session_id());
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -40,33 +30,43 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Get providers: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-error_log("Get providers: User authenticated - " . $_SESSION['authUserID']);
-
 try {
-    // Fetch all active authorized users (providers/clinicians)
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    if (!$session->isAuthenticated()) {
+        error_log("Get providers: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    $userId = $session->getUserId();
+    error_log("Get providers: User authenticated - $userId");
+
+    // Initialize database
+    $db = Database::getInstance();
+
+    // Fetch all active authorized users (providers/clinicians) from MINDLINE schema
     $sql = "SELECT
         id,
-        CONCAT(fname, ' ', lname) AS full_name,
-        fname,
-        lname,
+        CONCAT(first_name, ' ', last_name) AS full_name,
+        first_name,
+        last_name,
         username
     FROM users
-    WHERE active = 1 AND authorized = 1
-    ORDER BY lname, fname";
+    WHERE is_active = 1 AND is_provider = 1
+    ORDER BY last_name, first_name";
 
     error_log("Get providers SQL: " . $sql);
-    $result = sqlStatement($sql);
 
+    // Execute query using Database class
+    $rows = $db->queryAll($sql);
+
+    // Format providers for frontend
     $providers = [];
-    while ($row = sqlFetchArray($result)) {
+    foreach ($rows as $row) {
         $providers[] = [
             'value' => $row['id'],
             'label' => $row['full_name']

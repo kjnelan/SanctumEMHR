@@ -1,19 +1,14 @@
 <?php
 /**
- * Patient Search API - Session-based
+ * Patient Search API - Session-based (MIGRATED TO MINDLINE)
  * Searches for patients using session authentication
  */
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
+// Load Mindline initialization
+require_once(__DIR__ . '/../init.php');
 
-require_once(__DIR__ . '/../../interface/globals.php');
-
-// Enable error logging
-error_log("Patient search called - Session ID: " . session_id());
-error_log("GET params: " . print_r($_GET, true));
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -34,84 +29,88 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Patient search: Not authenticated");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-error_log("Patient search: User authenticated - " . $_SESSION['authUserID']);
-
-// Get search parameters
-$fname = isset($_GET['fname']) ? trim($_GET['fname']) : '';
-$lname = isset($_GET['lname']) ? trim($_GET['lname']) : '';
-
-// Need at least one search parameter
-if (empty($fname) && empty($lname)) {
-    echo json_encode([]);
-    exit;
-}
-
-// Build the SQL query
-$sql = "SELECT
-    pid AS id,
-    pid,
-    fname,
-    lname,
-    DOB,
-    sex,
-    phone_cell,
-    phone_home,
-    email
-FROM patient_data
-WHERE 1=1";
-
-$params = [];
-$types = '';
-
-// If both fname and lname provided, use AND (exact match on both)
-// If only one provided, search BOTH fields with OR (match either)
-if (!empty($fname) && !empty($lname)) {
-    // Both provided - must match both
-    $sql .= " AND fname LIKE ? AND lname LIKE ?";
-    $params[] = $fname . '%';
-    $params[] = $lname . '%';
-    $types .= 'ss';
-} elseif (!empty($fname)) {
-    // Only fname provided - search both fname and lname
-    $sql .= " AND (fname LIKE ? OR lname LIKE ?)";
-    $params[] = $fname . '%';
-    $params[] = $fname . '%';
-    $types .= 'ss';
-} elseif (!empty($lname)) {
-    // Only lname provided - search both fname and lname
-    $sql .= " AND (fname LIKE ? OR lname LIKE ?)";
-    $params[] = $lname . '%';
-    $params[] = $lname . '%';
-    $types .= 'ss';
-}
-
-$sql .= " ORDER BY lname, fname LIMIT 100";
-
-error_log("SQL Query: " . $sql);
-error_log("Params: " . print_r($params, true));
-
 try {
-    // Prepare and execute query
-    $stmt = sqlStatement($sql, $params);
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
 
+    if (!$session->isAuthenticated()) {
+        error_log("Patient search: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    $userId = $session->getUserId();
+    error_log("Patient search: User authenticated - $userId");
+    error_log("GET params: " . print_r($_GET, true));
+
+    // Get search parameters
+    $fname = isset($_GET['fname']) ? trim($_GET['fname']) : '';
+    $lname = isset($_GET['lname']) ? trim($_GET['lname']) : '';
+
+    // Need at least one search parameter
+    if (empty($fname) && empty($lname)) {
+        echo json_encode([]);
+        exit;
+    }
+
+    // Initialize database
+    $db = Database::getInstance();
+
+    // Build the SQL query for MINDLINE schema
+    $sql = "SELECT
+        c.id,
+        c.first_name,
+        c.last_name,
+        c.date_of_birth,
+        c.sex,
+        c.phone_mobile,
+        c.phone_home,
+        c.email
+    FROM clients c
+    WHERE 1=1";
+
+    $params = [];
+
+    // If both fname and lname provided, use AND (exact match on both)
+    // If only one provided, search BOTH fields with OR (match either)
+    if (!empty($fname) && !empty($lname)) {
+        // Both provided - must match both
+        $sql .= " AND c.first_name LIKE ? AND c.last_name LIKE ?";
+        $params[] = $fname . '%';
+        $params[] = $lname . '%';
+    } elseif (!empty($fname)) {
+        // Only fname provided - search both fname and lname
+        $sql .= " AND (c.first_name LIKE ? OR c.last_name LIKE ?)";
+        $params[] = $fname . '%';
+        $params[] = $fname . '%';
+    } elseif (!empty($lname)) {
+        // Only lname provided - search both fname and lname
+        $sql .= " AND (c.first_name LIKE ? OR c.last_name LIKE ?)";
+        $params[] = $lname . '%';
+        $params[] = $lname . '%';
+    }
+
+    $sql .= " ORDER BY c.last_name, c.first_name LIMIT 100";
+
+    error_log("SQL Query: " . $sql);
+    error_log("Params: " . print_r($params, true));
+
+    // Execute query using Database class
+    $rows = $db->queryAll($sql, $params);
+
+    // Format results for frontend (keep API response format for compatibility)
     $results = [];
-    while ($row = sqlFetchArray($stmt)) {
+    foreach ($rows as $row) {
         $results[] = [
             'id' => $row['id'],
-            'pid' => $row['pid'],
-            'fname' => $row['fname'],
-            'lname' => $row['lname'],
-            'DOB' => $row['DOB'],
+            'pid' => $row['id'], // Keep 'pid' for frontend compatibility
+            'fname' => $row['first_name'], // Keep old format for frontend
+            'lname' => $row['last_name'],
+            'DOB' => $row['date_of_birth'],
             'sex' => $row['sex'],
-            'phone_cell' => $row['phone_cell'],
+            'phone_cell' => $row['phone_mobile'], // Keep old key for frontend
             'phone_home' => $row['phone_home'],
             'email' => $row['email']
         ];
