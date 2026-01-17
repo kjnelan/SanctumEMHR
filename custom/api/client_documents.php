@@ -1,24 +1,13 @@
 <?php
 /**
- * Client Documents API
+ * Client Documents API (MIGRATED TO MINDLINE)
  * Fetches documents for a specific client organized by category
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+require_once(__DIR__ . '/../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
-
-require_once(__DIR__ . '/../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("Client documents API called - Session ID: " . session_id());
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header (unless uploading file, which needs multipart)
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_FILES['file'])) {
@@ -34,17 +23,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Client documents: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
+try {
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
 
-// Handle POST (file upload)
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    try {
+    if (!$session->isAuthenticated()) {
+        error_log("Client documents: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    // Initialize database
+    $db = Database::getInstance();
+
+    // Handle POST (file upload)
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $clientId = $_POST['patient_id'] ?? null;
         $categoryId = $_POST['category_id'] ?? null;
         $documentName = $_POST['name'] ?? null;
@@ -71,12 +66,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Use provided name or fall back to uploaded filename
         $documentName = $documentName ?: $uploadedFileName;
 
-        // Determine storage path - OpenEMR typically stores in sites/default/documents
-        $sitePath = $GLOBALS['OE_SITE_DIR'] ?? '/var/www/html/openemr/sites/default';
-        $documentsPath = $sitePath . '/documents';
+        // Determine storage path - Mindline stores documents in storage/documents
+        $documentsPath = dirname(__DIR__, 2) . '/storage/documents';
 
         // Create patient-specific directory if it doesn't exist
-        $patientDir = $documentsPath . '/patient_' . $clientId;
+        $patientDir = $documentsPath . '/client_' . $clientId;
         if (!is_dir($patientDir)) {
             mkdir($patientDir, 0755, true);
         }
@@ -95,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Store relative path for database
-        $relativeUrl = 'file://' . str_replace($sitePath . '/', '', $destinationPath);
+        $relativeUrl = 'documents/client_' . $clientId . '/' . $uniqueFileName;
 
         // Insert into documents table
         $insertSql = "INSERT INTO documents (
@@ -119,16 +113,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $documentName,
             $fileMimeType,
             $clientId,  // foreign_id (patient_id)
-            $_SESSION['authUserID']  // owner
+            $session->getUserId()  // owner
         ];
 
-        $result = sqlInsert($insertSql, $params);
-        $documentId = $result;
+        $documentId = $db->insert($insertSql, $params);
 
         // Link to category if provided
         if ($categoryId && $documentId) {
             $categorySql = "INSERT INTO categories_to_documents (category_id, document_id) VALUES (?, ?)";
-            sqlStatement($categorySql, [$categoryId, $documentId]);
+            $db->execute($categorySql, [$categoryId, $documentId]);
         }
 
         error_log("Document uploaded successfully - ID: $documentId");
@@ -141,64 +134,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'message' => 'Document uploaded successfully'
         ]);
         exit;
-
-    } catch (Exception $e) {
-        error_log("Error uploading document: " . $e->getMessage());
-        header('Content-Type: application/json');
-        http_response_code(500);
-        echo json_encode([
-            'error' => 'Failed to upload document',
-            'message' => $e->getMessage()
-        ]);
-        exit;
     }
-}
 
-// Handle GET (fetch documents or categories)
-$action = $_GET['action'] ?? 'documents';
+    // Handle GET (fetch documents or categories)
+    $action = $_GET['action'] ?? 'documents';
 
-// Fetch all available categories (for upload dropdown)
-if ($action === 'categories') {
-    try {
+    // Fetch all available categories (for upload dropdown)
+    if ($action === 'categories') {
         $categoriesSql = "SELECT id, name, parent, lft, rght
                           FROM categories
                           WHERE name != 'Categories'
                           ORDER BY name";
-        $result = sqlStatement($categoriesSql);
-
-        $categories = [];
-        while ($row = sqlFetchArray($result)) {
-            $categories[] = $row;
-        }
+        $categories = $db->queryAll($categoriesSql);
 
         http_response_code(200);
         echo json_encode(['categories' => $categories]);
         exit;
+    }
 
-    } catch (Exception $e) {
-        error_log("Error fetching categories: " . $e->getMessage());
-        http_response_code(500);
-        echo json_encode([
-            'error' => 'Failed to fetch categories',
-            'message' => $e->getMessage()
-        ]);
+    // Get client ID
+    $clientId = $_GET['id'] ?? null;
+
+    if (!$clientId) {
+        error_log("Client documents: No client ID provided");
+        http_response_code(400);
+        echo json_encode(['error' => 'Client ID is required']);
         exit;
     }
-}
 
-// Get client ID
-$clientId = $_GET['id'] ?? null;
+    error_log("Client documents: Fetching documents for client ID: " . $clientId);
 
-if (!$clientId) {
-    error_log("Client documents: No client ID provided");
-    http_response_code(400);
-    echo json_encode(['error' => 'Client ID is required']);
-    exit;
-}
-
-error_log("Client documents: Fetching documents for client ID: " . $clientId);
-
-try {
     // Fetch documents with category information
     $documentsSql = "SELECT
         d.id,
@@ -224,12 +189,7 @@ try {
     ORDER BY c.name, d.date DESC";
 
     error_log("Documents SQL: " . $documentsSql);
-    $documentsResult = sqlStatement($documentsSql, [$clientId]);
-
-    $documents = [];
-    while ($row = sqlFetchArray($documentsResult)) {
-        $documents[] = $row;
-    }
+    $documents = $db->queryAll($documentsSql, [$clientId]);
 
     error_log("Found " . count($documents) . " documents");
 
@@ -247,11 +207,7 @@ try {
     AND d.deleted = 0
     ORDER BY c.name";
 
-    $categoriesResult = sqlStatement($categoriesSql, [$clientId]);
-    $categories = [];
-    while ($row = sqlFetchArray($categoriesResult)) {
-        $categories[] = $row;
-    }
+    $categories = $db->queryAll($categoriesSql, [$clientId]);
 
     error_log("Found " . count($categories) . " categories");
 
@@ -264,11 +220,11 @@ try {
     echo json_encode($response);
 
 } catch (Exception $e) {
-    error_log("Error fetching client documents: " . $e->getMessage());
+    error_log("Error in client documents: " . $e->getMessage());
     error_log("Stack trace: " . $e->getTraceAsString());
     http_response_code(500);
     echo json_encode([
-        'error' => 'Failed to fetch documents',
+        'error' => 'Failed to process request',
         'message' => $e->getMessage()
     ]);
 }
