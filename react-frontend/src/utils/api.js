@@ -11,9 +11,6 @@
  * Proprietary and Confidential
  */
 
-const API_BASE = '/apis/default';
-const FHIR_BASE = '/fhir';
-
 /**
  * Make an authenticated API request using session cookies
  */
