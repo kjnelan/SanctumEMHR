@@ -1,7 +1,7 @@
 <?php
 /**
  * Mindline EMHR
- * Get Interventions API - Session-based authentication
+ * Get Interventions API - Session-based authentication (MIGRATED TO MINDLINE)
  * Returns intervention library with optional tier and modality filtering
  *
  * Author: Kenneth J. Nelan
@@ -12,60 +12,45 @@
  * Proprietary and Confidential
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+require_once(__DIR__ . '/../../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
-require_once(__DIR__ . '/../../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("Get interventions API called - Session ID: " . session_id());
-
-// Set JSON header
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// Handle OPTIONS request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// Only allow GET requests
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    error_log("Get interventions: Invalid method - " . $_SERVER['REQUEST_METHOD']);
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Get interventions: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-$userId = intval($_SESSION['authUserID']);
-
-// Optional filters
-$tier = $_GET['tier'] ?? null;
-$modality = $_GET['modality'] ?? null;
-$includeInactive = isset($_GET['include_inactive']) ? boolval($_GET['include_inactive']) : false;
-
-error_log("Get interventions: User authenticated - " . $userId);
-
 try {
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    if (!$session->isAuthenticated()) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    $userId = $session->getUserId();
+    $db = Database::getInstance();
+
+    // Optional filters
+    $tier = $_GET['tier'] ?? null;
+    $modality = $_GET['modality'] ?? null;
+    $includeInactive = isset($_GET['include_inactive']) ? boolval($_GET['include_inactive']) : false;
+
     // Build SQL query
     $sql = "SELECT
         i.id,
@@ -101,9 +86,7 @@ try {
     // Order by tier, then modality, then display order
     $sql .= " ORDER BY i.intervention_tier, i.modality, i.display_order, i.intervention_name";
 
-    error_log("Interventions SQL: " . $sql);
-
-    $result = sqlStatement($sql, $params);
+    $rows = $db->queryAll($sql, $params);
     $interventions = [];
 
     // Group by tier and modality
@@ -114,7 +97,7 @@ try {
         'tier4' => []  // Administrative
     ];
 
-    while ($row = sqlFetchArray($result)) {
+    foreach ($rows as $row) {
         $row['is_favorite'] = (bool)$row['is_favorite'];
         $row['is_system_intervention'] = (bool)$row['is_system_intervention'];
         $row['is_active'] = (bool)$row['is_active'];
@@ -151,13 +134,7 @@ try {
     WHERE f.user_id = ? AND i.is_active = 1
     ORDER BY f.display_order, i.intervention_name";
 
-    $favResult = sqlStatement($favoritesSql, [$userId]);
-    $favorites = [];
-    while ($favRow = sqlFetchArray($favResult)) {
-        $favorites[] = $favRow;
-    }
-
-    error_log("Found " . count($interventions) . " interventions, " . count($favorites) . " favorites");
+    $favorites = $db->queryAll($favoritesSql, [$userId]);
 
     $response = [
         'success' => true,
@@ -172,7 +149,6 @@ try {
 
 } catch (Exception $e) {
     error_log("Error fetching interventions: " . $e->getMessage());
-    error_log("Stack trace: " . $e->getTraceAsString());
     http_response_code(500);
     echo json_encode([
         'error' => 'Failed to fetch interventions',

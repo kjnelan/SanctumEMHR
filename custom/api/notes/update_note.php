@@ -1,7 +1,7 @@
 <?php
 /**
  * Mindline EMHR
- * Update Note API - Session-based authentication
+ * Update Note API - Session-based authentication (MIGRATED TO MINDLINE)
  * Updates an existing clinical note
  *
  * Author: Kenneth J. Nelan
@@ -12,61 +12,44 @@
  * Proprietary and Confidential
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+require_once(__DIR__ . '/../../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
-require_once(__DIR__ . '/../../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("Update note API called - Session ID: " . session_id());
-
-// Set JSON header
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: PUT, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// Handle OPTIONS request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// Allow PUT or POST requests
 if (!in_array($_SERVER['REQUEST_METHOD'], ['PUT', 'POST'])) {
-    error_log("Update note: Invalid method - " . $_SERVER['REQUEST_METHOD']);
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Update note: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-error_log("Update note: User authenticated - " . $_SESSION['authUserID']);
-
 try {
-    // Get JSON input
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    if (!$session->isAuthenticated()) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    $db = Database::getInstance();
+
     $input = json_decode(file_get_contents('php://input'), true);
 
     if (!$input) {
         throw new Exception('Invalid JSON input');
     }
-
-    error_log("Update note input: " . print_r($input, true));
 
     // Validate required fields
     if (!isset($input['noteId']) || $input['noteId'] === '') {
@@ -76,9 +59,8 @@ try {
     $noteId = intval($input['noteId']);
 
     // First, check if note exists and is not locked
-    $checkSql = "SELECT id, is_locked, status, provider_id FROM clinical_notes WHERE id = ?";
-    $checkResult = sqlStatement($checkSql, [$noteId]);
-    $existingNote = sqlFetchArray($checkResult);
+    $checkSql = "SELECT id, is_locked, status, created_by FROM clinical_notes WHERE id = ?";
+    $existingNote = $db->query($checkSql, [$noteId]);
 
     if (!$existingNote) {
         throw new Exception("Note not found");
@@ -88,11 +70,6 @@ try {
     if ($existingNote['is_locked']) {
         throw new Exception("Cannot update locked note. Create an addendum instead.");
     }
-
-    // Check if user is the note author (optional - you may want to allow other authorized users)
-    // if (intval($existingNote['provider_id']) !== intval($_SESSION['authUserID'])) {
-    //     throw new Exception("You can only edit your own notes");
-    // }
 
     // Build UPDATE query dynamically based on provided fields
     $updateFields = [];
@@ -186,12 +163,7 @@ try {
     // Build and execute UPDATE query
     $sql = "UPDATE clinical_notes SET " . implode(', ', $updateFields) . " WHERE id = ?";
 
-    error_log("Update SQL: " . $sql);
-    error_log("Params: " . print_r($params, true));
-
-    sqlStatement($sql, $params);
-
-    error_log("Note updated successfully: ID " . $noteId);
+    $db->execute($sql, $params);
 
     $response = [
         'success' => true,
@@ -204,7 +176,6 @@ try {
 
 } catch (Exception $e) {
     error_log("Error updating note: " . $e->getMessage());
-    error_log("Stack trace: " . $e->getTraceAsString());
     http_response_code(500);
     echo json_encode([
         'error' => 'Failed to update note',

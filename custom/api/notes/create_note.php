@@ -1,7 +1,7 @@
 <?php
 /**
  * Mindline EMHR
- * Create Clinical Note API - Session-based authentication
+ * Create Clinical Note API - Session-based authentication (MIGRATED TO MINDLINE)
  * Creates a new clinical note
  *
  * Author: Kenneth J. Nelan
@@ -12,61 +12,45 @@
  * Proprietary and Confidential
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+require_once(__DIR__ . '/../../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
-require_once(__DIR__ . '/../../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("Create note API called - Session ID: " . session_id());
-
-// Set JSON header
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// Handle OPTIONS request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    error_log("Create note: Invalid method - " . $_SERVER['REQUEST_METHOD']);
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Create note: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-error_log("Create note: User authenticated - " . $_SESSION['authUserID']);
-
 try {
-    // Get JSON input
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    if (!$session->isAuthenticated()) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    $providerId = $session->getUserId();
+    $db = Database::getInstance();
+
     $input = json_decode(file_get_contents('php://input'), true);
 
     if (!$input) {
         throw new Exception('Invalid JSON input');
     }
-
-    error_log("Create note input: " . print_r($input, true));
 
     // Validate required fields
     $required = ['patientId', 'noteType', 'serviceDate'];
@@ -78,7 +62,6 @@ try {
 
     // Extract inputs
     $patientId = intval($input['patientId']);
-    $providerId = intval($_SESSION['authUserID']); // Always use authenticated user
     $noteType = $input['noteType']; // 'progress', 'intake', 'crisis', 'discharge', 'admin', 'mse', 'treatment_plan'
     $serviceDate = $input['serviceDate']; // YYYY-MM-DD format
 
@@ -137,7 +120,7 @@ try {
     $sql = "INSERT INTO clinical_notes (
         note_uuid,
         patient_id,
-        provider_id,
+        created_by,
         appointment_id,
         billing_id,
         note_type,
@@ -206,28 +189,16 @@ try {
         $supervisorReviewRequired
     ];
 
-    // Execute INSERT
-    sqlStatement($sql, $params);
-
-    // CRITICAL FIX: Don't use Insert_ID() - it returns auto_increment value which may be wrong
-    // Instead, query for the note we just created using the UUID (which is unique)
-    $noteId = $GLOBALS['adodb']['db']->GetOne(
-        "SELECT id FROM clinical_notes WHERE note_uuid = ?",
-        [$noteUuid]
-    );
+    $noteId = $db->insert($sql, $params);
 
     if (!$noteId) {
-        error_log("ERROR: Failed to retrieve note ID after insert (UUID: $noteUuid)");
         throw new Exception("Failed to create note - could not retrieve ID");
     }
 
-    error_log("Clinical note created successfully - ID: $noteId, UUID: $noteUuid, Type: $templateType, Patient: $patientId");
-
     // If this note is linked to an appointment, update the appointment's clinical_note_id
     if ($appointmentId) {
-        $updateApptSql = "UPDATE openemr_postcalendar_events SET clinical_note_id = ? WHERE pc_eid = ?";
-        sqlStatement($updateApptSql, [$noteId, $appointmentId]);
-        error_log("Updated appointment $appointmentId with clinical_note_id $noteId");
+        $updateApptSql = "UPDATE appointments SET clinical_note_id = ? WHERE id = ?";
+        $db->execute($updateApptSql, [$noteId, $appointmentId]);
     }
 
     // Return the created note
@@ -243,7 +214,6 @@ try {
 
 } catch (Exception $e) {
     error_log("Error creating note: " . $e->getMessage());
-    error_log("Stack trace: " . $e->getTraceAsString());
     http_response_code(500);
     echo json_encode([
         'error' => 'Failed to create note',
