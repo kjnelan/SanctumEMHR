@@ -1,24 +1,14 @@
 <?php
 /**
- * Get Appointments API - Session-based
+ * Get Appointments API - Session-based (MIGRATED TO MINDLINE)
  * Fetches appointments for calendar view with optional filters
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+// Load Mindline initialization
+require_once(__DIR__ . '/../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
-
-require_once(__DIR__ . '/../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("Get appointments API called - Session ID: " . session_id());
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -40,17 +30,21 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Get appointments: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-error_log("Get appointments: User authenticated - " . $_SESSION['authUserID']);
-
 try {
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    if (!$session->isAuthenticated()) {
+        error_log("Get appointments: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    $userId = $session->getUserId();
+    error_log("Get appointments: User authenticated - $userId");
+
     // Get query parameters
     $start_date = $_GET['start_date'] ?? null;
     $end_date = $_GET['end_date'] ?? null;
@@ -66,80 +60,83 @@ try {
 
     error_log("Fetching appointments from $start_date to $end_date" . ($provider_id ? " for provider $provider_id" : ""));
 
-    // Build SQL query
+    // Initialize database
+    $db = Database::getInstance();
+
+    // Build SQL query for MINDLINE schema
     $sql = "SELECT
-        e.pc_eid,
-        e.pc_eventDate,
-        e.pc_startTime,
-        e.pc_endTime,
-        e.pc_duration,
-        e.pc_catid,
-        e.pc_apptstatus,
-        e.pc_title,
-        e.pc_hometext,
-        e.pc_pid,
-        e.pc_aid,
-        e.pc_room,
-        e.pc_recurrtype,
-        e.pc_recurrspec,
-        c.pc_catname,
-        c.pc_catcolor,
-        c.pc_cattype,
-        pd.fname AS patient_fname,
-        pd.lname AS patient_lname,
-        pd.DOB AS patient_dob,
-        CONCAT(u.fname, ' ', u.lname) AS provider_name,
-        u.id AS provider_id,
+        a.id,
+        a.start_datetime,
+        a.end_datetime,
+        a.duration,
+        a.category_id,
+        a.status,
+        a.title,
+        a.notes,
+        a.client_id,
+        a.provider_id,
+        a.facility_id,
+        c.name AS category_name,
+        c.color AS category_color,
+        c.is_billable,
+        CONCAT(cl.first_name, ' ', cl.last_name) AS client_name,
+        cl.date_of_birth AS client_dob,
+        CONCAT(u.first_name, ' ', u.last_name) AS provider_name,
         f.name AS facility_name,
-        r.title AS room_name
-    FROM openemr_postcalendar_events e
-    LEFT JOIN openemr_postcalendar_categories c ON e.pc_catid = c.pc_catid
-    LEFT JOIN patient_data pd ON e.pc_pid = pd.pid
-    LEFT JOIN users u ON e.pc_aid = u.id
-    LEFT JOIN facility f ON e.pc_facility = f.id
-    LEFT JOIN list_options r ON r.list_id = 'rooms' AND r.option_id = e.pc_room
-    WHERE e.pc_eventDate >= ? AND e.pc_eventDate <= ?";
+        (SELECT id FROM appointment_recurrence WHERE parent_appointment_id = a.id LIMIT 1) AS recurrence_id
+    FROM appointments a
+    LEFT JOIN appointment_categories c ON a.category_id = c.id
+    LEFT JOIN clients cl ON a.client_id = cl.id
+    LEFT JOIN users u ON a.provider_id = u.id
+    LEFT JOIN facilities f ON a.facility_id = f.id
+    WHERE DATE(a.start_datetime) >= ? AND DATE(a.start_datetime) <= ?";
 
     $params = [$start_date, $end_date];
 
     // Add provider filter if specified
     if ($provider_id && $provider_id !== 'all') {
-        $sql .= " AND e.pc_aid = ?";
+        $sql .= " AND a.provider_id = ?";
         $params[] = $provider_id;
     }
 
-    $sql .= " ORDER BY e.pc_eventDate, e.pc_startTime";
+    $sql .= " ORDER BY a.start_datetime";
 
     error_log("Appointments SQL: " . $sql);
 
-    $result = sqlStatement($sql, $params);
+    // Execute query using Database class
+    $rows = $db->queryAll($sql, $params);
 
+    // Format appointments for frontend
     $appointments = [];
-    while ($row = sqlFetchArray($result)) {
+    foreach ($rows as $row) {
+        // Extract date and time from TIMESTAMP fields
+        $startDT = new DateTime($row['start_datetime']);
+        $endDT = new DateTime($row['end_datetime']);
+
         $appointments[] = [
-            'id' => $row['pc_eid'],
-            'eventDate' => $row['pc_eventDate'],
-            'startTime' => $row['pc_startTime'],
-            'endTime' => $row['pc_endTime'],
-            'duration' => intval($row['pc_duration'] / 60), // Convert seconds to minutes
-            'categoryId' => $row['pc_catid'],
-            'categoryName' => $row['pc_catname'],
-            'categoryColor' => $row['pc_catcolor'],
-            'categoryType' => intval($row['pc_cattype']), // 0=appointment, 1=availability block
-            'apptstatus' => $row['pc_apptstatus'],
-            'status' => $row['pc_apptstatus'],
-            'title' => $row['pc_title'],
-            'comments' => $row['pc_hometext'],
-            'patientId' => $row['pc_pid'],
-            'patientName' => trim(($row['patient_fname'] ?? '') . ' ' . ($row['patient_lname'] ?? '')),
-            'patientDOB' => $row['patient_dob'],
+            'id' => $row['id'],
+            'eventDate' => $startDT->format('Y-m-d'),
+            'startTime' => $startDT->format('H:i:s'),
+            'endTime' => $endDT->format('H:i:s'),
+            'duration' => intval($row['duration']),
+            'categoryId' => $row['category_id'],
+            'categoryName' => $row['category_name'],
+            'categoryColor' => $row['category_color'],
+            'categoryType' => $row['is_billable'] ? 0 : 1, // Map billable to type (0=appointment, 1=availability)
+            'apptstatus' => $row['status'],
+            'status' => $row['status'],
+            'title' => $row['title'],
+            'comments' => $row['notes'],
+            'patientId' => $row['client_id'],
+            'patientName' => $row['client_name'],
+            'patientDOB' => $row['client_dob'],
             'providerId' => $row['provider_id'],
             'providerName' => $row['provider_name'],
             'facilityName' => $row['facility_name'],
-            'room' => $row['room_name'] ?? $row['pc_room'], // Use friendly name, fallback to ID
-            'roomId' => $row['pc_room'], // Keep room ID for editing
-            'isRecurring' => intval($row['pc_recurrtype']) === 1, // Is this part of a recurring series?
-            'recurrenceId' => $row['pc_recurrspec'] // Recurrence series ID
+            'room' => null, // Room field removed from Mindline schema
+            'roomId' => null,
+            'isRecurring' => !empty($row['recurrence_id']), // If recurrence record exists
+            'recurrenceId' => $row['recurrence_id'] // Recurrence series ID
         ];
     }
 
