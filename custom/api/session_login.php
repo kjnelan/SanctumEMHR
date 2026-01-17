@@ -3,40 +3,21 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 /**
- * Session-based login endpoint for React frontend
+ * Session-based login endpoint for React frontend (MIGRATED TO MINDLINE)
  *
- * This endpoint authenticates users and creates a PHP session,
- * eliminating the need for OAuth2 configuration.
+ * This endpoint authenticates users and creates a PHP session.
  *
- * @package   OpenEMR
- * @link      https://www.open-emr.org
- * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
+ * @package   Mindline
+ * @license   Proprietary and Confidential
  */
 
-// Set the site ID before loading OpenEMR globals
-$_GET['site'] = 'default';
+// Load Mindline initialization
+require_once dirname(__FILE__, 2) . "/init.php";
 
-// Load autoloader first
-$GLOBALS['already_autoloaded'] = true;
-require_once dirname(__FILE__, 3) . "/vendor/autoload.php";
-
-// Set webroot and start core session
-$GLOBALS['webroot'] = '';
-use OpenEMR\Common\Session\SessionUtil;
-SessionUtil::coreSessionStart($GLOBALS['webroot']);
-
-// Skip authentication checks for this login endpoint
-$ignoreAuth_onsite_portal_two = true;
-$ignoreAuth = true;
-
-// Set up OpenEMR environment
-require_once dirname(__FILE__, 3) . "/interface/globals.php";
-
-use OpenEMR\Common\Auth\AuthUtils;
-use OpenEMR\Common\Csrf\CsrfUtils;
-use OpenEMR\Common\Logging\EventAuditLogger;
-use OpenEMR\Common\Session\SessionUtil;
-use OpenEMR\Services\UserService;
+use Custom\Lib\Auth\CustomAuth;
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
+use Custom\Lib\Services\UserService;
 
 // Enable CORS for React app
 header('Access-Control-Allow-Origin: ' . ($_SERVER['HTTP_ORIGIN'] ?? '*'));
@@ -58,87 +39,73 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Get JSON input
-$input = json_decode(file_get_contents('php://input'), true);
+try {
+    // Get JSON input
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
 
-$username = $input['username'] ?? '';
-$password = $input['password'] ?? '';
-
-// Validate input
-if (empty($username) || empty($password)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Username and password are required']);
-    exit;
-}
-
-// Attempt authentication using OpenEMR's built-in auth
-$authUtils = new AuthUtils('login');
-$loginSuccess = $authUtils->confirmPassword($username, $password);
-
-if ($loginSuccess !== true) {
-    // Login failed
-    EventAuditLogger::instance()->newEvent("login", $username, '', 0, "Failed login attempt from React frontend");
-
-    // Clear password from memory
-    if (function_exists('sodium_memzero')) {
-        sodium_memzero($password);
+    if (!$data) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid JSON']);
+        exit;
     }
 
-    http_response_code(401);
-    echo json_encode(['error' => 'Invalid username or password']);
-    exit;
-}
+    $username = trim($data['username'] ?? '');
+    $password = $data['password'] ?? '';
 
-// Login successful - session variables are already set by confirmPassword()
-// The session should now contain: authUser, authProvider, authUserID, etc.
+    if (empty($username) || empty($password)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Username and password are required']);
+        exit;
+    }
 
-// Log successful login
-EventAuditLogger::instance()->newEvent("login", $_SESSION['authUser'], $_SESSION['authProvider'] ?? '', 1, "Successful login from React frontend");
+    error_log("Login attempt for user: $username");
 
-// Get user details for response
-$userService = new UserService();
-try {
-    $user = $userService->getUser($_SESSION['authUserID']);
+    // Authenticate using CustomAuth
+    $auth = new CustomAuth();
+    $result = $auth->login($username, $password);
 
-    $response = [
-        'success' => true,
-        'user' => [
-            'id' => $_SESSION['authUserID'],
-            'username' => $_SESSION['authUser'],
-            'fname' => $user['fname'] ?? '',
-            'lname' => $user['lname'] ?? '',
-            'fullName' => trim(($user['fname'] ?? '') . ' ' . ($user['lname'] ?? '')),
-            'authorized' => $_SESSION['authProvider'] ?? 0,
-            'calendar' => $_SESSION['calendar'] ?? 0,
-            'admin' => ($user['calendar'] ?? 0) == 1 // Only calendar admins have admin access
-        ]
-    ];
+    if (!$result['success']) {
+        error_log("Login failed for user: $username - " . $result['message']);
+        http_response_code(401);
+        echo json_encode([
+            'error' => $result['message'] ?? 'Invalid credentials'
+        ]);
+        exit;
+    }
 
+    // Login successful
+    $user = $result['user'];
+
+    error_log("Login successful for user: $username (ID: {$user['id']})");
+
+    // Return user information
     http_response_code(200);
-    echo json_encode($response);
+    echo json_encode([
+        'success' => true,
+        'message' => 'Login successful',
+        'user' => [
+            'id' => $user['id'],
+            'username' => $user['username'],
+            'email' => $user['email'],
+            'fname' => $user['first_name'],
+            'lname' => $user['last_name'],
+            'fullName' => $user['first_name'] . ' ' . $user['last_name'],
+            'displayName' => $user['first_name'] . ' ' . $user['last_name'],
+            'userType' => $user['user_type'],
+            'isProvider' => (bool) $user['is_provider'],
+            'admin' => $user['user_type'] === 'admin',
+            'npi' => $user['npi'] ?? null,
+            'phone' => $user['phone'] ?? null
+        ]
+    ]);
 
 } catch (Exception $e) {
-    error_log("Error fetching user details: " . $e->getMessage());
-
-    // Return basic info even if detailed fetch fails
-    $response = [
-        'success' => true,
-        'user' => [
-            'id' => $_SESSION['authUserID'],
-            'username' => $_SESSION['authUser'],
-            'fname' => '',
-            'lname' => '',
-            'fullName' => $_SESSION['authUser'],
-            'authorized' => $_SESSION['authProvider'] ?? 0,
-            'admin' => false
-        ]
-    ];
-
-    http_response_code(200);
-    echo json_encode($response);
-}
-
-// Clear password from memory
-if (function_exists('sodium_memzero')) {
-    sodium_memzero($password);
+    error_log("Login error: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
+    http_response_code(500);
+    echo json_encode([
+        'error' => 'Login failed',
+        'message' => 'An error occurred during login'
+    ]);
 }
