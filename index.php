@@ -1,30 +1,40 @@
 <?php
+/**
+ * Mindline EMHR - Application Entry Point
+ * Serves the React frontend application
+ */
 
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-// Set the site ID if required.  This must be done before any database
-// access is attempted.
+// Serve the React application from /app folder
+$appPath = __DIR__ . '/app/index.html';
 
-$site_id = '';
+if (file_exists($appPath)) {
+    // Set appropriate content type
+    header('Content-Type: text/html; charset=UTF-8');
 
-if (!empty($_GET['site'])) {
-    $site_id = $_GET['site'];
-} elseif (is_dir("sites/" . ($_SERVER['HTTP_HOST'] ?? 'default'))) {
-    $site_id = ($_SERVER['HTTP_HOST'] ?? 'default');
+    // Disable caching for the main HTML file (assets are cache-busted via hashing)
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+
+    // Serve the application
+    readfile($appPath);
 } else {
-    $site_id = 'default';
-}
-
-if (empty($site_id) || preg_match('/[^A-Za-z0-9\\-.]/', $site_id)) {
-    die("Site ID '" . htmlspecialchars($site_id, ENT_NOQUOTES) . "' contains invalid characters.");
-}
-
-require_once "sites/$site_id/sqlconf.php";
-
-if ($config == 1) {
-    header("Location: /interface/login/login.php?site=$site_id");
-} else {
-    header("Location: /setup.php?site=$site_id");
+    // App not built yet
+    http_response_code(503);
+    echo "<!DOCTYPE html>
+<html>
+<head>
+    <title>Mindline EMHR - Build Required</title>
+    <style>
+        body { font-family: system-ui; max-width: 600px; margin: 100px auto; padding: 20px; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>Mindline EMHR</h1>
+    <p>The React frontend has not been built yet.</p>
+    <p>Please build the application:</p>
+    <pre><code>cd react-frontend && npm run build</code></pre>
+    <p>This will create the production build in the <code>/app</code> directory.</p>
+</body>
+</html>";
 }
