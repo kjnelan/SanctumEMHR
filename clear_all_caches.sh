@@ -11,7 +11,7 @@ echo "   Done"
 # 2. Restart PHP-FPM (try multiple possible versions)
 echo ""
 echo "2. Restarting PHP-FPM..."
-for version in php8.2-fpm php8.1-fpm php8.0-fpm php-fpm php7.4-fpm; do
+for version in php8.4-fpm php8.3-fpm php8.2-fpm php8.1-fpm php8.0-fpm php-fpm php7.4-fpm; do
     if systemctl list-unit-files | grep -q "^$version.service"; then
         echo "   Found $version, restarting..."
         sudo systemctl restart $version
@@ -44,7 +44,7 @@ echo "   ✓ All PHP files touched"
 # 5. Check if everything is running
 echo ""
 echo "5. Service status:"
-for service in php8.2-fpm apache2 nginx; do
+for service in php8.4-fpm php8.3-fpm php8.2-fpm apache2 nginx; do
     if systemctl list-unit-files | grep -q "^$service.service"; then
         status=$(systemctl is-active $service)
         echo "   $service: $status"

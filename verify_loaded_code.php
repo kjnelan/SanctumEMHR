@@ -90,6 +90,6 @@ if (function_exists('opcache_reset')) {
 
 echo "\n=== INSTRUCTIONS ===\n";
 echo "If you see 'STALE CACHE' above, run these commands:\n";
-echo "   sudo systemctl restart php8.2-fpm\n";
+echo "   sudo systemctl restart php8.4-fpm\n";
 echo "   sudo systemctl restart apache2\n";
 echo "   (or whatever web server you're using)\n";
