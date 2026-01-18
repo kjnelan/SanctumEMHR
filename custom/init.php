@@ -24,10 +24,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
-// Start PHP session (for authentication)
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// DO NOT start session here - let SessionManager handle it completely
 
 // Directly load class files (bypasses autoloader case sensitivity issues)
 $baseDir = dirname(__FILE__);
