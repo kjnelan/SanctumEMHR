@@ -5,9 +5,8 @@
  * Usage: php create_user.php
  */
 
-require_once __DIR__ . '/vendor/autoload.php';
-
-use Custom\Lib\Database\Database;
+// Load database configuration
+$dbConfig = require __DIR__ . '/config/database.php';
 
 // User details - modify these as needed
 $userData = [
@@ -30,7 +29,19 @@ $userData = [
 ];
 
 try {
-    $db = Database::getInstance();
+    // Create PDO connection using config
+    $dsn = sprintf(
+        'mysql:host=%s;port=%s;dbname=%s;charset=%s',
+        $dbConfig['host'],
+        $dbConfig['port'],
+        $dbConfig['database'],
+        $dbConfig['charset']
+    );
+
+    $pdo = new PDO($dsn, $dbConfig['username'], $dbConfig['password'], [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
 
     // Generate UUID
     $uuid = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
@@ -45,10 +56,9 @@ try {
     $passwordHash = password_hash($userData['password'], PASSWORD_DEFAULT);
 
     // Check if user already exists
-    $existingUser = $db->query(
-        "SELECT id FROM users WHERE username = ? OR email = ?",
-        [$userData['username'], $userData['email']]
-    );
+    $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
+    $stmt->execute([$userData['username'], $userData['email']]);
+    $existingUser = $stmt->fetch();
 
     if ($existingUser) {
         echo "❌ Error: User with username '{$userData['username']}' or email '{$userData['email']}' already exists.\n";
@@ -72,7 +82,8 @@ try {
         NOW(), NOW()
     )";
 
-    $userId = $db->insert($sql, [
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
         $uuid,
         $userData['username'],
         $userData['email'],
@@ -91,6 +102,8 @@ try {
         $userData['mobile'],
         $userData['fax']
     ]);
+
+    $userId = $pdo->lastInsertId();
 
     echo "✅ User created successfully!\n\n";
     echo "User ID: {$userId}\n";
