@@ -105,26 +105,26 @@ try {
                     first_name AS fname,
                     middle_name AS mname,
                     last_name AS lname,
+                    title,
+                    suffix,
                     email,
                     phone,
                     mobile AS phonecell,
+                    fax,
                     npi,
                     license_number AS state_license_number,
                     license_state,
-                    dea_number,
-                    is_provider AS authorized,
-                    is_active AS active,
-                    CASE WHEN user_type = 'admin' THEN 1 ELSE 0 END AS calendar,
+                    federal_tax_id AS federaltaxid,
+                    taxonomy,
+                    CAST(is_provider AS CHAR) AS authorized,
+                    CAST(is_active AS CHAR) AS active,
+                    CAST(is_supervisor AS CHAR) AS is_supervisor,
+                    CAST(portal_user AS CHAR) AS portal_user,
+                    CAST(CASE WHEN user_type = 'admin' THEN 1 ELSE 0 END AS CHAR) AS calendar,
                     user_type,
-                    NULL AS title,
-                    NULL AS suffix,
-                    NULL AS federaltaxid,
-                    NULL AS taxonomy,
-                    NULL AS supervisor_id,
-                    NULL AS facility_id,
-                    0 AS is_supervisor,
-                    0 AS portal_user,
-                    NULL AS notes
+                    supervisor_id,
+                    facility_id,
+                    notes
                 FROM users
                 WHERE id = ?";
 
@@ -227,14 +227,24 @@ try {
                 'first_name' => $fname,
                 'last_name' => $lname,
                 'middle_name' => $input['mname'] ?? null,
+                'title' => $input['title'] ?? null,
+                'suffix' => $input['suffix'] ?? null,
                 'user_type' => $input['user_type'] ?? 'staff',
                 'is_provider' => ($input['authorized'] ?? 0) ? 1 : 0,
                 'is_active' => ($input['active'] ?? 1) ? 1 : 0,
+                'is_supervisor' => ($input['is_supervisor'] ?? 0) ? 1 : 0,
+                'portal_user' => ($input['portal_user'] ?? 0) ? 1 : 0,
                 'npi' => $input['npi'] ?? null,
-                'license_number' => $input['license_number'] ?? null,
+                'license_number' => $input['state_license_number'] ?? null,
                 'license_state' => $input['license_state'] ?? null,
+                'federal_tax_id' => $input['federaltaxid'] ?? null,
+                'taxonomy' => $input['taxonomy'] ?? null,
                 'phone' => $input['phone'] ?? null,
-                'mobile' => $input['phonecell'] ?? null
+                'mobile' => $input['phonecell'] ?? null,
+                'fax' => $input['fax'] ?? null,
+                'supervisor_id' => $input['supervisor_id'] ?? null,
+                'facility_id' => $input['facility_id'] ?? null,
+                'notes' => $input['notes'] ?? null
             ]);
 
             if (!$result['success']) {
@@ -279,19 +289,26 @@ try {
                 'fname' => 'first_name',
                 'mname' => 'middle_name',
                 'lname' => 'last_name',
+                'title' => 'title',
+                'suffix' => 'suffix',
                 'email' => 'email',
                 'phone' => 'phone',
                 'phonecell' => 'mobile',
+                'fax' => 'fax',
                 'npi' => 'npi',
-                'license_number' => 'license_number',
+                'state_license_number' => 'license_number',
                 'license_state' => 'license_state',
-                'dea_number' => 'dea_number'
+                'federaltaxid' => 'federal_tax_id',
+                'taxonomy' => 'taxonomy',
+                'supervisor_id' => 'supervisor_id',
+                'facility_id' => 'facility_id',
+                'notes' => 'notes'
             ];
 
             foreach ($fieldMap as $inputKey => $dbField) {
                 if (isset($input[$inputKey])) {
                     $updateFields[] = "$dbField = ?";
-                    $params[] = $input[$inputKey];
+                    $params[] = $input[$inputKey] ?: null; // Empty strings become NULL
                 }
             }
 
@@ -303,6 +320,16 @@ try {
             if (isset($input['active'])) {
                 $updateFields[] = "is_active = ?";
                 $params[] = $input['active'] ? 1 : 0;
+            }
+
+            if (isset($input['is_supervisor'])) {
+                $updateFields[] = "is_supervisor = ?";
+                $params[] = $input['is_supervisor'] ? 1 : 0;
+            }
+
+            if (isset($input['portal_user'])) {
+                $updateFields[] = "portal_user = ?";
+                $params[] = $input['portal_user'] ? 1 : 0;
             }
 
             if (isset($input['user_type'])) {
