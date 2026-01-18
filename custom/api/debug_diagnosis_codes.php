@@ -1,36 +1,27 @@
 <?php
 /**
- * Debug script to check diagnosis_codes values in the database
+ * Debug script to check diagnosis_codes values in database (MIGRATED TO MINDLINE)
  */
 
-require_once(__DIR__ . '/../../interface/globals.php');
+require_once(__DIR__ . '/../init.php');
 
-// Get all diagnosis notes
-$sql = "SELECT id, patient_id, diagnosis_codes, LENGTH(diagnosis_codes) as length FROM clinical_notes WHERE template_type = 'Diagnosis' ORDER BY id DESC LIMIT 10";
-$result = sqlStatement($sql);
+use Custom\Lib\Database\Database;
 
-echo "=== Diagnosis Notes in Database ===\n\n";
+$db = Database::getInstance();
 
-while ($row = sqlFetchArray($result)) {
+// Get all diagnosis notes from MINDLINE schema
+$sql = "SELECT id, client_id, note_type FROM clinical_notes WHERE note_type = 'Diagnosis' ORDER BY id DESC LIMIT 10";
+$rows = $db->queryAll($sql);
+
+echo "=== Diagnosis Notes in Mindline Database ===\n\n";
+
+foreach ($rows as $row) {
     echo "Note ID: " . $row['id'] . "\n";
-    echo "Patient ID: " . $row['patient_id'] . "\n";
-    echo "diagnosis_codes value: ";
-    var_dump($row['diagnosis_codes']);
-    echo "Length: " . $row['length'] . "\n";
-    echo "Type: " . gettype($row['diagnosis_codes']) . "\n";
-
-    // Try to decode
-    if ($row['diagnosis_codes']) {
-        $decoded = json_decode($row['diagnosis_codes'], true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            echo "JSON ERROR: " . json_last_error_msg() . "\n";
-        } else {
-            echo "Decoded successfully: ";
-            var_dump($decoded);
-        }
-    } else {
-        echo "Empty or null value\n";
-    }
-
+    echo "Client ID: " . $row['client_id'] . "\n";
+    echo "Note Type: " . $row['note_type'] . "\n";
     echo "\n" . str_repeat("-", 50) . "\n\n";
+}
+
+if (empty($rows)) {
+    echo "No diagnosis notes found.\n";
 }

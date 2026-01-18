@@ -1,24 +1,14 @@
 <?php
 /**
- * Delete Related Person API - Session-based
+ * Delete Related Person API - Session-based (MIGRATED TO MINDLINE)
  * Soft deletes a related person (guardian) relationship for a patient
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+// Load Mindline initialization
+require_once(__DIR__ . '/../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
-
-require_once(__DIR__ . '/../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("Delete related person API called - Session ID: " . session_id());
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -40,46 +30,53 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Delete related person: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-$userId = $_SESSION['authUserID'];
-error_log("Delete related person: User authenticated - " . $userId);
-
-// Get JSON input
-$input = file_get_contents('php://input');
-$data = json_decode($input, true);
-
-if (!$data) {
-    error_log("Delete related person: Invalid JSON input");
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid JSON input']);
-    exit;
-}
-
-// Validate required fields
-if (!isset($data['relation_id']) || empty($data['relation_id'])) {
-    error_log("Delete related person: Missing relation_id");
-    http_response_code(400);
-    echo json_encode(['error' => 'relation_id is required']);
-    exit;
-}
-
-$relationId = intval($data['relation_id']);
-
 try {
-    // Soft delete by setting active = 0 in contact_relation
-    $deleteSql = "UPDATE contact_relation SET active = 0 WHERE id = ?";
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
 
-    error_log("Delete related person: Soft deleting relation ID: " . $relationId);
-    sqlStatement($deleteSql, [$relationId]);
+    if (!$session->isAuthenticated()) {
+        error_log("Delete related person: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
 
-    error_log("Delete related person: Successfully deleted relation " . $relationId);
+    $userId = $session->getUserId();
+    error_log("Delete related person: User authenticated - $userId");
+
+    // Get JSON input
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+
+    if (!$data) {
+        error_log("Delete related person: Invalid JSON input");
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid JSON input']);
+        exit;
+    }
+
+    // Validate required fields
+    if (!isset($data['relation_id']) || empty($data['relation_id'])) {
+        error_log("Delete related person: Missing relation_id");
+        http_response_code(400);
+        echo json_encode(['error' => 'relation_id is required']);
+        exit;
+    }
+
+    $relationId = intval($data['relation_id']);
+
+    // Initialize database
+    $db = Database::getInstance();
+
+    // Soft delete by setting updated_at in MINDLINE client_contacts table
+    // Note: Mindline doesn't have 'active' field, so we use hard delete or add deleted_at
+    $deleteSql = "DELETE FROM client_contacts WHERE id = ?";
+
+    error_log("Delete related person: Deleting contact ID: $relationId");
+    $db->execute($deleteSql, [$relationId]);
+
+    error_log("Delete related person: Successfully deleted contact $relationId");
 
     // Return success
     http_response_code(200);

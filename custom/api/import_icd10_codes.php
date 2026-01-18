@@ -1,7 +1,7 @@
 <?php
 /**
  * Mindline EMHR
- * ICD-10 Code Import API - Session-based authentication
+ * ICD-10 Code Import API - Session-based authentication (MIGRATED TO MINDLINE)
  * Handles bulk import of ICD-10-CM codes from CMS text file
  *
  * File Format: Tab-delimited text
@@ -15,21 +15,10 @@
  * Proprietary and Confidential
  */
 
-// Start output buffering
-ob_start();
+require_once(__DIR__ . '/../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
-
-require_once(__DIR__ . '/../../interface/globals.php');
-
-// Clear any output
-ob_end_clean();
-
-// Enable error logging
-error_log("ICD-10 Import API called - Session ID: " . session_id());
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -51,28 +40,34 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Check authentication
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("ICD-10 Import: Not authenticated");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-// Check admin privileges (calendar = 1 for admin)
-$userSql = "SELECT calendar FROM users WHERE id = ?";
-$userResult = sqlQuery($userSql, [$_SESSION['authUserID']]);
-
-if (!$userResult || $userResult['calendar'] != 1) {
-    error_log("ICD-10 Import: User not admin - " . $_SESSION['authUserID']);
-    http_response_code(403);
-    echo json_encode(['error' => 'Admin privileges required']);
-    exit;
-}
-
-error_log("ICD-10 Import: Admin authenticated - " . $_SESSION['authUserID']);
-
 try {
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    if (!$session->isAuthenticated()) {
+        error_log("ICD-10 Import: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    // Initialize database
+    $db = Database::getInstance();
+
+    // Check admin privileges (is_admin flag in users table)
+    $userSql = "SELECT is_admin FROM users WHERE id = ?";
+    $userResult = $db->query($userSql, [$session->getUserId()]);
+
+    if (!$userResult || $userResult['is_admin'] != 1) {
+        error_log("ICD-10 Import: User not admin - " . $session->getUserId());
+        http_response_code(403);
+        echo json_encode(['error' => 'Admin privileges required']);
+        exit;
+    }
+
+    error_log("ICD-10 Import: Admin authenticated - " . $session->getUserId());
+
     // Check if file was uploaded
     if (!isset($_FILES['icd10_file']) || $_FILES['icd10_file']['error'] !== UPLOAD_ERR_OK) {
         throw new Exception('No file uploaded or upload error');
@@ -116,7 +111,7 @@ try {
         // Delete existing ICD-10 codes
         error_log("ICD-10 Import: Deleting existing codes");
         $deleteSql = "DELETE FROM codes WHERE code_type = 'ICD10'";
-        sqlStatement($deleteSql);
+        $db->execute($deleteSql);
     }
 
     // Prepare insert statement
@@ -148,7 +143,6 @@ try {
 
         // Parse delimited line (tabs or spaces)
         // Format: ORDER \t CODE \t VALID \t SHORT_DESC \t LONG_DESC
-        // Split on any whitespace, limit to 5 parts (last part contains all remaining text)
         $parts = preg_split('/\s+/', $line, 5);
 
         if (count($parts) < 3) {
@@ -179,7 +173,7 @@ try {
 
         // Insert into database
         try {
-            sqlStatement($insertSql, [
+            $db->execute($insertSql, [
                 'ICD10',
                 $code,
                 $description,
@@ -202,7 +196,7 @@ try {
 
     // Get final count
     $countSql = "SELECT COUNT(*) as total FROM codes WHERE code_type = 'ICD10' AND active = 1";
-    $countResult = sqlQuery($countSql);
+    $countResult = $db->query($countSql);
     $totalActive = $countResult['total'];
 
     $response = [

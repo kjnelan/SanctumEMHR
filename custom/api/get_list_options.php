@@ -1,24 +1,14 @@
 <?php
 /**
- * List Options API - Session-based
- * Returns dropdown options from OpenEMR's list_options table
+ * Get List Options API - Session-based (MIGRATED TO MINDLINE)
+ * Returns list options (dropdown values) for a specified list
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+// Load Mindline initialization
+require_once(__DIR__ . '/../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
-
-require_once(__DIR__ . '/../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("List options API called - Session ID: " . session_id());
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -34,73 +24,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // Only allow GET requests
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    error_log("List options: Invalid method - " . $_SERVER['REQUEST_METHOD']);
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("List options: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-// Get list_id from query parameter
-$listId = $_GET['list_id'] ?? null;
-
-if (!$listId) {
-    error_log("List options: No list_id provided");
-    http_response_code(400);
-    echo json_encode(['error' => 'list_id parameter is required']);
-    exit;
-}
-
-error_log("List options: User authenticated - " . $_SESSION['authUserID'] . ", fetching list: " . $listId);
-
 try {
-    // Fetch list options for the specified list_id
-    // Only return active options, ordered by seq for proper display order
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    if (!$session->isAuthenticated()) {
+        error_log("List options: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    $userId = $session->getUserId();
+
+    // Get list_id from query parameter
+    $listId = $_GET['list_id'] ?? null;
+
+    if (!$listId) {
+        error_log("List options: No list_id provided");
+        http_response_code(400);
+        echo json_encode(['error' => 'list_id parameter is required']);
+        exit;
+    }
+
+    error_log("List options: User $userId fetching list: $listId");
+
+    // Initialize database
+    $db = Database::getInstance();
+
+    // Fetch list options from MINDLINE settings_lists table
     $sql = "SELECT
         option_id,
         title,
-        seq,
+        sort_order,
         is_default,
-        option_value
-    FROM list_options
-    WHERE list_id = ? AND activity = 1
-    ORDER BY seq, title";
+        notes
+    FROM settings_lists
+    WHERE list_id = ? AND is_active = 1
+    ORDER BY sort_order, title";
 
-    error_log("List options SQL: " . $sql . " [list_id: " . $listId . "]");
-    $result = sqlStatement($sql, [$listId]);
+    error_log("List options SQL: $sql [list_id: $listId]");
 
+    // Execute query using Database class
+    $rows = $db->queryAll($sql, [$listId]);
+
+    // Format options for frontend
     $options = [];
-    while ($row = sqlFetchArray($result)) {
+    foreach ($rows as $row) {
         $options[] = [
+            'option_id' => $row['option_id'],
+            'title' => $row['title'],
             'value' => $row['option_id'],
             'label' => $row['title'],
-            'seq' => $row['seq'],
+            'seq' => $row['sort_order'], // Keep old key for frontend
             'is_default' => $row['is_default'],
-            'option_value' => $row['option_value']
+            'notes' => $row['notes']
         ];
     }
 
-    error_log("List options: Found " . count($options) . " options for list: " . $listId);
+    error_log("List options: Found " . count($options) . " options for list '$listId'");
 
     http_response_code(200);
     echo json_encode([
+        'success' => true,
         'list_id' => $listId,
         'options' => $options
     ]);
 
 } catch (Exception $e) {
-    error_log("Error fetching list options: " . $e->getMessage());
-    error_log("Stack trace: " . $e->getTraceAsString());
+    error_log("List options: Error - " . $e->getMessage());
     http_response_code(500);
-    echo json_encode([
-        'error' => 'Failed to fetch list options',
-        'message' => $e->getMessage()
-    ]);
+    echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Mindline EMHR - Get Patient Diagnoses API
+ * Mindline EMHR - Get Patient Diagnoses API (MIGRATED TO MINDLINE)
  * Fetches active (and optionally retired) diagnoses for a patient
  * Supports filtering by date (active as of a specific date)
  *
@@ -12,14 +12,10 @@
  * Proprietary and Confidential
  */
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
+require_once(__DIR__ . '/../init.php');
 
-require_once(__DIR__ . '/../../interface/globals.php');
-
-error_log("Get patient diagnoses called - Session ID: " . session_id());
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -40,30 +36,36 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Get patient diagnoses: Not authenticated");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-// Get parameters
-$patientId = $_GET['patient_id'] ?? null;
-$activeAsOf = $_GET['active_as_of'] ?? date('Y-m-d'); // Default to today
-$includeRetired = ($_GET['include_retired'] ?? '0') === '1';
-
-// Validate patient ID
-if (!$patientId || !is_numeric($patientId)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid or missing patient_id']);
-    exit;
-}
-
 try {
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    if (!$session->isAuthenticated()) {
+        error_log("Get patient diagnoses: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    // Get parameters
+    $patientId = $_GET['patient_id'] ?? null;
+    $activeAsOf = $_GET['active_as_of'] ?? date('Y-m-d'); // Default to today
+    $includeRetired = ($_GET['include_retired'] ?? '0') === '1';
+
+    // Validate patient ID
+    if (!$patientId || !is_numeric($patientId)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid or missing patient_id']);
+        exit;
+    }
+
+    // Initialize database
+    $db = Database::getInstance();
+
     // Verify user has access to this patient
-    $accessCheck = sqlQuery(
-        "SELECT id FROM patient_data WHERE id = ?",
+    $accessCheck = $db->query(
+        "SELECT id FROM clients WHERE id = ?",
         [$patientId]
     );
 
@@ -75,58 +77,68 @@ try {
 
     // Build query to fetch diagnoses
     // A diagnosis is "active as of" a date if:
-    // - It has a start date (begdate) <= the target date
-    // - It has NO end date (enddate IS NULL or enddate = '0000-00-00'), OR
+    // - It has a start date (start_date) <= the target date
+    // - It has NO end date (end_date IS NULL or end_date = '0000-00-00'), OR
     // - It has an end date > the target date
 
     $sql = "SELECT
                 id,
-                diagnosis,
-                title,
-                begdate,
-                enddate,
-                activity,
+                diagnosis_code,
+                diagnosis_description,
+                start_date,
+                end_date,
+                is_active,
                 occurrence,
                 classification,
                 outcome
-            FROM lists
-            WHERE pid = ?
-              AND type = 'medical_problem'";
+            FROM diagnoses
+            WHERE client_id = ?";
 
     $params = [$patientId];
 
     if (!$includeRetired) {
         // Only include diagnoses that were active as of the specified date
-        $sql .= " AND begdate <= ?
-                  AND (enddate IS NULL
-                       OR enddate = '0000-00-00'
-                       OR enddate = ''
-                       OR enddate > ?)
-                  AND activity = 1";
+        $sql .= " AND start_date <= ?
+                  AND (end_date IS NULL
+                       OR end_date = '0000-00-00'
+                       OR end_date = ''
+                       OR end_date > ?)
+                  AND is_active = 1";
         $params[] = $activeAsOf;
         $params[] = $activeAsOf;
     }
 
-    $sql .= " ORDER BY begdate DESC, id DESC";
+    $sql .= " ORDER BY start_date DESC, id DESC";
 
-    $result = sqlStatement($sql, $params);
+    $rows = $db->queryAll($sql, $params);
 
     $diagnoses = [];
-    while ($row = sqlFetchArray($result)) {
+    foreach ($rows as $row) {
         // Format dates
-        if ($row['begdate'] && $row['begdate'] !== '0000-00-00') {
-            $row['begdate'] = $row['begdate'];
+        if ($row['start_date'] && $row['start_date'] !== '0000-00-00') {
+            $row['start_date'] = $row['start_date'];
         } else {
-            $row['begdate'] = null;
+            $row['start_date'] = null;
         }
 
-        if ($row['enddate'] && $row['enddate'] !== '0000-00-00' && $row['enddate'] !== '') {
-            $row['enddate'] = $row['enddate'];
+        if ($row['end_date'] && $row['end_date'] !== '0000-00-00' && $row['end_date'] !== '') {
+            $row['end_date'] = $row['end_date'];
         } else {
-            $row['enddate'] = null;
+            $row['end_date'] = null;
         }
 
-        $diagnoses[] = $row;
+        // Map to old field names for frontend compatibility
+        $diagnoses[] = [
+            'id' => $row['id'],
+            'diagnosis' => $row['diagnosis_code'],
+            'title' => $row['diagnosis_description'],
+            'begdate' => $row['start_date'],
+            'enddate' => $row['end_date'],
+            'activity' => $row['is_active'],
+            'occurrence' => $row['occurrence'],
+            'classification' => $row['classification'],
+            'outcome' => $row['outcome']
+        ];
     }
 
     echo json_encode([

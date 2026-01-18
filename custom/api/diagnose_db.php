@@ -1,43 +1,51 @@
 <?php
-$ignoreAuth = true;
-require_once(__DIR__ . '/../../interface/globals.php');
+/**
+ * Database diagnosis script (MIGRATED TO MINDLINE)
+ */
+
+require_once(__DIR__ . '/../init.php');
+
+use Custom\Lib\Database\Database;
+
 header('Content-Type: application/json');
 
 try {
+    $db = Database::getInstance();
+
     // Check tables
-    $tables = sqlStatement("SHOW TABLES");
+    $tables = $db->queryAll("SHOW TABLES");
     $tableList = [];
-    while ($row = sqlFetchArray($tables)) {
+    foreach ($tables as $row) {
         $tableList[] = array_values($row)[0];
     }
 
-    // Check if the categories table exists
+    // Check appointment_categories table
     $categoriesTable = null;
     foreach ($tableList as $table) {
-        if (stripos($table, 'calendar') !== false && stripos($table, 'categories') !== false) {
+        if ($table === 'appointment_categories') {
             $categoriesTable = $table;
             break;
         }
     }
 
     $result = [
-        'tables_with_calendar' => array_filter($tableList, function($t) {
-            return stripos($t, 'calendar') !== false;
+        'tables_with_appointment' => array_filter($tableList, function($t) {
+            return stripos($t, 'appointment') !== false;
         }),
         'categories_table' => $categoriesTable
     ];
 
-    // If we found a categories table, describe it
+    // If we found categories table, describe it
     if ($categoriesTable) {
-        $describe = sqlStatement("DESCRIBE $categoriesTable");
+        $describe = $db->queryAll("DESCRIBE $categoriesTable");
         $columns = [];
-        while ($col = sqlFetchArray($describe)) {
+        foreach ($describe as $col) {
             $columns[] = $col['Field'];
         }
         $result['categories_columns'] = $columns;
 
         // Get sample data
-        $sample = sqlQuery("SELECT * FROM $categoriesTable LIMIT 1");
+        $sample = $db->query("SELECT * FROM $categoriesTable LIMIT 1");
         $result['sample_category'] = $sample;
     }
 

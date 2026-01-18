@@ -11,12 +11,8 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Load Composer autoloader
-require_once dirname(__FILE__, 3) . "/vendor/autoload.php";
-
-// Load custom classes
-require_once dirname(__FILE__, 2) . "/lib/Database/Database.php";
-require_once dirname(__FILE__, 2) . "/lib/Session/SessionManager.php";
+// Load Mindline initialization
+require_once dirname(__FILE__, 2) . "/init.php";
 
 use Custom\Lib\Session\SessionManager;
 

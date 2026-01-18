@@ -148,7 +148,8 @@
     ],
     "autoload": {
         "psr-4": {
-            "OpenEMR\\": "src"
+            "OpenEMR\\": "src",
+            "Custom\\": "custom"
         },
         "classmap": [
             "library/classes"

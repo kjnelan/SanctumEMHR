@@ -1,7 +1,7 @@
 <?php
 /**
  * Mindline EMHR
- * Update Appointment API - Session-based authentication
+ * Update Appointment API - Session-based authentication (MIGRATED TO MINDLINE)
  * Updates an existing appointment in the calendar system
  *
  * Author: Kenneth J. Nelan
@@ -12,21 +12,10 @@
  * Proprietary and Confidential
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+require_once(__DIR__ . '/../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
-
-require_once(__DIR__ . '/../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("Update appointment API called - Session ID: " . session_id());
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -48,17 +37,23 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Update appointment: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-error_log("Update appointment: User authenticated - " . $_SESSION['authUserID']);
-
 try {
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    if (!$session->isAuthenticated()) {
+        error_log("Update appointment: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    error_log("Update appointment: User authenticated - " . $session->getUserId());
+
+    // Initialize database
+    $db = Database::getInstance();
+
     // Get JSON input
     $input = json_decode(file_get_contents('php://input'), true);
 
@@ -91,65 +86,73 @@ try {
     $apptstatus = $input['apptstatus'] ?? '-'; // Default status
     $room = $input['room'] ?? '';
 
+    // Map OpenEMR status symbols to Mindline status strings
+    $statusMap = [
+        '-' => 'pending',
+        '~' => 'confirmed',
+        '@' => 'arrived',
+        '^' => 'checkout',
+        '*' => 'no_show',
+        '?' => 'cancelled',
+        'x' => 'deleted'
+    ];
+    $mindlineStatus = isset($statusMap[$apptstatus]) ? $statusMap[$apptstatus] : 'pending';
+
     // Check for series update
     $seriesUpdate = isset($input['seriesUpdate']) ? $input['seriesUpdate'] : null;
     $isSeriesUpdate = $seriesUpdate !== null;
     $updateScope = $isSeriesUpdate ? $seriesUpdate['scope'] : 'single'; // 'single', 'all', 'future'
     $recurrenceId = $isSeriesUpdate ? $seriesUpdate['recurrenceId'] : null;
 
-    // Calculate end time based on start time and duration
+    // Calculate start and end datetime
     $startDateTime = new DateTime($eventDate . ' ' . $startTime);
     $endDateTime = clone $startDateTime;
     $endDateTime->add(new DateInterval('PT' . $duration . 'M')); // Add duration in minutes
-    $endTime = $endDateTime->format('H:i:s');
-    $endDate = $endDateTime->format('Y-m-d');
-
-    // Convert duration to seconds for database (OpenEMR stores in seconds)
-    $durationSeconds = $duration * 60;
 
     // Determine which appointments to update based on scope
-    $whereClause = "pc_eid = ?";
+    $whereClause = "id = ?";
     $whereParams = [$appointmentId];
 
     if ($isSeriesUpdate && $updateScope !== 'single') {
         if ($updateScope === 'all') {
             // Update all occurrences in the series
-            $whereClause = "pc_recurrspec = ?";
+            $whereClause = "recurrence_group_id = ?";
             $whereParams = [$recurrenceId];
             error_log("Update appointment: Updating ALL occurrences with recurrence ID: $recurrenceId");
         } elseif ($updateScope === 'future') {
             // Update this and future occurrences (split series logic)
             // First, get the current appointment's date to know where to split
-            $currentAppt = sqlQuery("SELECT pc_eventDate FROM openemr_postcalendar_events WHERE pc_eid = ?", [$appointmentId]);
-            $splitDate = $currentAppt['pc_eventDate'];
+            $currentAppt = $db->query("SELECT start_datetime FROM appointments WHERE id = ?", [$appointmentId]);
+            $splitDate = $currentAppt['start_datetime'];
 
             // Generate new recurrence ID for the future occurrences
             $newRecurrenceId = uniqid('recur_', true);
 
             // Update future occurrences (including this one) with new recurrence ID
-            $sql = "UPDATE openemr_postcalendar_events SET pc_recurrspec = ? WHERE pc_recurrspec = ? AND pc_eventDate >= ?";
-            sqlStatement($sql, [$newRecurrenceId, $recurrenceId, $splitDate]);
+            $sql = "UPDATE appointments SET recurrence_group_id = ? WHERE recurrence_group_id = ? AND start_datetime >= ?";
+            $db->execute($sql, [$newRecurrenceId, $recurrenceId, $splitDate]);
 
             error_log("Update appointment: Split series - new recurrence ID: $newRecurrenceId for dates >= $splitDate");
 
             // Now update the new series
-            $whereClause = "pc_recurrspec = ?";
+            $whereClause = "recurrence_group_id = ?";
             $whereParams = [$newRecurrenceId];
         }
     }
 
     // Build UPDATE query
-    $sql = "UPDATE openemr_postcalendar_events SET
-        pc_catid = ?,
-        pc_aid = ?,
-        pc_pid = ?,
-        pc_title = ?,
-        pc_startTime = ?,
-        pc_endTime = ?,
-        pc_duration = ?,
-        pc_hometext = ?,
-        pc_apptstatus = ?,
-        pc_room = ?
+    $sql = "UPDATE appointments SET
+        category_id = ?,
+        provider_id = ?,
+        client_id = ?,
+        title = ?,
+        start_datetime = ?,
+        end_datetime = ?,
+        duration_minutes = ?,
+        comments = ?,
+        status = ?,
+        room = ?,
+        updated_at = NOW()
         WHERE $whereClause";
 
     $params = [
@@ -157,11 +160,11 @@ try {
         $providerId,
         $patientId,
         $title,
-        $startTime,
-        $endTime,
-        $durationSeconds,
+        $startDateTime->format('Y-m-d H:i:s'),
+        $endDateTime->format('Y-m-d H:i:s'),
+        $duration,
         $comments,
-        $apptstatus,
+        $mindlineStatus,
         $room
     ];
 
@@ -172,64 +175,65 @@ try {
     error_log("Update appointment params: " . print_r($params, true));
 
     // Execute update
-    $result = sqlStatement($sql, $params);
+    $updatedCount = $db->execute($sql, $params);
 
-    if ($result === false) {
-        throw new Exception('Failed to update appointment');
-    }
-
-    $updatedCount = $updateScope === 'single' ? 1 : sqlNumRows($result);
     error_log("Update appointment: Successfully updated $updatedCount appointment(s)");
 
     // Fetch the updated appointment to return full details
-    $updatedAppt = sqlQuery(
+    $updatedAppt = $db->query(
         "SELECT
-            e.pc_eid,
-            e.pc_eventDate,
-            e.pc_startTime,
-            e.pc_endTime,
-            e.pc_duration,
-            e.pc_catid,
-            e.pc_apptstatus,
-            e.pc_title,
-            e.pc_hometext,
-            e.pc_pid,
-            e.pc_aid,
-            e.pc_room,
-            c.pc_catname,
-            c.pc_catcolor,
-            pd.fname AS patient_fname,
-            pd.lname AS patient_lname,
-            CONCAT(u.fname, ' ', u.lname) AS provider_name
-        FROM openemr_postcalendar_events e
-        LEFT JOIN openemr_postcalendar_categories c ON e.pc_catid = c.pc_catid
-        LEFT JOIN patient_data pd ON e.pc_pid = pd.pid
-        LEFT JOIN users u ON e.pc_aid = u.id
-        WHERE e.pc_eid = ?",
+            a.id,
+            a.start_datetime,
+            a.end_datetime,
+            a.duration_minutes,
+            a.category_id,
+            a.status,
+            a.title,
+            a.comments,
+            a.client_id,
+            a.provider_id,
+            a.room,
+            c.name AS category_name,
+            c.color AS category_color,
+            cl.first_name AS patient_fname,
+            cl.last_name AS patient_lname,
+            CONCAT(u.first_name, ' ', u.last_name) AS provider_name
+        FROM appointments a
+        LEFT JOIN appointment_categories c ON a.category_id = c.id
+        LEFT JOIN clients cl ON a.client_id = cl.id
+        LEFT JOIN users u ON a.provider_id = u.id
+        WHERE a.id = ?",
         [$appointmentId]
     );
+
+    // Extract date and time components from TIMESTAMP fields
+    $startDT = new DateTime($updatedAppt['start_datetime']);
+    $endDT = new DateTime($updatedAppt['end_datetime']);
+
+    // Map Mindline status back to OpenEMR symbols for frontend compatibility
+    $reverseStatusMap = array_flip($statusMap);
 
     http_response_code(200);
     echo json_encode([
         'success' => true,
         'message' => 'Appointment updated successfully',
         'appointment' => [
-            'id' => $updatedAppt['pc_eid'],
-            'eventDate' => $updatedAppt['pc_eventDate'],
-            'startTime' => $updatedAppt['pc_startTime'],
-            'endTime' => $updatedAppt['pc_endTime'],
-            'duration' => intval($updatedAppt['pc_duration'] / 60), // Convert back to minutes
-            'categoryId' => $updatedAppt['pc_catid'],
-            'categoryName' => $updatedAppt['pc_catname'],
-            'categoryColor' => $updatedAppt['pc_catcolor'],
-            'apptstatus' => $updatedAppt['pc_apptstatus'],
-            'title' => $updatedAppt['pc_title'],
-            'comments' => $updatedAppt['pc_hometext'],
-            'patientId' => $updatedAppt['pc_pid'],
+            'id' => $updatedAppt['id'],
+            'eventDate' => $startDT->format('Y-m-d'),
+            'startTime' => $startDT->format('H:i:s'),
+            'endTime' => $endDT->format('H:i:s'),
+            'duration' => intval($updatedAppt['duration_minutes']),
+            'categoryId' => $updatedAppt['category_id'],
+            'categoryName' => $updatedAppt['category_name'],
+            'categoryColor' => $updatedAppt['category_color'],
+            'apptstatus' => $reverseStatusMap[$updatedAppt['status']] ?? '-',
+            'title' => $updatedAppt['title'],
+            'comments' => $updatedAppt['comments'],
+            'patientId' => $updatedAppt['client_id'],
             'patientName' => trim(($updatedAppt['patient_fname'] ?? '') . ' ' . ($updatedAppt['patient_lname'] ?? '')),
-            'providerId' => $updatedAppt['pc_aid'],
+            'providerId' => $updatedAppt['provider_id'],
             'providerName' => $updatedAppt['provider_name'],
-            'room' => $updatedAppt['pc_room']
+            'room' => $updatedAppt['room']
         ]
     ]);
 

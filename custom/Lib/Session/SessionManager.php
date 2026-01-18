@@ -224,9 +224,9 @@ class SessionManager implements SessionHandlerInterface
     }
 
     /**
-     * Destroy session completely
+     * Destroy session completely (renamed from destroy to avoid conflict with SessionHandlerInterface)
      */
-    public function destroy(): bool
+    public function destroySession(): bool
     {
         $this->start();
 
@@ -338,7 +338,7 @@ class SessionManager implements SessionHandlerInterface
      */
     public function logout(): bool
     {
-        return $this->destroy();
+        return $this->destroySession();
     }
 
     /**

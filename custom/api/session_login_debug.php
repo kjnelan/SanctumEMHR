@@ -1,54 +1,38 @@
 <?php
+/**
+ * Session Login Debug - Shows session status (MIGRATED TO MINDLINE)
+ */
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 header('Content-Type: application/json');
 
-echo json_encode(['step' => 1, 'message' => 'Starting']);
-flush();
-
 try {
-    // Set the site ID
-    $_GET['site'] = 'default';
-    echo json_encode(['step' => 2, 'message' => 'Site ID set']);
-    flush();
+    echo json_encode(['step' => 1, 'message' => 'Starting Mindline debug']) . "\n";
 
-    // Load autoloader
-    $GLOBALS['already_autoloaded'] = true;
-    $vendorPath = dirname(__FILE__, 3) . "/vendor/autoload.php";
-    echo json_encode(['step' => 3, 'message' => 'Autoloader path: ' . $vendorPath, 'exists' => file_exists($vendorPath)]);
-    flush();
+    // Load Mindline initialization
+    require_once dirname(__FILE__, 2) . "/init.php";
+    echo json_encode(['step' => 2, 'message' => 'Mindline init loaded']) . "\n";
 
-    require_once $vendorPath;
-    echo json_encode(['step' => 4, 'message' => 'Autoloader loaded']);
-    flush();
+    use Custom\Lib\Session\SessionManager;
+    echo json_encode(['step' => 3, 'message' => 'SessionManager loaded']) . "\n";
 
-    // Set webroot
-    $GLOBALS['webroot'] = '';
-    echo json_encode(['step' => 5, 'message' => 'Webroot set']);
-    flush();
+    $session = SessionManager::getInstance();
+    echo json_encode(['step' => 4, 'message' => 'SessionManager instance created']) . "\n";
 
-    // Start session
-    use OpenEMR\Common\Session\SessionUtil;
-    SessionUtil::coreSessionStart($GLOBALS['webroot']);
-    echo json_encode(['step' => 6, 'message' => 'Session started']);
-    flush();
+    $session->start();
+    echo json_encode(['step' => 5, 'message' => 'Session started']) . "\n";
 
-    // Set ignore auth flags
-    $ignoreAuth_onsite_portal_two = true;
-    $ignoreAuth = true;
-    echo json_encode(['step' => 7, 'message' => 'Auth flags set']);
-    flush();
+    $info = [
+        'step' => 6,
+        'message' => 'Success - Mindline session system working',
+        'session_id' => session_id(),
+        'is_authenticated' => $session->isAuthenticated(),
+        'user_id' => $session->getUserId(),
+        'username' => $session->getUsername()
+    ];
 
-    // Load globals
-    $globalsPath = dirname(__FILE__, 3) . "/interface/globals.php";
-    echo json_encode(['step' => 8, 'message' => 'Globals path: ' . $globalsPath, 'exists' => file_exists($globalsPath)]);
-    flush();
-
-    require_once $globalsPath;
-    echo json_encode(['step' => 9, 'message' => 'Globals loaded']);
-    flush();
-
-    echo json_encode(['step' => 10, 'message' => 'Success - all loaded']);
+    echo json_encode($info, JSON_PRETTY_PRINT);
 
 } catch (Exception $e) {
     echo json_encode(['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);

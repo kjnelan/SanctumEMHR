@@ -107,14 +107,23 @@ function Facilities() {
       website: '',
       email: '',
       street: '',
+      address_line2: '',
       city: '',
       state: '',
       postal_code: '',
       country_code: 'United States',
       mail_street: '',
+      mailing_address_line2: '',
       mail_city: '',
       mail_state: '',
       mail_zip: '',
+      mailing_same_as_physical: '1',
+      billing_street: '',
+      billing_address_line2: '',
+      billing_city: '',
+      billing_state: '',
+      billing_zip: '',
+      billing_same_as_physical: '1',
       color: '#99FFFF',
       pos_code: '11',
       facility_npi: '',
@@ -151,7 +160,9 @@ function Facilities() {
         accepts_assignment: data.accepts_assignment === '1' || data.accepts_assignment === 1 ? 1 : 0,
         service_location: data.service_location === '1' || data.service_location === 1 ? 1 : 0,
         primary_business_entity: data.primary_business_entity === '1' || data.primary_business_entity === 1 ? 1 : 0,
-        inactive: data.inactive === '1' || data.inactive === 1 ? 1 : 0
+        inactive: data.inactive === '1' || data.inactive === 1 ? 1 : 0,
+        mailing_same_as_physical: data.mailing_same_as_physical === '1' || data.mailing_same_as_physical === 1 ? '1' : '0',
+        billing_same_as_physical: data.billing_same_as_physical === '1' || data.billing_same_as_physical === 1 ? '1' : '0'
       });
       setFormError('');
       setAddressTab('physical');
@@ -556,19 +567,39 @@ function FacilityFormModal({
               >
                 Mailing Address
               </button>
+              <button
+                onClick={() => setAddressTab('billing')}
+                className={`px-4 py-2 font-semibold ${
+                  addressTab === 'billing'
+                    ? 'border-b-2 border-blue-600 text-blue-600'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                Billing Address
+              </button>
             </div>
 
             {/* Address Fields */}
             {addressTab === 'physical' ? (
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">Street Address</label>
+                  <label className="block text-gray-700 font-semibold mb-2">Street Address Line 1</label>
                   <input
                     type="text"
                     value={formData.street || ''}
                     onChange={(e) => onFormChange('street', e.target.value)}
                     className="input-field"
-                    placeholder="Enter street address"
+                    placeholder="123 Main Street"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">Street Address Line 2</label>
+                  <input
+                    type="text"
+                    value={formData.address_line2 || ''}
+                    onChange={(e) => onFormChange('address_line2', e.target.value)}
+                    className="input-field"
+                    placeholder="Suite 100"
                   />
                 </div>
                 <div className="grid grid-cols-3 gap-4">
@@ -605,16 +636,50 @@ function FacilityFormModal({
                   </div>
                 </div>
               </div>
-            ) : (
+            ) : addressTab === 'mailing' ? (
               <div className="grid grid-cols-1 gap-4">
+                <label className="flex items-center gap-3 cursor-pointer mb-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.mailing_same_as_physical === '1'}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      if (checked) {
+                        // Copy physical address to mailing
+                        onFormChange('mailing_same_as_physical', '1');
+                        onFormChange('mail_street', formData.street || '');
+                        onFormChange('mailing_address_line2', formData.address_line2 || '');
+                        onFormChange('mail_city', formData.city || '');
+                        onFormChange('mail_state', formData.state || '');
+                        onFormChange('mail_zip', formData.postal_code || '');
+                      } else {
+                        onFormChange('mailing_same_as_physical', '0');
+                      }
+                    }}
+                    className="w-5 h-5 rounded border-gray-300"
+                  />
+                  <span className="text-gray-700 font-semibold">Same as Physical Address</span>
+                </label>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">Mailing Street</label>
+                  <label className="block text-gray-700 font-semibold mb-2">Mailing Address Line 1</label>
                   <input
                     type="text"
                     value={formData.mail_street || ''}
                     onChange={(e) => onFormChange('mail_street', e.target.value)}
                     className="input-field"
                     placeholder="Enter mailing street address"
+                    disabled={formData.mailing_same_as_physical === '1'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">Mailing Address Line 2</label>
+                  <input
+                    type="text"
+                    value={formData.mailing_address_line2 || ''}
+                    onChange={(e) => onFormChange('mailing_address_line2', e.target.value)}
+                    className="input-field"
+                    placeholder="Suite, Apt, etc."
+                    disabled={formData.mailing_same_as_physical === '1'}
                   />
                 </div>
                 <div className="grid grid-cols-3 gap-4">
@@ -626,6 +691,7 @@ function FacilityFormModal({
                       onChange={(e) => onFormChange('mail_city', e.target.value)}
                       className="input-field"
                       placeholder="City"
+                      disabled={formData.mailing_same_as_physical === '1'}
                     />
                   </div>
                   <div>
@@ -637,6 +703,7 @@ function FacilityFormModal({
                       className="input-field"
                       placeholder="WI"
                       maxLength={2}
+                      disabled={formData.mailing_same_as_physical === '1'}
                     />
                   </div>
                   <div>
@@ -647,6 +714,90 @@ function FacilityFormModal({
                       onChange={(e) => onFormChange('mail_zip', e.target.value)}
                       className="input-field"
                       placeholder="53092"
+                      disabled={formData.mailing_same_as_physical === '1'}
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                <label className="flex items-center gap-3 cursor-pointer mb-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.billing_same_as_physical === '1'}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      if (checked) {
+                        // Copy physical address to billing
+                        onFormChange('billing_same_as_physical', '1');
+                        onFormChange('billing_street', formData.street || '');
+                        onFormChange('billing_address_line2', formData.address_line2 || '');
+                        onFormChange('billing_city', formData.city || '');
+                        onFormChange('billing_state', formData.state || '');
+                        onFormChange('billing_zip', formData.postal_code || '');
+                      } else {
+                        onFormChange('billing_same_as_physical', '0');
+                      }
+                    }}
+                    className="w-5 h-5 rounded border-gray-300"
+                  />
+                  <span className="text-gray-700 font-semibold">Same as Physical Address</span>
+                </label>
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">Billing Address Line 1</label>
+                  <input
+                    type="text"
+                    value={formData.billing_street || ''}
+                    onChange={(e) => onFormChange('billing_street', e.target.value)}
+                    className="input-field"
+                    placeholder="Enter billing street address"
+                    disabled={formData.billing_same_as_physical === '1'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-2">Billing Address Line 2</label>
+                  <input
+                    type="text"
+                    value={formData.billing_address_line2 || ''}
+                    onChange={(e) => onFormChange('billing_address_line2', e.target.value)}
+                    className="input-field"
+                    placeholder="Suite, Apt, etc."
+                    disabled={formData.billing_same_as_physical === '1'}
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-gray-700 font-semibold mb-2">City</label>
+                    <input
+                      type="text"
+                      value={formData.billing_city || ''}
+                      onChange={(e) => onFormChange('billing_city', e.target.value)}
+                      className="input-field"
+                      placeholder="City"
+                      disabled={formData.billing_same_as_physical === '1'}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-700 font-semibold mb-2">State</label>
+                    <input
+                      type="text"
+                      value={formData.billing_state || ''}
+                      onChange={(e) => onFormChange('billing_state', e.target.value)}
+                      className="input-field"
+                      placeholder="WI"
+                      maxLength={2}
+                      disabled={formData.billing_same_as_physical === '1'}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-700 font-semibold mb-2">Zip Code</label>
+                    <input
+                      type="text"
+                      value={formData.billing_zip || ''}
+                      onChange={(e) => onFormChange('billing_zip', e.target.value)}
+                      className="input-field"
+                      placeholder="53092"
+                      disabled={formData.billing_same_as_physical === '1'}
                     />
                   </div>
                 </div>

@@ -1,24 +1,13 @@
 <?php
 /**
- * Clinical Notes API - Session-based
- * Returns all clinical notes/forms for a patient across all encounters
+ * Clinical Notes API - Session-based (MIGRATED TO MINDLINE)
+ * Returns all clinical notes for a client
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+require_once(__DIR__ . '/../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
-
-require_once(__DIR__ . '/../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("Clinical notes API called - Session ID: " . session_id());
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -40,56 +29,67 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Clinical notes: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-// Get patient ID from query parameter
-$patientId = $_GET['patient_id'] ?? null;
-
-if (!$patientId) {
-    error_log("Clinical notes: No patient ID provided");
-    http_response_code(400);
-    echo json_encode(['error' => 'Patient ID is required']);
-    exit;
-}
-
-error_log("Clinical notes: User authenticated - " . $_SESSION['authUserID'] . ", fetching notes for patient ID: " . $patientId);
-
 try {
-    // Fetch all forms/notes for this patient with encounter information
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    if (!$session->isAuthenticated()) {
+        error_log("Clinical notes: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    // Get patient ID from query parameter
+    $patientId = $_GET['patient_id'] ?? null;
+
+    if (!$patientId) {
+        error_log("Clinical notes: No patient ID provided");
+        http_response_code(400);
+        echo json_encode(['error' => 'Patient ID is required']);
+        exit;
+    }
+
+    error_log("Clinical notes: User authenticated - " . $session->getUserId() . ", fetching notes for patient ID: " . $patientId);
+
+    // Initialize database
+    $db = Database::getInstance();
+
+    // Fetch all clinical notes for this client
     $notesSql = "SELECT
-        f.id,
-        f.form_id,
-        f.form_name,
-        f.formdir,
-        f.date,
-        f.encounter,
-        f.authorized,
-        f.deleted,
-        CONCAT(u.fname, ' ', u.lname) AS user_name,
-        fe.date AS encounter_date,
-        fe.reason AS encounter_reason,
-        CONCAT(prov.fname, ' ', prov.lname) AS encounter_provider,
-        fac.name AS facility_name
-    FROM forms f
-    LEFT JOIN users u ON u.id = f.user
-    LEFT JOIN form_encounter fe ON fe.encounter = f.encounter
-    LEFT JOIN users prov ON prov.id = fe.provider_id
-    LEFT JOIN facility fac ON fac.id = fe.facility_id
-    WHERE f.pid = ? AND f.deleted = 0 AND f.formdir != 'newpatient'
-    ORDER BY f.date DESC, f.encounter DESC";
+        n.id,
+        n.note_type,
+        n.note_date,
+        n.created_at,
+        n.updated_at,
+        CONCAT(u.first_name, ' ', u.last_name) AS user_name,
+        u.id AS user_id,
+        n.encounter_id
+    FROM clinical_notes n
+    LEFT JOIN users u ON u.id = n.created_by
+    WHERE n.client_id = ? AND n.is_deleted = 0
+    ORDER BY n.note_date DESC, n.created_at DESC";
 
     error_log("Notes SQL: " . $notesSql);
-    $notesResult = sqlStatement($notesSql, [$patientId]);
+    $rows = $db->queryAll($notesSql, [$patientId]);
+
     $notes = [];
-    while ($row = sqlFetchArray($notesResult)) {
-        $notes[] = $row;
+    foreach ($rows as $row) {
+        $notes[] = [
+            'id' => $row['id'],
+            'form_id' => $row['id'], // For backward compatibility
+            'form_name' => $row['note_type'],
+            'formdir' => strtolower(str_replace(' ', '_', $row['note_type'])),
+            'date' => $row['note_date'] ?: $row['created_at'],
+            'encounter' => $row['encounter_id'],
+            'authorized' => 1, // All notes are considered authorized
+            'deleted' => 0,
+            'user_name' => $row['user_name'],
+            'user_id' => $row['user_id']
+        ];
     }
+
     error_log("Found " . count($notes) . " clinical notes for patient");
 
     // Build response

@@ -24,32 +24,18 @@
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
-// Load Composer autoloader
-// This makes our Database class and other namespaced classes available
-require_once dirname(__FILE__, 2) . '/vendor/autoload.php';
+// DO NOT start session here - let SessionManager handle it completely
 
-// Start PHP session (for authentication)
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// Directly load class files (bypasses autoloader case sensitivity issues)
+$baseDir = dirname(__FILE__);
 
-// Make Database class available
-use Custom\Lib\Database\Database;
+// Try capital L first (correct), then lowercase l (fallback)
+$libDir = is_dir($baseDir . '/Lib') ? $baseDir . '/Lib' : $baseDir . '/lib';
 
-// Initialize database connection (singleton pattern)
-// API files can access via: $db = Database::getInstance();
-try {
-    $db = Database::getInstance();
-} catch (Exception $e) {
-    error_log("Mindline init.php - Database connection failed: " . $e->getMessage());
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error' => 'Database connection failed',
-        'message' => 'Unable to connect to database. Please check configuration.'
-    ]);
-    exit;
-}
+require_once $libDir . '/Database/Database.php';
+require_once $libDir . '/Auth/CustomAuth.php';
+require_once $libDir . '/Session/SessionManager.php';
+require_once $libDir . '/Services/UserService.php';
 
 // Helper function to get current logged-in user ID from session
 function getCurrentUserId() {

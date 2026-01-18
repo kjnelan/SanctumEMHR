@@ -1,24 +1,15 @@
 <?php
 /**
- * Encounter Detail API - Session-based
- * Returns detailed information for a specific encounter including notes, billing, vitals, etc.
+ * Encounter Detail API - Session-based (MIGRATED TO MINDLINE)
+ * Returns detailed information for a specific encounter
+ * Note: Mindline doesn't use the concept of "encounters" - notes are standalone
+ * This API returns note detail for backward compatibility
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+require_once(__DIR__ . '/../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
-
-require_once(__DIR__ . '/../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("Encounter detail API called - Session ID: " . session_id());
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -40,165 +31,150 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Encounter detail: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-// Get encounter ID from query parameter
-$encounterId = $_GET['encounter_id'] ?? null;
-
-if (!$encounterId) {
-    error_log("Encounter detail: No encounter ID provided");
-    http_response_code(400);
-    echo json_encode(['error' => 'Encounter ID is required']);
-    exit;
-}
-
-error_log("Encounter detail: User authenticated - " . $_SESSION['authUserID'] . ", fetching encounter ID: " . $encounterId);
-
 try {
-    // Fetch encounter details
-    $encounterSql = "SELECT
-        fe.encounter,
-        fe.pid,
-        fe.date,
-        fe.reason,
-        fe.provider_id,
-        fe.facility_id,
-        fe.encounter_type_code,
-        fe.encounter_type_description,
-        fe.onset_date,
-        fe.sensitivity,
-        fe.billing_note,
-        fe.pc_catid,
-        CONCAT(u.fname, ' ', u.lname) AS provider_name,
-        f.name AS facility_name,
-        CONCAT(p.fname, ' ', p.lname) AS patient_name
-    FROM form_encounter fe
-    LEFT JOIN users u ON u.id = fe.provider_id
-    LEFT JOIN facility f ON f.id = fe.facility_id
-    LEFT JOIN patient_data p ON p.pid = fe.pid
-    WHERE fe.encounter = ?";
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
 
-    error_log("Encounter SQL: " . $encounterSql);
-    $encounterResult = sqlStatement($encounterSql, [$encounterId]);
-    $encounter = sqlFetchArray($encounterResult);
+    if (!$session->isAuthenticated()) {
+        error_log("Encounter detail: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    // Get encounter ID from query parameter
+    // In Mindline, this maps to a note_id
+    $encounterId = $_GET['encounter_id'] ?? null;
+
+    if (!$encounterId) {
+        error_log("Encounter detail: No encounter ID provided");
+        http_response_code(400);
+        echo json_encode(['error' => 'Encounter ID is required']);
+        exit;
+    }
+
+    error_log("Encounter detail: User authenticated - " . $session->getUserId() . ", fetching encounter/note ID: " . $encounterId);
+
+    // Initialize database
+    $db = Database::getInstance();
+
+    // Fetch note details (acts as "encounter" in Mindline)
+    // Note: Mindline doesn't use traditional encounters - notes are standalone
+    $noteSql = "SELECT
+        n.id AS encounter,
+        n.client_id AS pid,
+        n.note_date AS date,
+        n.note_type AS reason,
+        n.created_by AS provider_id,
+        0 AS facility_id,
+        '' AS encounter_type_code,
+        n.note_type AS encounter_type_description,
+        n.note_date AS onset_date,
+        '' AS sensitivity,
+        '' AS billing_note,
+        0 AS pc_catid,
+        CONCAT(u.first_name, ' ', u.last_name) AS provider_name,
+        '' AS facility_name,
+        CONCAT(c.first_name, ' ', c.last_name) AS patient_name
+    FROM clinical_notes n
+    LEFT JOIN users u ON u.id = n.created_by
+    LEFT JOIN clients c ON c.id = n.client_id
+    WHERE n.id = ?";
+
+    error_log("Encounter/Note SQL: " . $noteSql);
+    $encounter = $db->query($noteSql, [$encounterId]);
 
     if (!$encounter) {
-        error_log("Encounter detail: Encounter not found - " . $encounterId);
+        error_log("Encounter detail: Encounter/note not found - " . $encounterId);
         http_response_code(404);
         echo json_encode(['error' => 'Encounter not found']);
         exit;
     }
 
-    error_log("Encounter detail: Found encounter for patient " . $encounter['patient_name']);
+    error_log("Encounter detail: Found note for client " . $encounter['patient_name']);
 
-    // Fetch all forms/notes for this encounter
-    $formsSql = "SELECT
-        f.id,
-        f.form_id,
-        f.form_name,
-        f.formdir,
-        f.date,
-        f.encounter,
-        f.authorized,
-        f.deleted,
-        CONCAT(u.fname, ' ', u.lname) AS user_name
-    FROM forms f
-    LEFT JOIN users u ON u.id = f.user
-    WHERE f.encounter = ? AND f.deleted = 0
-    ORDER BY f.date DESC";
+    // Return this note as a "form" for backward compatibility
+    $forms = [[
+        'id' => $encounter['encounter'],
+        'form_id' => $encounter['encounter'],
+        'form_name' => $encounter['reason'],
+        'formdir' => strtolower(str_replace(' ', '_', $encounter['reason'])),
+        'date' => $encounter['date'],
+        'encounter' => $encounter['encounter'],
+        'authorized' => 1,
+        'deleted' => 0,
+        'user_name' => $encounter['provider_name']
+    ]];
 
-    error_log("Forms SQL: " . $formsSql);
-    $formsResult = sqlStatement($formsSql, [$encounterId]);
-    $forms = [];
-    while ($row = sqlFetchArray($formsResult)) {
-        $forms[] = $row;
-    }
-    error_log("Found " . count($forms) . " forms for encounter");
-
-    // Fetch billing/charges for this encounter
-    $billingSql = "SELECT
-        b.id,
-        b.code_type,
-        b.code,
-        b.code_text,
-        b.modifier,
-        b.units,
-        b.fee,
-        b.justify,
-        b.authorized,
-        b.billed,
-        b.activity,
-        b.payer_id,
-        b.bill_date,
-        CONCAT(u.fname, ' ', u.lname) AS provider_name
-    FROM billing b
-    LEFT JOIN users u ON u.id = b.provider_id
-    WHERE b.encounter = ? AND b.activity = 1
-    ORDER BY b.code_type, b.code";
-
-    error_log("Billing SQL: " . $billingSql);
-    $billingResult = sqlStatement($billingSql, [$encounterId]);
+    // Fetch billing/charges for this note (if any)
     $billing = [];
     $totalCharges = 0;
-    while ($row = sqlFetchArray($billingResult)) {
-        $billing[] = $row;
-        $totalCharges += floatval($row['fee']) * floatval($row['units']);
+
+    try {
+        $billingSql = "SELECT
+            bc.id,
+            bc.code_type,
+            bc.code,
+            bc.description AS code_text,
+            bc.modifier,
+            bc.units,
+            bc.unit_price AS fee,
+            bc.justification AS justify,
+            bc.is_authorized AS authorized,
+            bc.is_billed AS billed,
+            bc.is_active AS activity,
+            bc.payer_id,
+            bc.billed_date AS bill_date,
+            CONCAT(u.first_name, ' ', u.last_name) AS provider_name
+        FROM billing_charges bc
+        LEFT JOIN users u ON u.id = bc.provider_id
+        WHERE bc.encounter_id = ? AND bc.is_active = 1
+        ORDER BY bc.code_type, bc.code";
+
+        error_log("Billing SQL: " . $billingSql);
+        $billingRows = $db->queryAll($billingSql, [$encounterId]);
+
+        foreach ($billingRows as $row) {
+            $billing[] = $row;
+            $totalCharges += floatval($row['fee']) * floatval($row['units']);
+        }
+        error_log("Found " . count($billing) . " billing entries for encounter");
+    } catch (Exception $e) {
+        error_log("Billing query failed: " . $e->getMessage());
+        // Continue without billing data
     }
-    error_log("Found " . count($billing) . " billing entries for encounter");
 
-    // Fetch vitals for this encounter
-    $vitalsSql = "SELECT
-        v.id,
-        v.date,
-        v.bps,
-        v.bpd,
-        v.weight,
-        v.height,
-        v.temperature,
-        v.pulse,
-        v.respiration,
-        v.oxygen_saturation,
-        v.BMI,
-        CONCAT(u.fname, ' ', u.lname) AS user_name
-    FROM form_vitals v
-    LEFT JOIN users u ON u.id = v.user
-    WHERE v.pid = ? AND v.encounter = ?
-    ORDER BY v.date DESC";
-
-    error_log("Vitals SQL: " . $vitalsSql);
-    $vitalsResult = sqlStatement($vitalsSql, [$encounter['pid'], $encounterId]);
+    // Fetch vitals (Mindline doesn't track vitals separately - they're in note content)
     $vitals = [];
-    while ($row = sqlFetchArray($vitalsResult)) {
-        $vitals[] = $row;
-    }
-    error_log("Found " . count($vitals) . " vitals records for encounter");
 
-    // Fetch diagnoses added during this encounter
-    $diagnosesSql = "SELECT
-        l.id,
-        l.diagnosis,
-        l.title,
-        l.begdate,
-        l.enddate,
-        l.occurrence,
-        l.outcome
-    FROM lists l
-    WHERE l.pid = ? AND l.type = 'medical_problem' AND l.encounter = ?
-    ORDER BY l.begdate DESC";
-
-    error_log("Diagnoses SQL: " . $diagnosesSql);
-    $diagnosesResult = sqlStatement($diagnosesSql, [$encounter['pid'], $encounterId]);
+    // Fetch diagnoses added with this note
     $diagnoses = [];
-    while ($row = sqlFetchArray($diagnosesResult)) {
-        $diagnoses[] = $row;
+
+    try {
+        $diagnosesSql = "SELECT
+            d.id,
+            d.diagnosis_code AS diagnosis,
+            d.diagnosis_description AS title,
+            d.start_date AS begdate,
+            d.end_date AS enddate,
+            d.occurrence,
+            d.outcome
+        FROM diagnoses d
+        WHERE d.client_id = ? AND d.encounter_id = ?
+        ORDER BY d.start_date DESC";
+
+        error_log("Diagnoses SQL: " . $diagnosesSql);
+        $diagnosesRows = $db->queryAll($diagnosesSql, [$encounter['pid'], $encounterId]);
+
+        foreach ($diagnosesRows as $row) {
+            $diagnoses[] = $row;
+        }
+        error_log("Found " . count($diagnoses) . " diagnoses for encounter");
+    } catch (Exception $e) {
+        error_log("Diagnoses query failed: " . $e->getMessage());
+        // Continue without diagnoses data
     }
-    error_log("Found " . count($diagnoses) . " diagnoses for encounter");
 
     // Build response
     $response = [
@@ -221,7 +197,7 @@ try {
         'forms' => $forms,
         'billing' => $billing,
         'total_charges' => $totalCharges,
-        'vitals' => $vitals,
+        'vitals' => $vitals, // Empty in Mindline
         'diagnoses' => $diagnoses
     ];
 

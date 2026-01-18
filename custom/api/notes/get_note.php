@@ -1,7 +1,7 @@
 <?php
 /**
  * Mindline EMHR
- * Get Note API - Session-based authentication
+ * Get Note API - Session-based authentication (MIGRATED TO MINDLINE)
  * Returns a specific clinical note by ID or UUID
  *
  * Author: Kenneth J. Nelan
@@ -12,70 +12,55 @@
  * Proprietary and Confidential
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+require_once(__DIR__ . '/../../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
-require_once(__DIR__ . '/../../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("Get note API called - Session ID: " . session_id());
-
-// Set JSON header
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// Handle OPTIONS request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// Only allow GET requests
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    error_log("Get note: Invalid method - " . $_SERVER['REQUEST_METHOD']);
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Get note: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-// Get note ID or UUID from query parameter
-$noteId = $_GET['note_id'] ?? null;
-$noteUuid = $_GET['note_uuid'] ?? null;
-
-if (!$noteId && !$noteUuid) {
-    error_log("Get note: No note ID or UUID provided");
-    http_response_code(400);
-    echo json_encode(['error' => 'Note ID or UUID is required']);
-    exit;
-}
-
-error_log("Get note: User authenticated - " . $_SESSION['authUserID']);
-
 try {
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    if (!$session->isAuthenticated()) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    $db = Database::getInstance();
+
+    // Get note ID or UUID from query parameter
+    $noteId = $_GET['note_id'] ?? null;
+    $noteUuid = $_GET['note_uuid'] ?? null;
+
+    if (!$noteId && !$noteUuid) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Note ID or UUID is required']);
+        exit;
+    }
+
     // Build SQL query
     $sql = "SELECT
         n.id,
         n.note_uuid,
         n.patient_id,
-        n.provider_id,
+        n.created_by,
         n.appointment_id,
         n.billing_id,
         n.note_type,
@@ -121,15 +106,15 @@ try {
         n.updated_at,
         n.locked_at,
         n.last_autosave_at,
-        CONCAT(p.fname, ' ', p.lname) AS provider_name,
-        CONCAT(sb.fname, ' ', sb.lname) AS signed_by_name,
-        CONCAT(ss.fname, ' ', ss.lname) AS supervisor_name,
-        CONCAT(pt.fname, ' ', pt.lname) AS patient_name
+        CONCAT(p.first_name, ' ', p.last_name) AS provider_name,
+        CONCAT(sb.first_name, ' ', sb.last_name) AS signed_by_name,
+        CONCAT(ss.first_name, ' ', ss.last_name) AS supervisor_name,
+        CONCAT(pt.first_name, ' ', pt.last_name) AS patient_name
     FROM clinical_notes n
-    LEFT JOIN users p ON p.id = n.provider_id
+    LEFT JOIN users p ON p.id = n.created_by
     LEFT JOIN users sb ON sb.id = n.signed_by
     LEFT JOIN users ss ON ss.id = n.supervisor_signed_by
-    LEFT JOIN patient_data pt ON pt.pid = n.patient_id
+    LEFT JOIN clients pt ON pt.id = n.patient_id
     WHERE ";
 
     $params = [];
@@ -142,14 +127,9 @@ try {
         $params[] = $noteUuid;
     }
 
-    error_log("Note SQL: " . $sql);
-    error_log("Params: " . print_r($params, true));
-
-    $result = sqlStatement($sql, $params);
-    $note = sqlFetchArray($result);
+    $note = $db->query($sql, $params);
 
     if (!$note) {
-        error_log("Note not found");
         http_response_code(404);
         echo json_encode(['error' => 'Note not found']);
         exit;
@@ -174,20 +154,14 @@ try {
         n.addendum_reason,
         n.created_at,
         n.updated_at,
-        CONCAT(u.fname, ' ', u.lname) AS provider_name
+        CONCAT(u.first_name, ' ', u.last_name) AS provider_name
     FROM clinical_notes n
-    LEFT JOIN users u ON u.id = n.provider_id
+    LEFT JOIN users u ON u.id = n.created_by
     WHERE n.parent_note_id = ? AND n.is_addendum = 1
     ORDER BY n.created_at DESC";
 
-    $addendaResult = sqlStatement($addendaSql, [$note['id']]);
-    $addenda = [];
-    while ($addRow = sqlFetchArray($addendaResult)) {
-        $addenda[] = $addRow;
-    }
+    $addenda = $db->queryAll($addendaSql, [$note['id']]);
     $note['addenda'] = $addenda;
-
-    error_log("Successfully retrieved note ID: " . $note['id']);
 
     $response = [
         'success' => true,
@@ -199,7 +173,6 @@ try {
 
 } catch (Exception $e) {
     error_log("Error fetching note: " . $e->getMessage());
-    error_log("Stack trace: " . $e->getTraceAsString());
     http_response_code(500);
     echo json_encode([
         'error' => 'Failed to fetch note',

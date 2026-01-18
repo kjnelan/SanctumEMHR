@@ -1,17 +1,13 @@
 <?php
 /**
- * Client Demographics API - Session-based
+ * Client Demographics API - Session-based (MIGRATED TO MINDLINE)
  * Returns demographic breakdowns for active clients
  */
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
+require_once(__DIR__ . '/../init.php');
 
-require_once(__DIR__ . '/../../interface/globals.php');
-
-error_log("Client demographics called - Session ID: " . session_id());
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -32,41 +28,47 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Client demographics: Not authenticated");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-error_log("Client demographics: User authenticated - " . $_SESSION['authUserID']);
-
 try {
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    if (!$session->isAuthenticated()) {
+        error_log("Client demographics: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    error_log("Client demographics: User authenticated - " . $session->getUserId());
+
+    // Initialize database
+    $db = Database::getInstance();
+
     $demographics = [];
 
     // Get age distribution for active clients
     try {
         $ageSql = "SELECT
                     CASE
-                        WHEN TIMESTAMPDIFF(YEAR, DOB, CURDATE()) < 18 THEN 'Under 18'
-                        WHEN TIMESTAMPDIFF(YEAR, DOB, CURDATE()) BETWEEN 18 AND 25 THEN '18-25'
-                        WHEN TIMESTAMPDIFF(YEAR, DOB, CURDATE()) BETWEEN 26 AND 35 THEN '26-35'
-                        WHEN TIMESTAMPDIFF(YEAR, DOB, CURDATE()) BETWEEN 36 AND 50 THEN '36-50'
-                        WHEN TIMESTAMPDIFF(YEAR, DOB, CURDATE()) BETWEEN 51 AND 65 THEN '51-65'
-                        WHEN TIMESTAMPDIFF(YEAR, DOB, CURDATE()) > 65 THEN '65+'
+                        WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) < 18 THEN 'Under 18'
+                        WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN 18 AND 25 THEN '18-25'
+                        WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN 26 AND 35 THEN '26-35'
+                        WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN 36 AND 50 THEN '36-50'
+                        WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN 51 AND 65 THEN '51-65'
+                        WHEN TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) > 65 THEN '65+'
                         ELSE 'Unknown'
                     END as age_range,
                     COUNT(*) as count
-                   FROM patient_data
-                   WHERE (care_team_status = 'active' OR care_team_status = 'Active')
-                   AND DOB IS NOT NULL
+                   FROM clients
+                   WHERE status = 'active'
+                   AND date_of_birth IS NOT NULL
                    GROUP BY age_range
                    ORDER BY age_range";
 
-        $ageStmt = sqlStatement($ageSql);
         $ageData = [];
-        while ($row = sqlFetchArray($ageStmt)) {
+        $rows = $db->queryAll($ageSql);
+        foreach ($rows as $row) {
             $ageData[] = [
                 'category' => $row['age_range'],
                 'count' => intval($row['count'])
@@ -81,21 +83,21 @@ try {
 
     // Get gender identity distribution
     try {
-        // OpenEMR stores gender_identity as list option codes, need to join with list_options
+        // Mindline stores gender_identity as list option codes, join with settings_lists
         $genderSql = "SELECT
-                        COALESCE(lo.title, 'Not Specified') as gender,
+                        COALESCE(sl.option_title, 'Not Specified') as gender,
                         COUNT(*) as count
-                      FROM patient_data pd
-                      LEFT JOIN list_options lo ON lo.option_id = pd.gender_identity
-                          AND lo.list_id = 'gender_identity'
-                      WHERE (pd.care_team_status = 'active' OR pd.care_team_status = 'Active')
+                      FROM clients c
+                      LEFT JOIN settings_lists sl ON sl.option_id = c.gender_identity
+                          AND sl.list_id = 'gender_identity'
+                      WHERE c.status = 'active'
                       GROUP BY gender
                       ORDER BY count DESC
                       LIMIT 10";
 
-        $genderStmt = sqlStatement($genderSql);
         $genderData = [];
-        while ($row = sqlFetchArray($genderStmt)) {
+        $rows = $db->queryAll($genderSql);
+        foreach ($rows as $row) {
             $genderData[] = [
                 'category' => $row['gender'] ?: 'Not Specified',
                 'count' => intval($row['count'])
@@ -112,19 +114,19 @@ try {
     try {
         // Race is stored as list option codes too
         $raceSql = "SELECT
-                      COALESCE(lo.title, 'Not Specified') as race,
+                      COALESCE(sl.option_title, 'Not Specified') as race,
                       COUNT(*) as count
-                    FROM patient_data pd
-                    LEFT JOIN list_options lo ON lo.option_id = pd.race
-                        AND lo.list_id = 'race'
-                    WHERE (pd.care_team_status = 'active' OR pd.care_team_status = 'Active')
+                    FROM clients c
+                    LEFT JOIN settings_lists sl ON sl.option_id = c.race
+                        AND sl.list_id = 'race'
+                    WHERE c.status = 'active'
                     GROUP BY race
                     ORDER BY count DESC
                     LIMIT 10";
 
-        $raceStmt = sqlStatement($raceSql);
         $raceData = [];
-        while ($row = sqlFetchArray($raceStmt)) {
+        $rows = $db->queryAll($raceSql);
+        foreach ($rows as $row) {
             $raceData[] = [
                 'category' => $row['race'] ?: 'Not Specified',
                 'count' => intval($row['count'])
@@ -141,19 +143,19 @@ try {
     try {
         // Ethnicity is also stored as list option codes
         $ethnicitySql = "SELECT
-                          COALESCE(lo.title, 'Not Specified') as ethnicity,
+                          COALESCE(sl.option_title, 'Not Specified') as ethnicity,
                           COUNT(*) as count
-                        FROM patient_data pd
-                        LEFT JOIN list_options lo ON lo.option_id = pd.ethnicity
-                            AND lo.list_id = 'ethnicity'
-                        WHERE (pd.care_team_status = 'active' OR pd.care_team_status = 'Active')
+                        FROM clients c
+                        LEFT JOIN settings_lists sl ON sl.option_id = c.ethnicity
+                            AND sl.list_id = 'ethnicity'
+                        WHERE c.status = 'active'
                         GROUP BY ethnicity
                         ORDER BY count DESC
                         LIMIT 10";
 
-        $ethnicityStmt = sqlStatement($ethnicitySql);
         $ethnicityData = [];
-        while ($row = sqlFetchArray($ethnicityStmt)) {
+        $rows = $db->queryAll($ethnicitySql);
+        foreach ($rows as $row) {
             $ethnicityData[] = [
                 'category' => $row['ethnicity'] ?: 'Not Specified',
                 'count' => intval($row['count'])

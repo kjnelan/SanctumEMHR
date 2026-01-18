@@ -1,24 +1,14 @@
 <?php
 /**
- * Get Insurance Companies API - Session-based
+ * Get Insurance Companies API - Session-based (MIGRATED TO MINDLINE)
  * Returns list of insurance companies for dropdowns
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+// Load Mindline initialization
+require_once(__DIR__ . '/../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
-
-require_once(__DIR__ . '/../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("Get insurance companies API called - Session ID: " . session_id());
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -40,44 +30,53 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Get insurance companies: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-error_log("Get insurance companies: User authenticated - " . $_SESSION['authUserID']);
-
 try {
-    // Query to get active insurance companies
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    if (!$session->isAuthenticated()) {
+        error_log("Get insurance companies: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    $userId = $session->getUserId();
+    error_log("Get insurance companies: User authenticated - $userId");
+
+    // Initialize database
+    $db = Database::getInstance();
+
+    // Query to get active insurance companies from MINDLINE schema
     $sql = "SELECT
         id,
         name,
-        attn,
-        cms_id,
-        ins_type_code,
-        x12_receiver_id,
-        x12_default_partner_id
-    FROM insurance_companies
-    WHERE inactive = 0
+        payer_id,
+        insurance_type,
+        phone,
+        email
+    FROM insurance_providers
+    WHERE is_active = 1
     ORDER BY name";
 
     error_log("Get insurance companies SQL: " . $sql);
 
-    $result = sqlStatement($sql);
+    // Execute query using Database class
+    $rows = $db->queryAll($sql);
 
+    // Format companies for frontend (keep compatible field names)
     $companies = [];
-    while ($row = sqlFetchArray($result)) {
+    foreach ($rows as $row) {
         $companies[] = [
             'id' => $row['id'],
             'name' => $row['name'],
-            'attn' => $row['attn'],
-            'cms_id' => $row['cms_id'],
-            'ins_type_code' => $row['ins_type_code'],
-            'x12_receiver_id' => $row['x12_receiver_id'],
-            'x12_default_partner_id' => $row['x12_default_partner_id']
+            'cms_id' => $row['payer_id'], // Keep old key for frontend
+            'payer_id' => $row['payer_id'],
+            'ins_type_code' => $row['insurance_type'], // Keep old key for frontend
+            'insurance_type' => $row['insurance_type'],
+            'phone' => $row['phone'],
+            'email' => $row['email']
         ];
     }
 

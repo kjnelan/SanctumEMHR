@@ -1,7 +1,7 @@
 <?php
 /**
  * Mindline EMHR
- * Create Appointment API - Session-based authentication
+ * Create Appointment API - Session-based authentication (MIGRATED TO MINDLINE)
  * Creates a new appointment in the calendar system
  *
  * Author: Kenneth J. Nelan
@@ -12,21 +12,10 @@
  * Proprietary and Confidential
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+require_once(__DIR__ . '/../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
-
-require_once(__DIR__ . '/../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("Create appointment API called - Session ID: " . session_id());
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -48,17 +37,23 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Create appointment: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-error_log("Create appointment: User authenticated - " . $_SESSION['authUserID']);
-
 try {
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    if (!$session->isAuthenticated()) {
+        error_log("Create appointment: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    error_log("Create appointment: User authenticated - " . $session->getUserId());
+
+    // Initialize database
+    $db = Database::getInstance();
+
     // Get JSON input
     $input = json_decode(file_get_contents('php://input'), true);
 
@@ -91,6 +86,18 @@ try {
     $room = $input['room'] ?? '';
     $facilityId = isset($input['facilityId']) ? intval($input['facilityId']) : 0;
     $overrideAvailability = isset($input['overrideAvailability']) ? boolval($input['overrideAvailability']) : false;
+
+    // Map OpenEMR status symbols to Mindline status strings
+    $statusMap = [
+        '-' => 'pending',
+        '~' => 'confirmed',
+        '@' => 'arrived',
+        '^' => 'checkout',
+        '*' => 'no_show',
+        '?' => 'cancelled',
+        'x' => 'deleted'
+    ];
+    $mindlineStatus = isset($statusMap[$apptstatus]) ? $statusMap[$apptstatus] : 'pending';
 
     // Check if this is a recurring appointment
     $isRecurring = isset($input['recurrence']) && $input['recurrence']['enabled'] === true;
@@ -184,19 +191,14 @@ try {
         $occurrenceDates = [$eventDate];
     }
 
-    // Calculate end time based on start time and duration
+    // Calculate end datetime based on start time and duration
     $startDateTime = new DateTime($eventDate . ' ' . $startTime);
     $endDateTime = clone $startDateTime;
     $endDateTime->add(new DateInterval('PT' . $duration . 'M')); // Add duration in minutes
-    $endTime = $endDateTime->format('H:i:s');
-    $endDate = $endDateTime->format('Y-m-d');
-
-    // Convert duration to seconds for database (OpenEMR stores in seconds)
-    $durationSeconds = $duration * 60;
 
     // Get current user's facility if not specified
     if ($facilityId === 0) {
-        $facilityResult = sqlQuery("SELECT facility_id FROM users WHERE id = ?", [$_SESSION['authUserID']]);
+        $facilityResult = $db->query("SELECT facility_id FROM users WHERE id = ?", [$session->getUserId()]);
         $facilityId = $facilityResult['facility_id'] ?? 0;
     }
 
@@ -205,50 +207,47 @@ try {
     $conflicts = [];
     if ($patientId > 0) {
         foreach ($occurrenceDates as $occurrenceDate) {
+            // Calculate start and end datetime for this occurrence
+            $occurrenceStartDT = new DateTime($occurrenceDate . ' ' . $startTime);
+            $occurrenceEndDT = clone $occurrenceStartDT;
+            $occurrenceEndDT->add(new DateInterval('PT' . $duration . 'M'));
+
             $conflictSql = "SELECT
-                e.pc_eid,
-                e.pc_title,
-                e.pc_eventDate,
-                e.pc_startTime,
-                e.pc_duration,
-                e.pc_pid,
-                c.pc_catname,
-                c.pc_cattype
-            FROM openemr_postcalendar_events e
-            LEFT JOIN openemr_postcalendar_categories c ON e.pc_catid = c.pc_catid
-            WHERE e.pc_aid = ?
-              AND e.pc_eventDate = ?
-              AND e.pc_apptstatus NOT IN ('x', '?')
+                a.id,
+                a.title,
+                a.start_datetime,
+                a.end_datetime,
+                a.client_id,
+                c.name AS category_name,
+                c.category_type
+            FROM appointments a
+            LEFT JOIN appointment_categories c ON a.category_id = c.id
+            WHERE a.provider_id = ?
+              AND DATE(a.start_datetime) = ?
+              AND a.status NOT IN ('deleted', 'cancelled')
               AND (
-                  -- New appointment starts during existing event
-                  (? >= e.pc_startTime AND ? < ADDTIME(e.pc_startTime, SEC_TO_TIME(e.pc_duration)))
-                  OR
-                  -- New appointment ends during existing event
-                  (? > e.pc_startTime AND ? <= ADDTIME(e.pc_startTime, SEC_TO_TIME(e.pc_duration)))
-                  OR
-                  -- New appointment completely contains existing event
-                  (? <= e.pc_startTime AND ? >= ADDTIME(e.pc_startTime, SEC_TO_TIME(e.pc_duration)))
+                  -- New appointment overlaps with existing event
+                  (? < a.end_datetime AND ? > a.start_datetime)
               )";
 
             $conflictParams = [
                 $providerId,
                 $occurrenceDate,
-                $startTime, $startTime,  // Check start time
-                $endTime, $endTime,      // Check end time
-                $startTime, $endTime     // Check if contains
+                $occurrenceStartDT->format('Y-m-d H:i:s'),
+                $occurrenceEndDT->format('Y-m-d H:i:s')
             ];
 
-            $conflictResult = sqlQuery($conflictSql, $conflictParams);
+            $conflictResult = $db->query($conflictSql, $conflictParams);
 
             if ($conflictResult) {
                 // Determine conflict type
-                $conflictType = intval($conflictResult['pc_cattype']);
+                $conflictType = intval($conflictResult['category_type']);
                 $isBlocking = false;
                 $conflictReason = '';
 
                 if ($conflictType === 1) {
                     // Availability block - check if it's a blocking type
-                    $categoryName = strtolower($conflictResult['pc_catname']);
+                    $categoryName = strtolower($conflictResult['category_name']);
 
                     // Keywords that indicate unavailability (blocks appointments)
                     $blockingKeywords = ['out', 'vacation', 'meeting', 'lunch', 'break', 'unavailable', 'holiday', 'away'];
@@ -256,14 +255,14 @@ try {
                     foreach ($blockingKeywords as $keyword) {
                         if (strpos($categoryName, $keyword) !== false) {
                             $isBlocking = true;
-                            $conflictReason = "Provider unavailable: " . $conflictResult['pc_catname'];
+                            $conflictReason = "Provider unavailable: " . $conflictResult['category_name'];
                             break;
                         }
                     }
                 } else {
                     // Conflict with another appointment
                     $isBlocking = true;
-                    $conflictReason = "Existing appointment: " . $conflictResult['pc_title'];
+                    $conflictReason = "Existing appointment: " . $conflictResult['title'];
                 }
 
                 if ($isBlocking) {
@@ -293,69 +292,58 @@ try {
         }
     }
 
-    // Generate a unique recurrence ID if this is recurring
-    $recurrenceId = $isRecurring ? uniqid('recur_', true) : null;
+    // Generate a unique recurrence group ID if this is recurring
+    $recurrenceGroupId = $isRecurring ? uniqid('recur_', true) : null;
 
     // Create appointments for all occurrences
     $createdAppointments = [];
     $appointmentIds = [];
 
     foreach ($occurrenceDates as $occurrenceDate) {
-        // Calculate end date for this occurrence
-        $occurrenceStartDateTime = new DateTime($occurrenceDate . ' ' . $startTime);
-        $occurrenceEndDateTime = clone $occurrenceStartDateTime;
-        $occurrenceEndDateTime->add(new DateInterval('PT' . $duration . 'M'));
-        $occurrenceEndTime = $occurrenceEndDateTime->format('H:i:s');
-        $occurrenceEndDate = $occurrenceEndDateTime->format('Y-m-d');
+        // Calculate start and end datetime for this occurrence
+        $occurrenceStartDT = new DateTime($occurrenceDate . ' ' . $startTime);
+        $occurrenceEndDT = clone $occurrenceStartDT;
+        $occurrenceEndDT->add(new DateInterval('PT' . $duration . 'M'));
 
         // Build INSERT query
-        $sql = "INSERT INTO openemr_postcalendar_events (
-            pc_catid,
-            pc_aid,
-            pc_pid,
-            pc_title,
-            pc_eventDate,
-            pc_endDate,
-            pc_startTime,
-            pc_endTime,
-            pc_duration,
-            pc_hometext,
-            pc_apptstatus,
-            pc_room,
-            pc_facility,
-            pc_eventstatus,
-            pc_sharing,
-            pc_topic,
-            pc_multiple,
-            pc_alldayevent,
-            pc_recurrtype,
-            pc_recurrspec,
-            pc_sendalertsms,
-            pc_sendalertemail
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 1, 0, 0, ?, ?, 'NO', 'NO')";
+        $sql = "INSERT INTO appointments (
+            category_id,
+            provider_id,
+            client_id,
+            title,
+            start_datetime,
+            end_datetime,
+            duration_minutes,
+            comments,
+            status,
+            room,
+            facility_id,
+            is_recurring,
+            recurrence_group_id,
+            created_at,
+            updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
 
         $params = [
             $categoryId,
             $providerId,
             $patientId,
             $title,
-            $occurrenceDate,
-            $occurrenceEndDate,
-            $startTime,
-            $occurrenceEndTime,
-            $durationSeconds,
+            $occurrenceStartDT->format('Y-m-d H:i:s'),
+            $occurrenceEndDT->format('Y-m-d H:i:s'),
+            $duration,
             $comments,
-            $apptstatus,
+            $mindlineStatus,
             $room,
             $facilityId,
-            $isRecurring ? 1 : 0, // pc_recurrtype: 1 if recurring, 0 if not
-            $recurrenceId          // pc_recurrspec: shared ID for all occurrences in series
+            $isRecurring ? 1 : 0,
+            $recurrenceGroupId
         ];
 
         error_log("Create appointment SQL for date $occurrenceDate: " . $sql);
 
         // Execute insert
-        $result = sqlInsert($sql, $params);
+        $result = $db->insert($sql, $params);
 
         if ($result === false) {
             throw new Exception("Failed to insert appointment for date $occurrenceDate");
@@ -369,52 +357,58 @@ try {
     // Fetch all created appointments to return full details
     $placeholders = implode(',', array_fill(0, count($appointmentIds), '?'));
     $createdApptsQuery = "SELECT
-            e.pc_eid,
-            e.pc_eventDate,
-            e.pc_startTime,
-            e.pc_endTime,
-            e.pc_duration,
-            e.pc_catid,
-            e.pc_apptstatus,
-            e.pc_title,
-            e.pc_hometext,
-            e.pc_pid,
-            e.pc_aid,
-            e.pc_recurrtype,
-            e.pc_recurrspec,
-            c.pc_catname,
-            c.pc_catcolor,
-            pd.fname AS patient_fname,
-            pd.lname AS patient_lname,
-            CONCAT(u.fname, ' ', u.lname) AS provider_name
-        FROM openemr_postcalendar_events e
-        LEFT JOIN openemr_postcalendar_categories c ON e.pc_catid = c.pc_catid
-        LEFT JOIN patient_data pd ON e.pc_pid = pd.pid
-        LEFT JOIN users u ON e.pc_aid = u.id
-        WHERE e.pc_eid IN ($placeholders)
-        ORDER BY e.pc_eventDate, e.pc_startTime";
+            a.id,
+            a.start_datetime,
+            a.end_datetime,
+            a.duration_minutes,
+            a.category_id,
+            a.status,
+            a.title,
+            a.comments,
+            a.client_id,
+            a.provider_id,
+            a.is_recurring,
+            a.recurrence_group_id,
+            c.name AS category_name,
+            c.color AS category_color,
+            cl.first_name AS patient_fname,
+            cl.last_name AS patient_lname,
+            CONCAT(u.first_name, ' ', u.last_name) AS provider_name
+        FROM appointments a
+        LEFT JOIN appointment_categories c ON a.category_id = c.id
+        LEFT JOIN clients cl ON a.client_id = cl.id
+        LEFT JOIN users u ON a.provider_id = u.id
+        WHERE a.id IN ($placeholders)
+        ORDER BY a.start_datetime";
 
-    $createdApptsResult = sqlStatement($createdApptsQuery, $appointmentIds);
+    $createdApptsResult = $db->queryAll($createdApptsQuery, $appointmentIds);
 
-    while ($row = sqlFetchArray($createdApptsResult)) {
+    // Map Mindline status back to OpenEMR symbols for frontend compatibility
+    $reverseStatusMap = array_flip($statusMap);
+
+    foreach ($createdApptsResult as $row) {
+        // Extract date and time components from TIMESTAMP fields
+        $startDT = new DateTime($row['start_datetime']);
+        $endDT = new DateTime($row['end_datetime']);
+
         $createdAppointments[] = [
-            'id' => $row['pc_eid'],
-            'eventDate' => $row['pc_eventDate'],
-            'startTime' => $row['pc_startTime'],
-            'endTime' => $row['pc_endTime'],
-            'duration' => $row['pc_duration'],
-            'categoryId' => $row['pc_catid'],
-            'categoryName' => $row['pc_catname'],
-            'categoryColor' => $row['pc_catcolor'],
-            'status' => $row['pc_apptstatus'],
-            'title' => $row['pc_title'],
-            'comments' => $row['pc_hometext'],
-            'patientId' => $row['pc_pid'],
+            'id' => $row['id'],
+            'eventDate' => $startDT->format('Y-m-d'),
+            'startTime' => $startDT->format('H:i:s'),
+            'endTime' => $endDT->format('H:i:s'),
+            'duration' => $row['duration_minutes'] * 60, // Convert minutes to seconds for frontend
+            'categoryId' => $row['category_id'],
+            'categoryName' => $row['category_name'],
+            'categoryColor' => $row['category_color'],
+            'status' => $reverseStatusMap[$row['status']] ?? '-', // Map back to symbol
+            'title' => $row['title'],
+            'comments' => $row['comments'],
+            'patientId' => $row['client_id'],
             'patientName' => trim(($row['patient_fname'] ?? '') . ' ' . ($row['patient_lname'] ?? '')),
-            'providerId' => $row['pc_aid'],
+            'providerId' => $row['provider_id'],
             'providerName' => $row['provider_name'],
-            'isRecurring' => intval($row['pc_recurrtype']) === 1,
-            'recurrenceId' => $row['pc_recurrspec']
+            'isRecurring' => intval($row['is_recurring']) === 1,
+            'recurrenceId' => $row['recurrence_group_id']
         ];
     }
 
@@ -426,7 +420,7 @@ try {
             : 'Appointment created successfully',
         'isRecurring' => $isRecurring,
         'occurrenceCount' => count($createdAppointments),
-        'recurrenceId' => $recurrenceId,
+        'recurrenceId' => $recurrenceGroupId,
         'appointmentId' => $appointmentIds[0], // First appointment ID for backwards compatibility
         'appointmentIds' => $appointmentIds,
         'appointments' => $createdAppointments,

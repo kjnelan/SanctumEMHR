@@ -1,8 +1,8 @@
 <?php
 /**
  * Mindline EMHR
- * Search Codes API - Session-based authentication
- * Returns diagnosis codes (ICD-10) and procedure codes (CPT) from OpenEMR codes table
+ * Search Codes API - Session-based authentication (MIGRATED TO MINDLINE)
+ * Returns diagnosis codes (ICD-10) and procedure codes (CPT) from codes table
  *
  * Author: Kenneth J. Nelan
  * License: Proprietary and Confidential
@@ -12,21 +12,10 @@
  * Proprietary and Confidential
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+require_once(__DIR__ . '/../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
-
-require_once(__DIR__ . '/../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("Search codes API called - Session ID: " . session_id());
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -48,36 +37,42 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Search codes: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-// Get search parameters
-$search = $_GET['search'] ?? '';
-$codeType = $_GET['code_type'] ?? 'ICD10';
-$limit = isset($_GET['limit']) ? intval($_GET['limit']) : 50;
-
-// Validate limit
-if ($limit < 1 || $limit > 200) {
-    $limit = 50;
-}
-
-// Validate code type
-$validCodeTypes = ['ICD10', 'ICD9', 'CPT4', 'HCPCS', 'SNOMED-CT'];
-if (!in_array($codeType, $validCodeTypes)) {
-    error_log("Search codes: Invalid code type - " . $codeType);
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid code type']);
-    exit;
-}
-
-error_log("Search codes: User authenticated - " . $_SESSION['authUserID'] . ", searching for: " . $search . ", code type: " . $codeType);
-
 try {
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    if (!$session->isAuthenticated()) {
+        error_log("Search codes: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    // Get search parameters
+    $search = $_GET['search'] ?? '';
+    $codeType = $_GET['code_type'] ?? 'ICD10';
+    $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 50;
+
+    // Validate limit
+    if ($limit < 1 || $limit > 200) {
+        $limit = 50;
+    }
+
+    // Validate code type
+    $validCodeTypes = ['ICD10', 'ICD9', 'CPT4', 'HCPCS', 'SNOMED-CT'];
+    if (!in_array($codeType, $validCodeTypes)) {
+        error_log("Search codes: Invalid code type - " . $codeType);
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid code type']);
+        exit;
+    }
+
+    error_log("Search codes: User authenticated - " . $session->getUserId() . ", searching for: " . $search . ", code type: " . $codeType);
+
+    // Initialize database
+    $db = Database::getInstance();
+
     // Build SQL query
     // The codes table structure:
     // - code_type: 'ICD10', 'CPT4', etc.
@@ -130,10 +125,10 @@ try {
     error_log("Search codes SQL: " . $sql);
     error_log("Params: " . print_r($params, true));
 
-    $result = sqlStatement($sql, $params);
+    $rows = $db->queryAll($sql, $params);
     $codes = [];
 
-    while ($row = sqlFetchArray($result)) {
+    foreach ($rows as $row) {
         $codes[] = [
             'code' => $row['code'],
             'description' => $row['code_text'],

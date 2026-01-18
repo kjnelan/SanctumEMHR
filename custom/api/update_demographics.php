@@ -1,24 +1,13 @@
 <?php
 /**
- * Update Demographics API - Session-based
+ * Update Demographics API - Session-based (MIGRATED TO MINDLINE)
  * Updates patient demographic information with audit trail
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+require_once(__DIR__ . '/../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
-
-require_once(__DIR__ . '/../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("Update demographics API called - Session ID: " . session_id());
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -40,144 +29,155 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Update demographics: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-$userId = $_SESSION['authUserID'];
-error_log("Update demographics: User authenticated - " . $userId);
-
-// Get JSON input
-$input = file_get_contents('php://input');
-$data = json_decode($input, true);
-
-if (!$data) {
-    error_log("Update demographics: Invalid JSON input");
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid JSON input']);
-    exit;
-}
-
-// Validate patient ID
-if (!isset($data['patient_id']) || empty($data['patient_id'])) {
-    error_log("Update demographics: Missing patient_id");
-    http_response_code(400);
-    echo json_encode(['error' => 'Patient ID is required']);
-    exit;
-}
-
-$patientId = intval($data['patient_id']);
-error_log("Update demographics: Updating patient ID: " . $patientId);
-
-// Build update query with only the fields that can be edited
-$updateFields = [];
-$params = [];
-
-// Define allowed fields with their database column names
-$allowedFields = [
-    // Personal Information
-    'fname' => 'fname',
-    'mname' => 'mname',
-    'lname' => 'lname',
-    'preferred_name' => 'preferred_name',
-    'DOB' => 'DOB',
-    'sex' => 'sex',
-    'gender_identity' => 'gender_identity',
-    'sexual_orientation' => 'sexual_orientation',
-    'marital_status' => 'status',
-    'previous_names' => 'name_history',
-    'patient_categories' => 'patient_groups',
-    'ss' => 'ss',
-
-    // Contact Information
-    'street' => 'street',
-    'street_line_2' => 'street_line_2',
-    'city' => 'city',
-    'state' => 'state',
-    'postal_code' => 'postal_code',
-    'county' => 'county',
-    'contact_relationship' => 'contact_relationship',
-    'phone_contact' => 'phone_contact',
-    'phone_home' => 'phone_home',
-    'phone_cell' => 'phone_cell',
-    'phone_biz' => 'phone_biz',
-    'email' => 'email',
-    'email_direct' => 'email_direct',
-
-    // Risk & Protection
-    'protect_indicator' => 'protect_indicator',
-
-    // Care Team Status
-    'care_team_status' => 'care_team_status',
-
-    // Payment Type (stored in userlist1)
-    'payment_type' => 'userlist1',
-
-    // Clinician Information
-    'provider_id' => 'providerID',
-    'referring_provider_id' => 'ref_providerID',
-
-    // Portal Settings
-    'allow_patient_portal' => 'allow_patient_portal',
-    'cmsportal_login' => 'cmsportal_login',
-
-    // HIPAA Preferences
-    'hipaa_notice' => 'hipaa_notice',
-    'hipaa_allowsms' => 'hipaa_allowsms',
-    'hipaa_voice' => 'hipaa_voice',
-    'hipaa_mail' => 'hipaa_mail',
-    'hipaa_email' => 'hipaa_allowemail'
-];
-
-// Build the SET clause
-foreach ($allowedFields as $field => $column) {
-    if (isset($data[$field])) {
-        $updateFields[] = "$column = ?";
-        $params[] = $data[$field];
-    }
-}
-
-if (empty($updateFields)) {
-    error_log("Update demographics: No valid fields to update");
-    http_response_code(400);
-    echo json_encode(['error' => 'No valid fields to update']);
-    exit;
-}
-
-// Add patient ID to params for WHERE clause
-$params[] = $patientId;
-
-// Build and execute update query
 try {
-    $sql = "UPDATE patient_data SET " . implode(', ', $updateFields) . " WHERE pid = ?";
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    if (!$session->isAuthenticated()) {
+        error_log("Update demographics: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    $userId = $session->getUserId();
+    error_log("Update demographics: User authenticated - " . $userId);
+
+    // Get JSON input
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+
+    if (!$data) {
+        error_log("Update demographics: Invalid JSON input");
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid JSON input']);
+        exit;
+    }
+
+    // Validate patient ID
+    if (!isset($data['patient_id']) || empty($data['patient_id'])) {
+        error_log("Update demographics: Missing patient_id");
+        http_response_code(400);
+        echo json_encode(['error' => 'Patient ID is required']);
+        exit;
+    }
+
+    $patientId = intval($data['patient_id']);
+    error_log("Update demographics: Updating patient ID: " . $patientId);
+
+    // Initialize database
+    $db = Database::getInstance();
+
+    // Build update query with only the fields that can be edited
+    $updateFields = [];
+    $params = [];
+
+    // Define allowed fields with their database column names (Mindline schema)
+    $allowedFields = [
+        // Personal Information
+        'fname' => 'first_name',
+        'mname' => 'middle_name',
+        'lname' => 'last_name',
+        'preferred_name' => 'preferred_name',
+        'DOB' => 'date_of_birth',
+        'sex' => 'sex',
+        'gender_identity' => 'gender_identity',
+        'sexual_orientation' => 'sexual_orientation',
+        'marital_status' => 'marital_status',
+        'previous_names' => 'previous_names',
+        'patient_categories' => 'patient_categories',
+        'ss' => 'ssn_encrypted',
+
+        // Contact Information
+        'street' => 'street',
+        'street_line_2' => 'street_line_2',
+        'city' => 'city',
+        'state' => 'state',
+        'postal_code' => 'postal_code',
+        'county' => 'county',
+        'contact_relationship' => 'contact_relationship',
+        'phone_contact' => 'phone_contact',
+        'phone_home' => 'phone_home',
+        'phone_cell' => 'phone_cell',
+        'phone_biz' => 'phone_work',
+        'email' => 'email',
+        'email_direct' => 'email_direct',
+
+        // Risk & Protection
+        'protect_indicator' => 'protect_indicator',
+
+        // Care Team Status
+        'care_team_status' => 'status',
+
+        // Payment Type
+        'payment_type' => 'payment_type',
+
+        // Clinician Information
+        'provider_id' => 'provider_id',
+        'referring_provider_id' => 'referring_provider_id',
+
+        // Portal Settings
+        'allow_patient_portal' => 'allow_patient_portal',
+        'cmsportal_login' => 'portal_username',
+
+        // HIPAA Preferences
+        'hipaa_notice' => 'hipaa_notice_received',
+        'hipaa_allowsms' => 'hipaa_allow_sms',
+        'hipaa_voice' => 'hipaa_allow_voice',
+        'hipaa_mail' => 'hipaa_allow_mail',
+        'hipaa_email' => 'hipaa_allow_email'
+    ];
+
+    // Build the SET clause
+    foreach ($allowedFields as $field => $column) {
+        if (isset($data[$field])) {
+            $updateFields[] = "$column = ?";
+            $params[] = $data[$field];
+        }
+    }
+
+    if (empty($updateFields)) {
+        error_log("Update demographics: No valid fields to update");
+        http_response_code(400);
+        echo json_encode(['error' => 'No valid fields to update']);
+        exit;
+    }
+
+    // Add updated_at timestamp
+    $updateFields[] = "updated_at = NOW()";
+
+    // Add patient ID to params for WHERE clause
+    $params[] = $patientId;
+
+    // Build and execute update query
+    $sql = "UPDATE clients SET " . implode(', ', $updateFields) . " WHERE id = ?";
     error_log("Update demographics SQL: " . $sql);
 
-    sqlStatement($sql, $params);
+    $db->execute($sql, $params);
 
     // Log the update in audit log
-    $auditSql = "INSERT INTO log (
-        date,
-        event,
-        user,
-        patient_id,
-        comments
+    $auditSql = "INSERT INTO audit_logs (
+        user_id,
+        action,
+        table_name,
+        record_id,
+        description,
+        created_at
     ) VALUES (
-        NOW(),
-        'patient-record',
+        ?,
+        'update',
+        'clients',
         ?,
         ?,
-        ?
+        NOW()
     )";
 
     $changedFields = array_keys(array_intersect_key($data, $allowedFields));
-    $auditComment = "Demographics updated: " . implode(', ', $changedFields) . " by user " . $userId;
+    $auditDescription = "Demographics updated: " . implode(', ', $changedFields);
 
-    sqlStatement($auditSql, [$userId, $patientId, $auditComment]);
-    error_log("Update demographics: Audit trail created - " . $auditComment);
+    $db->execute($auditSql, [$userId, $patientId, $auditDescription]);
+    error_log("Update demographics: Audit trail created - " . $auditDescription);
 
     // Return success
     http_response_code(200);

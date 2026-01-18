@@ -1,5 +1,4 @@
 # Ignore actual config files (keep only templates)
-database.php
 *.local.php
 
 # Keep template files

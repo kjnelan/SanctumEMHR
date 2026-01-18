@@ -416,6 +416,12 @@ class CustomAuth
         if (isset($userData['is_provider'])) {
             $userData['is_provider'] = (int) $userData['is_provider'];
         }
+        if (isset($userData['is_supervisor'])) {
+            $userData['is_supervisor'] = (int) $userData['is_supervisor'];
+        }
+        if (isset($userData['portal_user'])) {
+            $userData['portal_user'] = (int) $userData['portal_user'];
+        }
 
         // Insert user
         try {

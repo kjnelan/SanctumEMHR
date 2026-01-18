@@ -1,24 +1,13 @@
 <?php
 /**
- * Update calendar settings in OpenEMR globals table
+ * Update calendar settings in Mindline system_settings (MIGRATED TO MINDLINE)
  * Session-based authentication
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+require_once(__DIR__ . '/../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
-
-require_once(__DIR__ . '/../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("Update calendar settings API called - Session ID: " . session_id());
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -32,20 +21,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Check if user is authenticated
-if (!isset($_SESSION['authUserID'])) {
-    error_log("Update calendar settings: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-error_log("Update calendar settings: User authenticated - " . $_SESSION['authUserID']);
-
-// Note: Admin permission is checked on the frontend (NavBar.jsx)
-// Only users with admin/emergency_login permissions can access Settings menu
-// Additional server-side ACL checks can be added here if needed
-
 // Only accept POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -54,6 +29,24 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
+
+    if (!$session->isAuthenticated()) {
+        error_log("Update calendar settings: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    $userId = $session->getUserId();
+    error_log("Update calendar settings: User authenticated - $userId");
+
+    // Note: Admin permission is checked on the frontend (NavBar.jsx)
+    // Only users with admin/emergency_login permissions can access Settings menu
+    // Additional server-side ACL checks can be added here if needed
+
     // Get JSON input
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
@@ -64,7 +57,10 @@ try {
 
     error_log("Updating calendar settings: " . json_encode($data));
 
-    // Map frontend field names to OpenEMR global names
+    // Initialize database
+    $db = Database::getInstance();
+
+    // Map frontend field names to database setting keys
     $settingsMap = [
         'startHour' => 'schedule_start',
         'endHour' => 'schedule_end',
@@ -75,8 +71,8 @@ try {
         'providersSeeAll' => 'docs_see_entire_calendar'
     ];
 
-    // Update each setting in the globals table
-    foreach ($settingsMap as $frontendKey => $globalKey) {
+    // Update each setting in the system_settings table
+    foreach ($settingsMap as $frontendKey => $settingKey) {
         if (isset($data[$frontendKey])) {
             $value = $data[$frontendKey];
 
@@ -86,19 +82,19 @@ try {
             }
 
             // Check if setting exists
-            $checkSql = "SELECT gl_name FROM globals WHERE gl_name = ?";
-            $exists = sqlQuery($checkSql, [$globalKey]);
+            $checkSql = "SELECT setting_key FROM system_settings WHERE setting_key = ?";
+            $exists = $db->query($checkSql, [$settingKey]);
 
             if ($exists) {
                 // Update existing setting
-                $updateSql = "UPDATE globals SET gl_value = ? WHERE gl_name = ?";
-                sqlStatement($updateSql, [$value, $globalKey]);
-                error_log("Updated $globalKey to $value");
+                $updateSql = "UPDATE system_settings SET setting_value = ?, updated_at = NOW() WHERE setting_key = ?";
+                $db->execute($updateSql, [$value, $settingKey]);
+                error_log("Updated $settingKey to $value");
             } else {
                 // Insert new setting
-                $insertSql = "INSERT INTO globals (gl_name, gl_index, gl_value) VALUES (?, 0, ?)";
-                sqlStatement($insertSql, [$globalKey, $value]);
-                error_log("Inserted $globalKey with value $value");
+                $insertSql = "INSERT INTO system_settings (setting_key, setting_value, created_at, updated_at) VALUES (?, ?, NOW(), NOW())";
+                $db->execute($insertSql, [$settingKey, $value]);
+                error_log("Inserted $settingKey with value $value");
             }
         }
     }

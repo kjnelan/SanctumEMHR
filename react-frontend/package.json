@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "npm run build && rm -rf /var/www/html/mindline/app/* && cp -r dist/* ../app && chown -hR www-data: /var/www/html/mindline/"
+    "deploy": "npm run build && rm -rf /var/www/html/sacwan.org/sacwanmed.sacwan.org/app/* && cp -r dist/* /var/www/html/sacwan.org/sacwanmed.sacwan.org/app/ && chown -hR www-data: /var/www/html/sacwan.org/sacwanmed.sacwan.org/"
   },
   "dependencies": {
     "react": "^19.2.0",

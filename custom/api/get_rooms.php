@@ -1,8 +1,8 @@
 <?php
 /**
  * Mindline EMHR
- * Get Rooms API - Returns list of room/location options
- * Fetches rooms from the list_options table
+ * Get Rooms API - Returns list of room/location options (MIGRATED TO MINDLINE)
+ * Fetches rooms from the settings_lists table
  *
  * Author: Kenneth J. Nelan
  * License: Proprietary and Confidential
@@ -12,21 +12,11 @@
  * Proprietary and Confidential
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+// Load Mindline initialization
+require_once(__DIR__ . '/../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
-
-require_once(__DIR__ . '/../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("Get rooms API called - Session ID: " . session_id());
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -48,58 +38,39 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-// Check if user is authenticated via session
-if (!isset($_SESSION['authUserID']) || empty($_SESSION['authUserID'])) {
-    error_log("Get rooms: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-error_log("Get rooms: User authenticated - " . $_SESSION['authUserID']);
-
 try {
-    // First, ensure the "rooms" list exists
-    $listCheck = sqlQuery("SELECT * FROM list_options WHERE list_id = 'lists' AND option_id = 'rooms'");
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
 
-    if (!$listCheck) {
-        error_log("Rooms list not found, checking for old name");
-        // Check if old "Patient_Flow_Board_Rooms" list exists
-        $oldList = sqlQuery("SELECT * FROM list_options WHERE list_id = 'lists' AND option_id = 'Patient_Flow_Board_Rooms'");
-
-        if ($oldList) {
-            error_log("Found old Patient_Flow_Board_Rooms list, renaming to 'rooms'");
-            // Update the list name
-            sqlStatement(
-                "UPDATE list_options SET option_id = 'rooms', title = 'Rooms' WHERE list_id = 'lists' AND option_id = 'Patient_Flow_Board_Rooms'"
-            );
-            // Update all room entries to use new list_id
-            sqlStatement(
-                "UPDATE list_options SET list_id = 'rooms' WHERE list_id = 'Patient_Flow_Board_Rooms'"
-            );
-        } else {
-            // Create the rooms list if it doesn't exist
-            error_log("Creating new 'rooms' list");
-            sqlStatement(
-                "INSERT INTO list_options (list_id, option_id, title, seq, is_default, option_value, notes, activity)
-                 VALUES ('lists', 'rooms', 'Rooms', 0, 0, 0, '', 1)"
-            );
-        }
+    if (!$session->isAuthenticated()) {
+        error_log("Get rooms: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
     }
 
-    // Fetch all rooms from the list
-    $sql = "SELECT option_id, title, seq, is_default, notes
-            FROM list_options
+    $userId = $session->getUserId();
+    error_log("Get rooms: User authenticated - $userId");
+
+    // Initialize database
+    $db = Database::getInstance();
+
+    // Fetch all rooms from MINDLINE settings_lists table
+    $sql = "SELECT option_id, title, sort_order, is_default, notes
+            FROM settings_lists
             WHERE list_id = 'rooms'
-            AND activity = 1
-            ORDER BY seq, title";
+            AND is_active = 1
+            ORDER BY sort_order, title";
 
     error_log("Get rooms SQL: " . $sql);
 
-    $result = sqlStatement($sql);
+    // Execute query using Database class
+    $rows = $db->queryAll($sql);
 
+    // Format rooms for frontend
     $rooms = [];
-    while ($row = sqlFetchArray($result)) {
+    foreach ($rows as $row) {
         $rooms[] = [
             'id' => $row['option_id'],
             'name' => $row['title'],

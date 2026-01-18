@@ -1,24 +1,13 @@
 <?php
 /**
- * Get calendar settings from OpenEMR globals
+ * Get calendar settings from Mindline system_settings (MIGRATED TO MINDLINE)
  * Session-based authentication
  */
 
-// Start output buffering to prevent any PHP warnings/notices from breaking JSON
-ob_start();
+require_once(__DIR__ . '/../init.php');
 
-// IMPORTANT: Set these BEFORE loading globals.php to prevent redirects
-$ignoreAuth = true;
-$ignoreAuth_onsite_portal = true;
-$ignoreAuth_onsite_portal_two = true;
-
-require_once(__DIR__ . '/../../interface/globals.php');
-
-// Clear any output that globals.php might have generated
-ob_end_clean();
-
-// Enable error logging
-error_log("Get calendar settings API called - Session ID: " . session_id());
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -32,45 +21,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Check if user is authenticated
-if (!isset($_SESSION['authUserID'])) {
-    error_log("Calendar settings: Not authenticated - authUserID not set");
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit;
-}
-
-error_log("Calendar settings: User authenticated - " . $_SESSION['authUserID']);
-
 try {
-    // Try BOTH naming conventions (see DEBUG_CALENDAR_SETTINGS.md for debug code)
-    // OpenEMR uses schedule_start/schedule_end in $GLOBALS
-    // But DB fields are calendar_start/calendar_end
-    $startHour = isset($GLOBALS['schedule_start']) ? (int)$GLOBALS['schedule_start']
-                : (isset($GLOBALS['calendar_start']) ? (int)$GLOBALS['calendar_start'] : 8);
+    // Initialize session and check authentication
+    $session = SessionManager::getInstance();
+    $session->start();
 
-    $endHour = isset($GLOBALS['schedule_end']) ? (int)$GLOBALS['schedule_end']
-              : (isset($GLOBALS['calendar_end']) ? (int)$GLOBALS['calendar_end'] : 17);
+    if (!$session->isAuthenticated()) {
+        error_log("Calendar settings: Not authenticated");
+        http_response_code(401);
+        echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
 
-    $interval = isset($GLOBALS['calendar_interval']) ? (int)$GLOBALS['calendar_interval'] : 15;
+    error_log("Calendar settings: User authenticated - " . $session->getUserId());
 
-    // Get additional calendar settings
-    $viewType = isset($GLOBALS['calendar_view_type']) ? $GLOBALS['calendar_view_type'] : 'week';
-    $eventColor = isset($GLOBALS['event_color']) ? $GLOBALS['event_color'] : '1';
-    $apptStyle = isset($GLOBALS['calendar_appt_style']) ? $GLOBALS['calendar_appt_style'] : '2';
-    $providersSeeAll = isset($GLOBALS['docs_see_entire_calendar']) ? (bool)$GLOBALS['docs_see_entire_calendar'] : true;
+    // Initialize database
+    $db = Database::getInstance();
 
-    // Return settings
+    // Fetch calendar settings from system_settings table
+    $settingKeys = [
+        'schedule_start',
+        'schedule_end',
+        'calendar_interval',
+        'calendar_view_type',
+        'event_color',
+        'calendar_appt_style',
+        'docs_see_entire_calendar'
+    ];
+
+    $placeholders = implode(',', array_fill(0, count($settingKeys), '?'));
+    $sql = "SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN ($placeholders)";
+    $rows = $db->queryAll($sql, $settingKeys);
+
+    // Build settings array with defaults
+    $settings = [
+        'schedule_start' => 8,
+        'schedule_end' => 17,
+        'calendar_interval' => 15,
+        'calendar_view_type' => 'week',
+        'event_color' => '1',
+        'calendar_appt_style' => '2',
+        'docs_see_entire_calendar' => true
+    ];
+
+    // Override with database values
+    foreach ($rows as $row) {
+        $key = $row['setting_key'];
+        $value = $row['setting_value'];
+
+        // Convert to appropriate type
+        if (in_array($key, ['schedule_start', 'schedule_end', 'calendar_interval'])) {
+            $settings[$key] = intval($value);
+        } elseif ($key === 'docs_see_entire_calendar') {
+            $settings[$key] = boolval($value);
+        } else {
+            $settings[$key] = $value;
+        }
+    }
+
+    // Return settings in expected format
     echo json_encode([
         'success' => true,
         'settings' => [
-            'startHour' => $startHour,
-            'endHour' => $endHour,
-            'interval' => $interval,
-            'viewType' => $viewType,
-            'eventColor' => $eventColor,
-            'apptStyle' => $apptStyle,
-            'providersSeeAll' => $providersSeeAll
+            'startHour' => $settings['schedule_start'],
+            'endHour' => $settings['schedule_end'],
+            'interval' => $settings['calendar_interval'],
+            'viewType' => $settings['calendar_view_type'],
+            'eventColor' => $settings['event_color'],
+            'apptStyle' => $settings['calendar_appt_style'],
+            'providersSeeAll' => $settings['docs_see_entire_calendar']
         ]
     ]);
 
