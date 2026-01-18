@@ -62,7 +62,7 @@ try {
                     accepts_assignment, service_location, pos_code,
                     attn, mail_street, mail_city, mail_state, mail_zip,
                     info, inactive, website, email
-                FROM facility
+                FROM facilities
                 WHERE id = ?";
 
                 $result = $db->query($sql, [$facilityId]);
@@ -78,7 +78,7 @@ try {
                 $sql = "SELECT
                     id, name, phone, fax, street, city, state, postal_code,
                     billing_location, service_location, inactive
-                FROM facility
+                FROM facilities
                 ORDER BY name";
 
                 $facilities = $db->queryAll($sql);
@@ -96,7 +96,7 @@ try {
                 throw new Exception('Facility name is required');
             }
 
-            $sql = "INSERT INTO facility (
+            $sql = "INSERT INTO facilities (
                 name, phone, fax, street, city, state, postal_code, country_code,
                 federal_ein, facility_npi, facility_taxonomy,
                 tax_id_type, color, primary_business_entity, billing_location,
@@ -152,7 +152,7 @@ try {
                 throw new Exception('Invalid facility ID');
             }
 
-            $sql = "UPDATE facility SET
+            $sql = "UPDATE facilities SET
                 name = ?, phone = ?, fax = ?, street = ?, city = ?, state = ?,
                 postal_code = ?, country_code = ?, federal_ein = ?, facility_npi = ?,
                 facility_taxonomy = ?, tax_id_type = ?, color = ?,
@@ -211,7 +211,7 @@ try {
             }
 
             // Mark as inactive instead of deleting
-            $sql = "UPDATE facility SET inactive = 1 WHERE id = ?";
+            $sql = "UPDATE facilities SET inactive = 1 WHERE id = ?";
             $db->execute($sql, [$facilityId]);
 
             http_response_code(200);
