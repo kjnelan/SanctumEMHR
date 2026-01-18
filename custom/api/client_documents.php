@@ -42,7 +42,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $clientId = $_POST['patient_id'] ?? null;
         $categoryId = $_POST['category_id'] ?? null;
-        $documentName = $_POST['name'] ?? null;
+        $documentTitle = $_POST['name'] ?? null;
         $documentDescription = $_POST['description'] ?? '';
 
         if (!$clientId) {
@@ -64,7 +64,7 @@ try {
         $fileMimeType = $file['type'];
 
         // Use provided name or fall back to uploaded filename
-        $documentName = $documentName ?: $uploadedFileName;
+        $documentTitle = $documentTitle ?: pathinfo($uploadedFileName, PATHINFO_FILENAME);
 
         // Determine storage path - Mindline stores documents in storage/documents
         $documentsPath = dirname(__DIR__, 2) . '/storage/documents';
@@ -89,40 +89,35 @@ try {
         }
 
         // Store relative path for database
-        $relativeUrl = 'documents/client_' . $clientId . '/' . $uniqueFileName;
+        $relativePath = 'documents/client_' . $clientId . '/' . $uniqueFileName;
 
-        // Insert into documents table
+        // Insert into documents table - mapped to Mindline schema
         $insertSql = "INSERT INTO documents (
-            type,
-            size,
-            date,
-            url,
-            name,
-            mimetype,
-            foreign_id,
-            owner,
-            storagemethod,
-            imported,
-            deleted
-        ) VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, 0, 0, 0)";
+            client_id,
+            category_id,
+            title,
+            description,
+            file_name,
+            file_path,
+            file_size,
+            mime_type,
+            uploaded_by,
+            is_active
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)";
 
         $params = [
-            'file_url',  // type
+            $clientId,
+            $categoryId ?: null,
+            $documentTitle,
+            $documentDescription,
+            $uniqueFileName,
+            $relativePath,
             $fileSize,
-            $relativeUrl,
-            $documentName,
             $fileMimeType,
-            $clientId,  // foreign_id (patient_id)
-            $session->getUserId()  // owner
+            $session->getUserId()
         ];
 
         $documentId = $db->insert($insertSql, $params);
-
-        // Link to category if provided
-        if ($categoryId && $documentId) {
-            $categorySql = "INSERT INTO categories_to_documents (category_id, document_id) VALUES (?, ?)";
-            $db->execute($categorySql, [$categoryId, $documentId]);
-        }
 
         error_log("Document uploaded successfully - ID: $documentId");
 
@@ -141,10 +136,17 @@ try {
 
     // Fetch all available categories (for upload dropdown)
     if ($action === 'categories') {
-        $categoriesSql = "SELECT id, name, parent, lft, rght
-                          FROM categories
-                          WHERE name != 'Categories'
-                          ORDER BY name";
+        $categoriesSql = "SELECT
+            id,
+            name,
+            parent_id AS parent,
+            lft,
+            rght,
+            description
+        FROM document_categories
+        WHERE is_active = 1
+        ORDER BY name";
+
         $categories = $db->queryAll($categoriesSql);
 
         http_response_code(200);
@@ -164,29 +166,32 @@ try {
 
     error_log("Client documents: Fetching documents for client ID: " . $clientId);
 
-    // Fetch documents with category information
+    // Fetch documents with category information - mapped to Mindline schema
     $documentsSql = "SELECT
         d.id,
-        d.type,
-        d.size,
-        d.date,
-        d.url,
-        d.name,
-        d.mimetype,
-        d.foreign_id,
-        d.docdate,
-        d.list_id,
-        c.id AS category_id,
+        'file_url' AS type,
+        d.file_size AS size,
+        d.uploaded_at AS date,
+        d.file_path AS url,
+        d.title AS name,
+        d.mime_type AS mimetype,
+        d.client_id AS foreign_id,
+        d.document_date AS docdate,
+        NULL AS list_id,
+        d.category_id,
         c.name AS category_name,
-        c.parent AS category_parent,
+        c.parent_id AS category_parent,
         c.lft AS category_lft,
-        c.rght AS category_rght
+        c.rght AS category_rght,
+        d.description,
+        d.file_name,
+        CONCAT(u.first_name, ' ', u.last_name) AS uploaded_by_name
     FROM documents d
-    LEFT JOIN categories_to_documents ctd ON d.id = ctd.document_id
-    LEFT JOIN categories c ON ctd.category_id = c.id
-    WHERE d.foreign_id = ?
-    AND d.deleted = 0
-    ORDER BY c.name, d.date DESC";
+    LEFT JOIN document_categories c ON d.category_id = c.id
+    LEFT JOIN users u ON d.uploaded_by = u.id
+    WHERE d.client_id = ?
+    AND d.is_active = 1
+    ORDER BY c.name, d.uploaded_at DESC";
 
     error_log("Documents SQL: " . $documentsSql);
     $documents = $db->queryAll($documentsSql, [$clientId]);
@@ -197,14 +202,15 @@ try {
     $categoriesSql = "SELECT DISTINCT
         c.id,
         c.name,
-        c.parent,
+        c.parent_id AS parent,
         c.lft,
-        c.rght
-    FROM categories c
-    INNER JOIN categories_to_documents ctd ON c.id = ctd.category_id
-    INNER JOIN documents d ON ctd.document_id = d.id
-    WHERE d.foreign_id = ?
-    AND d.deleted = 0
+        c.rght,
+        c.description
+    FROM document_categories c
+    INNER JOIN documents d ON c.id = d.category_id
+    WHERE d.client_id = ?
+    AND d.is_active = 1
+    AND c.is_active = 1
     ORDER BY c.name";
 
     $categories = $db->queryAll($categoriesSql, [$clientId]);
