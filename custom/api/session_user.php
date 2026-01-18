@@ -12,14 +12,8 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Load Composer autoloader
-require_once dirname(__FILE__, 3) . "/vendor/autoload.php";
-
-// Load custom classes
-require_once dirname(__FILE__, 2) . "/lib/Database/Database.php";
-require_once dirname(__FILE__, 2) . "/lib/Auth/CustomAuth.php";
-require_once dirname(__FILE__, 2) . "/lib/Session/SessionManager.php";
-require_once dirname(__FILE__, 2) . "/lib/Services/UserService.php";
+// Load init.php which handles all class loading
+require_once dirname(__FILE__, 2) . "/init.php";
 
 use Custom\Lib\Database\Database;
 use Custom\Lib\Auth\CustomAuth;
