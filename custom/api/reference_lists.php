@@ -12,7 +12,25 @@
 // Prevent any output before JSON
 ob_start();
 
-require_once(__DIR__ . '/../init.php');
+// Catch all errors and convert to JSON
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+});
+
+try {
+    require_once(__DIR__ . '/../init.php');
+} catch (Exception $e) {
+    ob_clean();
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'error' => 'Init error: ' . $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine()
+    ]);
+    ob_end_flush();
+    exit;
+}
 
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
