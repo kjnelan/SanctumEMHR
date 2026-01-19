@@ -9,6 +9,11 @@
  * Copyright © 2026 Sacred Wandering
  */
 
+// Turn off all error display - we'll handle errors as JSON
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
+error_reporting(E_ALL);
+
 // Prevent any output before JSON
 ob_start();
 
@@ -49,24 +54,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 try {
+    error_log("Reference Lists API: Starting request - Method: " . $_SERVER['REQUEST_METHOD']);
+
     $session = SessionManager::getInstance();
     $session->start();
 
+    error_log("Reference Lists API: Session started");
+
     if (!$session->isAuthenticated()) {
+        error_log("Reference Lists API: Not authenticated");
         http_response_code(401);
         echo json_encode(['error' => 'Not authenticated']);
         exit;
     }
 
+    error_log("Reference Lists API: Authenticated");
+
     // Admin-only check
     $user = $session->getUser();
+    error_log("Reference Lists API: Got user - " . ($user ? json_encode(['id' => $user['id'], 'username' => $user['username']]) : 'null'));
+
     if (!$user || !in_array('admin', $user['permissions'] ?? [])) {
+        error_log("Reference Lists API: No admin access");
         http_response_code(403);
         echo json_encode(['error' => 'Admin access required']);
         exit;
     }
 
+    error_log("Reference Lists API: Admin check passed");
+
     $db = Database::getInstance();
+    error_log("Reference Lists API: Database instance created");
     $method = $_SERVER['REQUEST_METHOD'];
 
     // Get list type from query parameter
@@ -112,6 +130,8 @@ try {
 
     switch ($method) {
         case 'GET':
+            error_log("Reference Lists API: GET request for type: " . $listType);
+
             // List all items for the specified type
             $sql = "SELECT
                 id,
@@ -126,7 +146,9 @@ try {
             WHERE list_type = ?
             ORDER BY sort_order ASC, name ASC";
 
+            error_log("Reference Lists API: Executing query");
             $rows = $db->queryAll($sql, [$listType]);
+            error_log("Reference Lists API: Query returned " . count($rows) . " rows");
 
             $items = [];
             foreach ($rows as $row) {
@@ -142,8 +164,10 @@ try {
                 ];
             }
 
+            error_log("Reference Lists API: Sending response with " . count($items) . " items");
             http_response_code(200);
             echo json_encode(['items' => $items]);
+            error_log("Reference Lists API: Response sent successfully");
             break;
 
         case 'POST':
