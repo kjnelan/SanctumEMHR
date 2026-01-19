@@ -21,7 +21,15 @@ import About from '../components/admin/About';
 
 function Admin() {
   const [activeSection, setActiveSection] = useState('calendar-settings');
-  const [collapsedGroups, setCollapsedGroups] = useState({});
+  // Start with all groups collapsed
+  const [collapsedGroups, setCollapsedGroups] = useState({
+    system: true,
+    clinical: true,
+    scheduling: true,
+    billing: true,
+    communications: true,
+    organization: true
+  });
 
   const sectionGroups = [
     {
@@ -78,14 +86,6 @@ function Admin() {
         { id: 'facilities', label: 'Facilities', available: true },
         { id: 'users', label: 'Users', available: true },
       ]
-    },
-    {
-      id: 'about',
-      label: 'About',
-      icon: 'ℹ️',
-      sections: [
-        { id: 'about', label: 'System Information', available: true },
-      ]
     }
   ];
 
@@ -110,6 +110,7 @@ function Admin() {
         <div className="w-72 flex-shrink-0">
           <div className="glass-card p-4">
             <nav className="space-y-1">
+              {/* Collapsible Groups */}
               {sectionGroups.map(group => (
                 <div key={group.id}>
                   {/* Group Header */}
@@ -157,6 +158,22 @@ function Admin() {
                   )}
                 </div>
               ))}
+
+              {/* Separator */}
+              <div className="border-t border-gray-200 my-2"></div>
+
+              {/* About - Standalone Item */}
+              <button
+                onClick={() => setActiveSection('about')}
+                className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm flex items-center gap-2 ${
+                  activeSection === 'about'
+                    ? 'bg-blue-600 text-white font-medium'
+                    : 'hover:bg-gray-100 text-gray-700'
+                }`}
+              >
+                <span>ℹ️</span>
+                <span>About</span>
+              </button>
             </nav>
           </div>
         </div>
