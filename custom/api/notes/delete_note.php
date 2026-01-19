@@ -87,9 +87,9 @@ try {
     }
 
     // Check if user is the provider (or admin)
-    $userSql = "SELECT is_admin FROM users WHERE id = ?";
+    $userSql = "SELECT user_type FROM users WHERE id = ?";
     $user = $db->query($userSql, [$userId]);
-    $isAdmin = ($user && $user['is_admin'] == 1);
+    $isAdmin = ($user && $user['user_type'] === 'admin');
 
     if (!$isAdmin && $note['created_by'] != $userId) {
         error_log("Delete note: User $userId is not authorized to delete note $noteId");
