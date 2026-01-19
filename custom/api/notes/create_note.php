@@ -78,8 +78,11 @@ try {
     $response = $input['response'] ?? null;
     $plan = $input['plan'] ?? null;
 
-    // Risk assessment
-    $riskPresent = isset($input['riskPresent']) ? boolval($input['riskPresent']) : false;
+    // Risk assessment - convert to integer for MySQL
+    $riskPresent = 0;
+    if (isset($input['riskPresent']) && $input['riskPresent'] !== '' && $input['riskPresent'] !== null) {
+        $riskPresent = ($input['riskPresent'] === true || $input['riskPresent'] === 'true' || $input['riskPresent'] === 1 || $input['riskPresent'] === '1') ? 1 : 0;
+    }
     $riskAssessment = $input['riskAssessment'] ?? null;
 
     // JSON fields - diagnosis_codes already JSON stringified by frontend
@@ -103,8 +106,11 @@ try {
     $durationOfSymptoms = $input['duration_of_symptoms'] ?? null;
     $previousDiagnoses = $input['previous_diagnoses'] ?? null;
 
-    // Supervision
-    $supervisorReviewRequired = isset($input['supervisorReviewRequired']) ? boolval($input['supervisorReviewRequired']) : false;
+    // Supervision - convert to integer for MySQL
+    $supervisorReviewRequired = 0;
+    if (isset($input['supervisorReviewRequired']) && $input['supervisorReviewRequired'] !== '' && $input['supervisorReviewRequired'] !== null) {
+        $supervisorReviewRequired = ($input['supervisorReviewRequired'] === true || $input['supervisorReviewRequired'] === 'true' || $input['supervisorReviewRequired'] === 1 || $input['supervisorReviewRequired'] === '1') ? 1 : 0;
+    }
 
     // Generate UUID for API security
     $noteUuid = sprintf(

@@ -108,15 +108,23 @@ try {
         }
     }
 
-    // Boolean fields
+    // Boolean fields - convert to integer for MySQL
     if (isset($input['riskPresent'])) {
         $updateFields[] = "risk_present = ?";
-        $params[] = boolval($input['riskPresent']);
+        $riskPresent = 0;
+        if ($input['riskPresent'] !== '' && $input['riskPresent'] !== null) {
+            $riskPresent = ($input['riskPresent'] === true || $input['riskPresent'] === 'true' || $input['riskPresent'] === 1 || $input['riskPresent'] === '1') ? 1 : 0;
+        }
+        $params[] = $riskPresent;
     }
 
     if (isset($input['supervisorReviewRequired'])) {
         $updateFields[] = "supervisor_review_required = ?";
-        $params[] = boolval($input['supervisorReviewRequired']);
+        $supervisorReviewRequired = 0;
+        if ($input['supervisorReviewRequired'] !== '' && $input['supervisorReviewRequired'] !== null) {
+            $supervisorReviewRequired = ($input['supervisorReviewRequired'] === true || $input['supervisorReviewRequired'] === 'true' || $input['supervisorReviewRequired'] === 1 || $input['supervisorReviewRequired'] === '1') ? 1 : 0;
+        }
+        $params[] = $supervisorReviewRequired;
     }
 
     // JSON fields
