@@ -136,10 +136,12 @@ try {
     }
 
     // Decode JSON fields
+    $note['risk_assessment'] = $note['risk_assessment'] ? json_decode($note['risk_assessment'], true) : null;
     $note['goals_addressed'] = $note['goals_addressed'] ? json_decode($note['goals_addressed'], true) : null;
     $note['interventions_selected'] = $note['interventions_selected'] ? json_decode($note['interventions_selected'], true) : null;
     $note['client_presentation'] = $note['client_presentation'] ? json_decode($note['client_presentation'], true) : null;
     $note['diagnosis_codes'] = $note['diagnosis_codes'] ? json_decode($note['diagnosis_codes'], true) : null;
+    $note['mental_status_exam'] = $note['mental_status_exam'] ? json_decode($note['mental_status_exam'], true) : null;
 
     // Convert boolean fields
     $note['risk_present'] = (bool)($note['risk_present'] ?? false);
@@ -149,6 +151,42 @@ try {
 
     // Addenda feature not yet implemented in Phase 4 schema
     $note['addenda'] = [];
+
+    // Map snake_case to camelCase for frontend editing (NoteEditor expects camelCase)
+    $note['patientId'] = $note['patient_id'];
+    $note['createdBy'] = $note['created_by'];
+    $note['appointmentId'] = $note['appointment_id'];
+    $note['billingId'] = $note['billing_id'];
+    $note['noteType'] = $note['note_type'];
+    $note['templateType'] = $note['template_type'];
+    $note['serviceDate'] = $note['service_date'];
+    $note['serviceDuration'] = $note['service_duration'];
+    $note['serviceLocation'] = $note['service_location'];
+    $note['behaviorProblem'] = $note['behavior_problem'];
+    $note['riskAssessment'] = $note['risk_assessment'];
+    $note['riskPresent'] = $note['risk_present'];
+    $note['goalsAddressed'] = $note['goals_addressed'];
+    $note['interventionsSelected'] = $note['interventions_selected'];
+    $note['clientPresentation'] = $note['client_presentation'];
+    $note['diagnosisCodes'] = $note['diagnosis_codes'];
+    $note['presentingConcerns'] = $note['presenting_concerns'];
+    $note['clinicalObservations'] = $note['clinical_observations'];
+    $note['mentalStatusExam'] = $note['mental_status_exam'];
+    $note['symptomsReported'] = $note['symptoms_reported'];
+    $note['symptomsObserved'] = $note['symptoms_observed'];
+    $note['clinicalJustification'] = $note['clinical_justification'];
+    $note['differentialDiagnosis'] = $note['differential_diagnosis'];
+    $note['severitySpecifiers'] = $note['severity_specifiers'];
+    $note['functionalImpairment'] = $note['functional_impairment'];
+    $note['durationOfSymptoms'] = $note['duration_of_symptoms'];
+    $note['previousDiagnoses'] = $note['previous_diagnoses'];
+    $note['supervisorReviewRequired'] = $note['supervisor_review_required'];
+    $note['supervisorComments'] = $note['supervisor_comments'];
+    $note['isLocked'] = $note['is_locked'];
+    $note['signedAt'] = $note['signed_at'];
+    $note['signedBy'] = $note['signed_by'];
+    $note['createdAt'] = $note['created_at'];
+    $note['updatedAt'] = $note['updated_at'];
 
     $response = [
         'success' => true,
