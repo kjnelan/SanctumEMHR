@@ -3,58 +3,67 @@ function BackgroundEffects() {
         <>
         <div className="absolute inset-0 bg-gradient-mental"></div>
 
-        {/* Decorative flowing shapes using CSS */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Top right decorative blob */}
+        {/* Large decorative organic shapes */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 1 }}>
+          {/* Top right large blob */}
           <div
-            className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full opacity-20"
+            className="absolute"
             style={{
-              background: 'radial-gradient(circle, rgba(107, 154, 196, 0.4) 0%, transparent 70%)',
-              filter: 'blur(60px)',
+              top: '-20%',
+              right: '-10%',
+              width: '50%',
+              height: '60%',
+              background: 'rgba(107, 154, 196, 0.15)',
+              borderRadius: '30% 70% 70% 30% / 30% 30% 70% 70%',
+              filter: 'blur(40px)',
             }}
           />
 
-          {/* Top center wave */}
+          {/* Bottom left large blob */}
           <div
-            className="absolute -top-20 left-1/4 w-[500px] h-[400px] rounded-full opacity-15"
+            className="absolute"
             style={{
-              background: 'radial-gradient(ellipse, rgba(168, 197, 165, 0.5) 0%, transparent 70%)',
-              filter: 'blur(80px)',
-              transform: 'rotate(-20deg)',
+              bottom: '-15%',
+              left: '-8%',
+              width: '45%',
+              height: '55%',
+              background: 'rgba(168, 197, 165, 0.15)',
+              borderRadius: '70% 30% 30% 70% / 60% 60% 40% 40%',
+              filter: 'blur(40px)',
             }}
           />
 
-          {/* Bottom left decorative blob */}
+          {/* Center right accent */}
           <div
-            className="absolute -bottom-40 -left-40 w-[700px] h-[700px] rounded-full opacity-20"
+            className="absolute"
             style={{
-              background: 'radial-gradient(circle, rgba(168, 197, 165, 0.4) 0%, transparent 70%)',
-              filter: 'blur(80px)',
+              top: '30%',
+              right: '10%',
+              width: '35%',
+              height: '40%',
+              background: 'rgba(232, 220, 196, 0.12)',
+              borderRadius: '60% 40% 30% 70% / 40% 50% 50% 60%',
+              filter: 'blur(50px)',
             }}
           />
 
-          {/* Bottom right accent */}
+          {/* Top left accent */}
           <div
-            className="absolute -bottom-20 right-1/4 w-[450px] h-[350px] rounded-full opacity-15"
+            className="absolute"
             style={{
-              background: 'radial-gradient(ellipse, rgba(232, 220, 196, 0.5) 0%, transparent 70%)',
-              filter: 'blur(70px)',
-              transform: 'rotate(25deg)',
-            }}
-          />
-
-          {/* Center subtle glow */}
-          <div
-            className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[300px] rounded-full opacity-10"
-            style={{
-              background: 'radial-gradient(ellipse, rgba(107, 154, 196, 0.3) 0%, transparent 60%)',
-              filter: 'blur(100px)',
+              top: '10%',
+              left: '15%',
+              width: '30%',
+              height: '35%',
+              background: 'rgba(168, 197, 165, 0.1)',
+              borderRadius: '40% 60% 70% 30% / 50% 60% 40% 50%',
+              filter: 'blur(45px)',
             }}
           />
         </div>
 
         {/* Floating particles */}
-        <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden" style={{ zIndex: 2 }}>
         <div className="particle particle-1"></div>
         <div className="particle particle-2"></div>
         <div className="particle particle-3"></div>
