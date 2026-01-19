@@ -70,6 +70,10 @@ try {
 
     error_log("Reference Lists API: Authenticated");
 
+    // Get Database instance
+    $db = Database::getInstance();
+    error_log("Reference Lists API: Database instance created");
+
     // Admin-only check
     $userId = $session->getUserId();
     error_log("Reference Lists API: Got user ID - " . $userId);
@@ -85,9 +89,6 @@ try {
     }
 
     error_log("Reference Lists API: Admin check passed - User ID: " . $userId);
-
-    $db = Database::getInstance();
-    error_log("Reference Lists API: Database instance created");
     $method = $_SERVER['REQUEST_METHOD'];
 
     // Get list type from query parameter
