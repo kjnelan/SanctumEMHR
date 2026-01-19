@@ -71,17 +71,20 @@ try {
     error_log("Reference Lists API: Authenticated");
 
     // Admin-only check
-    $user = $session->getUser();
-    error_log("Reference Lists API: Got user - " . ($user ? json_encode(['id' => $user['id'], 'username' => $user['username']]) : 'null'));
+    $userId = $session->getUserId();
+    error_log("Reference Lists API: Got user ID - " . $userId);
 
-    if (!$user || !in_array('admin', $user['permissions'] ?? [])) {
-        error_log("Reference Lists API: No admin access");
+    $userSql = "SELECT is_admin FROM users WHERE id = ?";
+    $userResult = $db->queryOne($userSql, [$userId]);
+
+    if (!$userResult || $userResult['is_admin'] != 1) {
+        error_log("Reference Lists API: No admin access - User ID: " . $userId);
         http_response_code(403);
         echo json_encode(['error' => 'Admin access required']);
         exit;
     }
 
-    error_log("Reference Lists API: Admin check passed");
+    error_log("Reference Lists API: Admin check passed - User ID: " . $userId);
 
     $db = Database::getInstance();
     error_log("Reference Lists API: Database instance created");
