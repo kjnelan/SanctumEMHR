@@ -13,10 +13,10 @@
 -- ========================================
 
 CREATE TABLE IF NOT EXISTS treatment_goals (
-    id BIGINT(20) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 
-    patient_id BIGINT(20) NOT NULL,
-    provider_id BIGINT(20) NOT NULL,
+    patient_id BIGINT(20) UNSIGNED NOT NULL,
+    provider_id BIGINT(20) UNSIGNED NOT NULL,
 
     -- Goal content
     goal_text TEXT NOT NULL,
@@ -49,14 +49,14 @@ CREATE TABLE IF NOT EXISTS treatment_goals (
 -- ========================================
 
 CREATE TABLE IF NOT EXISTS intervention_library (
-    id BIGINT(20) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 
     intervention_name VARCHAR(100) NOT NULL UNIQUE,
     intervention_tier INT NOT NULL,
     modality VARCHAR(50) NULL,
 
     is_system_intervention BOOLEAN DEFAULT TRUE,
-    created_by BIGINT(20) NULL,
+    created_by BIGINT(20) UNSIGNED NULL,
 
     display_order INT DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
@@ -75,10 +75,10 @@ CREATE TABLE IF NOT EXISTS intervention_library (
 -- ========================================
 
 CREATE TABLE IF NOT EXISTS user_favorite_interventions (
-    id BIGINT(20) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 
-    user_id BIGINT(20) NOT NULL,
-    intervention_id BIGINT(20) NOT NULL,
+    user_id BIGINT(20) UNSIGNED NOT NULL,
+    intervention_id BIGINT(20) UNSIGNED NOT NULL,
 
     display_order INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -95,14 +95,14 @@ CREATE TABLE IF NOT EXISTS user_favorite_interventions (
 -- ========================================
 
 CREATE TABLE IF NOT EXISTS clinical_settings (
-    id BIGINT(20) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 
     setting_key VARCHAR(100) NOT NULL UNIQUE,
     setting_value TEXT NOT NULL,
     setting_type VARCHAR(20) DEFAULT 'string',
 
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    updated_by BIGINT(20) NULL,
+    updated_by BIGINT(20) UNSIGNED NULL,
 
     FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
