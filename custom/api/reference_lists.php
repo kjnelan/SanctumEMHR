@@ -79,7 +79,7 @@ try {
     error_log("Reference Lists API: Got user ID - " . $userId);
 
     $userSql = "SELECT is_admin FROM users WHERE id = ?";
-    $userResult = $db->queryOne($userSql, [$userId]);
+    $userResult = $db->query($userSql, [$userId]);
 
     if (!$userResult || $userResult['is_admin'] != 1) {
         error_log("Reference Lists API: No admin access - User ID: " . $userId);
@@ -184,7 +184,7 @@ try {
 
             // Check for duplicate name within the same list type
             $checkSql = "SELECT COUNT(*) as count FROM reference_lists WHERE list_type = ? AND name = ?";
-            $exists = $db->queryOne($checkSql, [$listType, $input['name']]);
+            $exists = $db->query($checkSql, [$listType, $input['name']]);
             if ($exists && $exists['count'] > 0) {
                 http_response_code(409);
                 echo json_encode(['error' => 'An item with this name already exists']);
@@ -193,7 +193,7 @@ try {
 
             // Get the next sort order
             $sortSql = "SELECT COALESCE(MAX(sort_order), 0) + 1 as next_order FROM reference_lists WHERE list_type = ?";
-            $sortResult = $db->queryOne($sortSql, [$listType]);
+            $sortResult = $db->query($sortSql, [$listType]);
             $nextOrder = $sortResult ? (int)$sortResult['next_order'] : 1;
 
             $sql = "INSERT INTO reference_lists (list_type, name, description, is_active, sort_order, created_at, updated_at)
@@ -223,7 +223,7 @@ try {
 
             // Verify the item exists and belongs to this list type
             $checkSql = "SELECT id FROM reference_lists WHERE id = ? AND list_type = ?";
-            $exists = $db->queryOne($checkSql, [$input['id'], $listType]);
+            $exists = $db->query($checkSql, [$input['id'], $listType]);
             if (!$exists) {
                 http_response_code(404);
                 echo json_encode(['error' => 'Item not found']);
@@ -233,7 +233,7 @@ try {
             // Check for duplicate name (excluding current item)
             if (isset($input['name'])) {
                 $dupSql = "SELECT COUNT(*) as count FROM reference_lists WHERE list_type = ? AND name = ? AND id != ?";
-                $dupCheck = $db->queryOne($dupSql, [$listType, $input['name'], $input['id']]);
+                $dupCheck = $db->query($dupSql, [$listType, $input['name'], $input['id']]);
                 if ($dupCheck && $dupCheck['count'] > 0) {
                     http_response_code(409);
                     echo json_encode(['error' => 'An item with this name already exists']);
@@ -287,7 +287,7 @@ try {
 
             // Verify the item exists and belongs to this list type
             $checkSql = "SELECT id FROM reference_lists WHERE id = ? AND list_type = ?";
-            $exists = $db->queryOne($checkSql, [$id, $listType]);
+            $exists = $db->query($checkSql, [$id, $listType]);
             if (!$exists) {
                 http_response_code(404);
                 echo json_encode(['error' => 'Item not found']);
