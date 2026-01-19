@@ -3,42 +3,54 @@ function BackgroundEffects() {
         <>
         <div className="absolute inset-0 bg-gradient-mental"></div>
 
-        {/* Decorative flowing shapes */}
+        {/* Decorative flowing shapes using CSS */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Top right flowing shape */}
-          <svg className="absolute -top-32 -right-32 w-[800px] h-[800px] opacity-30" viewBox="0 0 800 800" fill="none">
-            <path d="M400,0 Q600,100 700,300 T800,600 L800,0 Z" fill="url(#gradient1)" />
-            <defs>
-              <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#6B9AC4" stopOpacity="0.3" />
-                <stop offset="100%" stopColor="#A8C5A5" stopOpacity="0.1" />
-              </linearGradient>
-            </defs>
-          </svg>
+          {/* Top right decorative blob */}
+          <div
+            className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full opacity-20"
+            style={{
+              background: 'radial-gradient(circle, rgba(107, 154, 196, 0.4) 0%, transparent 70%)',
+              filter: 'blur(60px)',
+            }}
+          />
 
-          {/* Bottom left flowing shape */}
-          <svg className="absolute -bottom-32 -left-32 w-[700px] h-[700px] opacity-25" viewBox="0 0 700 700" fill="none">
-            <path d="M0,700 Q100,600 200,500 T400,300 L0,300 Z" fill="url(#gradient2)" />
-            <defs>
-              <linearGradient id="gradient2" x1="0%" y1="100%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#A8C5A5" stopOpacity="0.3" />
-                <stop offset="100%" stopColor="#E8DCC4" stopOpacity="0.1" />
-              </linearGradient>
-            </defs>
-          </svg>
+          {/* Top center wave */}
+          <div
+            className="absolute -top-20 left-1/4 w-[500px] h-[400px] rounded-full opacity-15"
+            style={{
+              background: 'radial-gradient(ellipse, rgba(168, 197, 165, 0.5) 0%, transparent 70%)',
+              filter: 'blur(80px)',
+              transform: 'rotate(-20deg)',
+            }}
+          />
 
-          {/* Center decorative curve */}
-          <svg className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[600px] opacity-20" viewBox="0 0 1000 600" fill="none">
-            <path d="M0,300 Q250,100 500,300 T1000,300" stroke="url(#gradient3)" strokeWidth="2" fill="none" opacity="0.5" />
-            <path d="M0,320 Q250,120 500,320 T1000,320" stroke="url(#gradient3)" strokeWidth="1.5" fill="none" opacity="0.3" />
-            <defs>
-              <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#6B9AC4" stopOpacity="0.6" />
-                <stop offset="50%" stopColor="#A8C5A5" stopOpacity="0.4" />
-                <stop offset="100%" stopColor="#E8DCC4" stopOpacity="0.6" />
-              </linearGradient>
-            </defs>
-          </svg>
+          {/* Bottom left decorative blob */}
+          <div
+            className="absolute -bottom-40 -left-40 w-[700px] h-[700px] rounded-full opacity-20"
+            style={{
+              background: 'radial-gradient(circle, rgba(168, 197, 165, 0.4) 0%, transparent 70%)',
+              filter: 'blur(80px)',
+            }}
+          />
+
+          {/* Bottom right accent */}
+          <div
+            className="absolute -bottom-20 right-1/4 w-[450px] h-[350px] rounded-full opacity-15"
+            style={{
+              background: 'radial-gradient(ellipse, rgba(232, 220, 196, 0.5) 0%, transparent 70%)',
+              filter: 'blur(70px)',
+              transform: 'rotate(25deg)',
+            }}
+          />
+
+          {/* Center subtle glow */}
+          <div
+            className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[300px] rounded-full opacity-10"
+            style={{
+              background: 'radial-gradient(ellipse, rgba(107, 154, 196, 0.3) 0%, transparent 60%)',
+              filter: 'blur(100px)',
+            }}
+          />
         </div>
 
         {/* Floating particles */}
