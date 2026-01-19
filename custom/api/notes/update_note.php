@@ -58,17 +58,17 @@ try {
 
     $noteId = intval($input['noteId']);
 
-    // First, check if note exists and is not locked
-    $checkSql = "SELECT id, is_locked, status, created_by FROM clinical_notes WHERE id = ?";
+    // First, check if note exists and is not signed (Phase 4: no is_locked column)
+    $checkSql = "SELECT id, status, created_by, signed_at FROM clinical_notes WHERE id = ?";
     $existingNote = $db->query($checkSql, [$noteId]);
 
     if (!$existingNote) {
         throw new Exception("Note not found");
     }
 
-    // Check if note is locked
-    if ($existingNote['is_locked']) {
-        throw new Exception("Cannot update locked note. Create an addendum instead.");
+    // Check if note is signed (Phase 4: signed notes cannot be updated)
+    if ($existingNote['status'] === 'signed' || !empty($existingNote['signed_at'])) {
+        throw new Exception("Cannot update signed note. Create an addendum instead.");
     }
 
     // Build UPDATE query dynamically based on provided fields
