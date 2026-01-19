@@ -11,7 +11,7 @@ function NavBar({ activeNav, setActiveNav, user }) {
     { id: 'messages', label: 'Messages' },
     { id: 'billing', label: 'Billing' },
     { id: 'reports', label: 'Reports' },
-    ...(hasAdminAccess ? [{ id: 'admin', label: 'Settings' }] : [])
+    ...(hasAdminAccess ? [{ id: 'admin', label: 'Admin Settings' }] : [])
   ];
 
   return (
