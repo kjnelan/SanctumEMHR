@@ -36,7 +36,7 @@ try {
 if (!$db->tableExists('users')) {
     echo "✗ Users table does not exist!\n";
     echo "\nPlease import the database schema:\n";
-    echo "  mysql -u root -p mindline < database/mindline.sql\n\n";
+    echo "  mysql -u root -p mindline < sql/mindline.sql\n\n";
     exit(1);
 }
 

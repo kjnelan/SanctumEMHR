@@ -1,37 +1,30 @@
-# logs
+# Logs
 /logs
+*.log
 
-# environment vars
+# Environment variables
 .env
 
-# vendor and assets
+# Node modules
 node_modules
-/vendor/*
-/public/assets/*
-/public/themes/*
-!/public/assets/modified
-/.docs/.out/*
+/node_modules
 
-# ccda service build
-ccdaservice/node_modules
-
-# dev editor configs
-/.idea/*
-/.vscode/*
-/.vscode-oss/*
-/nbproject/*
+# IDE and editor configs
+.idea
+.vscode
+.vscode-oss
+nbproject
 .DS_Store
 .buildpath
 .project
 .settings
 
-# testing
+# Testing
 .phpunit.result.cache
-coverage/js-unit
+coverage
 
-# phpstan
-tmp-phpstan/*
-openemr-archived-docs/
-composer.json.backup-*
-test_db_connection.php
-simple_login_test.php
+# Temporary files
+*.tmp
+*.swp
+*~
+vendor/

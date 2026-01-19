@@ -183,14 +183,17 @@ function DocumentsTab({ data }) {
   };
 
   const handleViewDocument = (doc) => {
-    // Link to OpenEMR's document viewer
-    const viewerUrl = `/interface/patient_file/encounter/view_form.php?formname=../../Documents/${doc.id}`;
-    window.open(viewerUrl, '_blank');
+    // Direct file path - documents are stored with their path in the database
+    if (doc.file_path) {
+      window.open(doc.file_path, '_blank');
+    } else {
+      console.error('Document file path not available');
+    }
   };
 
   const handleDownloadDocument = (doc) => {
-    // Link to OpenEMR's document download
-    const downloadUrl = `/controller.php?document&retrieve&patient_id=${clientId}&document_id=${doc.id}`;
+    // Use custom API endpoint for document download
+    const downloadUrl = `/custom/api/client_documents.php?action=download&document_id=${doc.id}`;
     window.open(downloadUrl, '_blank');
   };
 
