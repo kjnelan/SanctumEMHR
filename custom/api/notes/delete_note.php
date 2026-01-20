@@ -98,10 +98,6 @@ try {
         exit;
     }
 
-    // Delete related drafts first
-    $deleteDraftsSql = "DELETE FROM note_drafts WHERE note_id = ?";
-    $db->execute($deleteDraftsSql, [$noteId]);
-
     // Delete the note
     $deleteNoteSql = "DELETE FROM clinical_notes WHERE id = ?";
     $db->execute($deleteNoteSql, [$noteId]);
