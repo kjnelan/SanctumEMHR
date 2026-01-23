@@ -13,6 +13,10 @@ CREATE TABLE IF NOT EXISTS system_settings (
     INDEX idx_key (setting_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Add is_editable column if it doesn't exist (for existing tables)
+ALTER TABLE system_settings
+ADD COLUMN IF NOT EXISTS is_editable TINYINT(1) DEFAULT 1;
+
 -- Insert default security settings
 INSERT INTO system_settings (setting_key, setting_value, setting_type, category, description, is_editable) VALUES
 ('security.max_login_attempts', '5', 'integer', 'security', 'Maximum number of failed login attempts before account is locked', 1),
