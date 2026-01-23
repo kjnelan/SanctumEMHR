@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { updateDemographics, getListOptions, getCurrentUser, getProviders, getRelatedPersons, saveRelatedPerson, deleteRelatedPerson } from '../../utils/api';
+import useReferenceLists from '../../hooks/useReferenceLists';
 
 function DemographicsTab({ data, onDataUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -13,16 +14,42 @@ function DemographicsTab({ data, onDataUpdate }) {
   const [showGuardianModal, setShowGuardianModal] = useState(false);
   const [editingGuardian, setEditingGuardian] = useState(null);
 
-  // Load dropdown options and current user on component mount
+  // Fetch reference lists for dropdowns
+  const { data: referenceLists, loading: listsLoading } = useReferenceLists([
+    'sexual-orientation',
+    'gender-identity',
+    'marital-status',
+    'client-status',
+    'pronouns',
+    'ethnicity',
+    'insurance-type',
+    'referral-source'
+  ]);
+
+  // Load reference lists into dropdown options when they're available
   useEffect(() => {
-    const loadDropdownOptions = async () => {
+    if (!listsLoading && referenceLists) {
+      setDropdownOptions({
+        ...dropdownOptions,
+        sexual_orientation: referenceLists['sexual-orientation'] || [],
+        gender_identity: referenceLists['gender-identity'] || [],
+        marital_status: referenceLists['marital-status'] || [],
+        client_status: referenceLists['client-status'] || [],
+        pronouns: referenceLists['pronouns'] || [],
+        ethnicity: referenceLists['ethnicity'] || [],
+        insurance_type: referenceLists['insurance-type'] || [],
+        referral_source: referenceLists['referral-source'] || []
+      });
+    }
+  }, [referenceLists, listsLoading]);
+
+  // Load other dropdown options (sex, state, etc.) from old system
+  useEffect(() => {
+    const loadOtherOptions = async () => {
       try {
-        // Fetch all required list options in parallel
-        const [sexOptions, genderOptions, orientationOptions, maritalOptions, protectOptions, stateOptions, categoriesOptions, careTeamStatusOptions, paymentTypeOptions] = await Promise.all([
+        // Fetch remaining options that aren't in reference lists yet
+        const [sexOptions, protectOptions, stateOptions, categoriesOptions, careTeamStatusOptions, paymentTypeOptions] = await Promise.all([
           getListOptions('sex'),
-          getListOptions('gender_identity'),
-          getListOptions('sexual_orientation'),
-          getListOptions('marital'),
           getListOptions('yesno'),
           getListOptions('state'),
           getListOptions('Patient_Groupings'),
@@ -30,17 +57,15 @@ function DemographicsTab({ data, onDataUpdate }) {
           getListOptions('payment_type')
         ]);
 
-        setDropdownOptions({
+        setDropdownOptions(prev => ({
+          ...prev,
           sex: sexOptions.options || [],
-          gender_identity: genderOptions.options || [],
-          sexual_orientation: orientationOptions.options || [],
-          marital_status: maritalOptions.options || [],
           protect_indicator: protectOptions.options || [],
           state: stateOptions.options || [],
           patient_categories: categoriesOptions.options || [],
           care_team_status: careTeamStatusOptions.options || [],
           payment_type: paymentTypeOptions.options || []
-        });
+        }));
       } catch (err) {
         console.error('Failed to load dropdown options:', err);
       }
@@ -64,7 +89,7 @@ function DemographicsTab({ data, onDataUpdate }) {
       }
     };
 
-    loadDropdownOptions();
+    loadOtherOptions();
     loadUser();
     loadProviders();
   }, []);
@@ -103,11 +128,13 @@ function DemographicsTab({ data, onDataUpdate }) {
       mname: patient.mname || '',
       lname: patient.lname || '',
       preferred_name: patient.preferred_name || '',
+      pronouns: patient.pronouns || '',
       DOB: patient.DOB || '',
       sex: patient.sex || '',
       gender_identity: patient.gender_identity || '',
       sexual_orientation: patient.sexual_orientation || '',
       marital_status: patient.marital_status || '',
+      ethnicity: patient.ethnicity || '',
       previous_names: patient.previous_names || '',
       patient_categories: patient.patient_categories || '',
       ss: patient.ss || '',
@@ -370,6 +397,11 @@ function DemographicsTab({ data, onDataUpdate }) {
                     {renderField('Middle Name', formData.mname, 'mname')}
                     {renderField('Last Name *', formData.lname, 'lname')}
                     {renderField('Preferred Name', formData.preferred_name, 'preferred_name')}
+                    {renderField('Pronouns', formData.pronouns, 'pronouns', 'text',
+                      dropdownOptions.pronouns && dropdownOptions.pronouns.length > 0
+                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.pronouns]
+                        : null
+                    )}
                     {renderField('DOB', formData.DOB, 'DOB', 'date')}
                     {renderField('Sex *', formData.sex, 'sex', 'text',
                       dropdownOptions.sex && dropdownOptions.sex.length > 0
@@ -389,6 +421,11 @@ function DemographicsTab({ data, onDataUpdate }) {
                     {renderField('Marital Status', formData.marital_status, 'marital_status', 'text',
                       dropdownOptions.marital_status && dropdownOptions.marital_status.length > 0
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.marital_status]
+                        : null
+                    )}
+                    {renderField('Ethnicity', formData.ethnicity, 'ethnicity', 'text',
+                      dropdownOptions.ethnicity && dropdownOptions.ethnicity.length > 0
+                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.ethnicity]
                         : null
                     )}
                     <div className="form-field">
@@ -418,16 +455,38 @@ function DemographicsTab({ data, onDataUpdate }) {
                       <div className="form-field-value">{patient.fname} {patient.mname && patient.mname + ' '}{patient.lname}</div>
                     </div>
                     {renderField('Preferred Name', patient.preferred_name)}
+                    {renderField('Pronouns', patient.pronouns, null, 'text',
+                      dropdownOptions.pronouns && dropdownOptions.pronouns.length > 0
+                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.pronouns]
+                        : null
+                    )}
                     {renderField('DOB', patient.DOB)}
                     {renderField('Birth Sex', patient.birth_sex)}
-                    {renderField('Gender Identity', patient.gender_identity)}
+                    {renderField('Gender Identity', patient.gender_identity, null, 'text',
+                      dropdownOptions.gender_identity && dropdownOptions.gender_identity.length > 0
+                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.gender_identity]
+                        : null
+                    )}
                     {renderField('Sex', patient.sex)}
-                    {renderField('Sexual Orientation', patient.sexual_orientation)}
+                    {renderField('Sexual Orientation', patient.sexual_orientation, null, 'text',
+                      dropdownOptions.sexual_orientation && dropdownOptions.sexual_orientation.length > 0
+                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.sexual_orientation]
+                        : null
+                    )}
                     <div className="form-field">
                       <div className="form-field-label">S.S.</div>
                       <div className="form-field-value">{patient.ss ? '***-**-' + patient.ss.slice(-4) : ''}</div>
                     </div>
-                    {renderField('Marital Status', patient.marital_status)}
+                    {renderField('Marital Status', patient.marital_status, null, 'text',
+                      dropdownOptions.marital_status && dropdownOptions.marital_status.length > 0
+                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.marital_status]
+                        : null
+                    )}
+                    {renderField('Ethnicity', patient.ethnicity, null, 'text',
+                      dropdownOptions.ethnicity && dropdownOptions.ethnicity.length > 0
+                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.ethnicity]
+                        : null
+                    )}
                     {renderField('Previous Names', patient.previous_names)}
                     <div className="col-span-2">
                       {renderField('Client Categories', patient.patient_categories, null, 'text',

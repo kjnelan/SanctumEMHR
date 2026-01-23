@@ -56,12 +56,17 @@ try {
                     u.npi,
                     u.license_number,
                     u.license_state,
+                    u.title,
+                    u.is_supervisor,
                     CAST(u.is_provider AS CHAR) AS authorized,
                     CAST(u.is_active AS CHAR) AS active,
                     CAST(CASE WHEN u.user_type = 'admin' THEN 1 ELSE 0 END AS CHAR) AS calendar,
                     u.phone,
                     u.mobile AS phonecell,
-                    u.user_type
+                    u.user_type,
+                    u.failed_login_attempts,
+                    u.locked_until,
+                    CAST(CASE WHEN u.locked_until IS NOT NULL AND u.locked_until > NOW() THEN 1 ELSE 0 END AS CHAR) AS is_locked
                 FROM users u
                 WHERE 1=1";
 
@@ -176,9 +181,7 @@ try {
                 echo json_encode(['facilities' => $facilities]);
 
             } elseif ($action === 'user_supervisors') {
-                // Get supervisors assigned to a specific user
-                // For now, return empty array as we don't have a junction table yet
-                // This can be extended later when supervisor relationships are needed
+                // Get supervisors assigned to a specific user from user_supervisors table
                 $userId = $_GET['id'] ?? null;
 
                 if (!$userId) {
@@ -187,10 +190,51 @@ try {
                     exit;
                 }
 
-                // TODO: Implement user_supervisors junction table if needed
-                // For now, return empty to prevent errors
+                $sql = "SELECT supervisor_id, relationship_type, started_at, ended_at
+                        FROM user_supervisors
+                        WHERE user_id = ?
+                        AND (ended_at IS NULL OR ended_at > CURDATE())
+                        ORDER BY started_at DESC";
+
+                $supervisors = $db->queryAll($sql, [$userId]);
+                $supervisorIds = array_map(fn($s) => $s['supervisor_id'], $supervisors);
+
                 http_response_code(200);
-                echo json_encode(['supervisor_ids' => []]);
+                echo json_encode([
+                    'supervisor_ids' => $supervisorIds,
+                    'relationships' => $supervisors
+                ]);
+
+            } elseif ($action === 'unlock') {
+                // Unlock a locked user account
+                $userId = $_GET['id'] ?? null;
+
+                if (!$userId) {
+                    http_response_code(400);
+                    echo json_encode(['error' => 'User ID required']);
+                    exit;
+                }
+
+                // Check if requesting user is admin
+                $currentUser = $session->get('user');
+                if (!$currentUser || $currentUser['user_type'] !== 'admin') {
+                    http_response_code(403);
+                    echo json_encode(['error' => 'Only administrators can unlock accounts']);
+                    exit;
+                }
+
+                $unlockSql = "UPDATE users
+                              SET locked_until = NULL,
+                                  failed_login_attempts = 0
+                              WHERE id = ?";
+
+                $db->execute($unlockSql, [$userId]);
+
+                http_response_code(200);
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Account unlocked successfully'
+                ]);
             }
             break;
 
@@ -253,10 +297,32 @@ try {
                 exit;
             }
 
+            $newUserId = $result['user_id'];
+
+            // Handle supervisor relationships
+            if (!empty($input['supervisor_ids']) && is_array($input['supervisor_ids'])) {
+                $relationshipType = $input['relationship_type'] ?? 'direct';
+                $startedAt = date('Y-m-d');
+
+                foreach ($input['supervisor_ids'] as $supervisorId) {
+                    if (empty($supervisorId)) continue;
+
+                    $insertSql = "INSERT INTO user_supervisors
+                                  (user_id, supervisor_id, relationship_type, started_at)
+                                  VALUES (?, ?, ?, ?)";
+
+                    try {
+                        $db->execute($insertSql, [$newUserId, $supervisorId, $relationshipType, $startedAt]);
+                    } catch (\Exception $e) {
+                        error_log("Error creating supervisor relationship: " . $e->getMessage());
+                    }
+                }
+            }
+
             http_response_code(201);
             echo json_encode([
                 'success' => true,
-                'id' => $result['user_id'],
+                'id' => $newUserId,
                 'message' => 'User created successfully'
             ]);
             break;
@@ -337,6 +403,18 @@ try {
                 $params[] = $input['user_type'];
             }
 
+            // Handle password change if provided
+            if (isset($input['password']) && !empty($input['password'])) {
+                $auth = new CustomAuth($db);
+                $passwordResult = $auth->changePassword($userId, $input['password']);
+
+                if (!$passwordResult['success']) {
+                    http_response_code(400);
+                    echo json_encode(['error' => $passwordResult['message']]);
+                    exit;
+                }
+            }
+
             if (empty($updateFields)) {
                 http_response_code(400);
                 echo json_encode(['error' => 'No fields to update']);
@@ -346,6 +424,39 @@ try {
             $params[] = $userId;
             $sql = "UPDATE users SET " . implode(', ', $updateFields) . " WHERE id = ?";
             $db->execute($sql, $params);
+
+            // Handle supervisor relationships if provided
+            if (isset($input['supervisor_ids']) && is_array($input['supervisor_ids'])) {
+                // End all existing supervisor relationships
+                $endSql = "UPDATE user_supervisors SET ended_at = CURDATE() WHERE user_id = ? AND ended_at IS NULL";
+                $db->execute($endSql, [$userId]);
+
+                // Add new supervisor relationships
+                $relationshipType = $input['relationship_type'] ?? 'direct';
+                $startedAt = date('Y-m-d');
+
+                foreach ($input['supervisor_ids'] as $supervisorId) {
+                    if (empty($supervisorId)) continue;
+
+                    // Check if this relationship already exists and is active
+                    $checkSql = "SELECT id FROM user_supervisors
+                                 WHERE user_id = ? AND supervisor_id = ?
+                                 AND started_at = ?";
+                    $existing = $db->query($checkSql, [$userId, $supervisorId, $startedAt]);
+
+                    if (!$existing) {
+                        $insertSql = "INSERT INTO user_supervisors
+                                      (user_id, supervisor_id, relationship_type, started_at)
+                                      VALUES (?, ?, ?, ?)";
+
+                        try {
+                            $db->execute($insertSql, [$userId, $supervisorId, $relationshipType, $startedAt]);
+                        } catch (\Exception $e) {
+                            error_log("Error creating supervisor relationship: " . $e->getMessage());
+                        }
+                    }
+                }
+            }
 
             http_response_code(200);
             echo json_encode(['success' => true, 'message' => 'User updated successfully']);

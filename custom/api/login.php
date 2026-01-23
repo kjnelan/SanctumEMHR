@@ -60,14 +60,51 @@ try {
     // Start session
     $session->start();
 
+    // Check if account exists and is locked first
+    $sql = "SELECT id, username, locked_until, failed_login_attempts, is_active
+            FROM users
+            WHERE username = ?
+            LIMIT 1";
+    $userCheck = $db->query($sql, [$username]);
+
+    if ($userCheck) {
+        // Check if account is locked
+        if ($userCheck['locked_until'] && strtotime($userCheck['locked_until']) > time()) {
+            $lockUntil = date('g:i A', strtotime($userCheck['locked_until']));
+            error_log("Login attempt for locked account: $username (locked until {$userCheck['locked_until']})");
+            http_response_code(403);
+            echo json_encode([
+                'error' => 'Account locked',
+                'message' => "This account has been locked due to multiple failed login attempts. Please try again after $lockUntil or contact an administrator.",
+                'locked_until' => $userCheck['locked_until']
+            ]);
+            exit;
+        }
+
+        // Check if account is inactive
+        if (!$userCheck['is_active']) {
+            error_log("Login attempt for inactive account: $username");
+            http_response_code(403);
+            echo json_encode([
+                'error' => 'Account inactive',
+                'message' => 'This account has been deactivated. Please contact an administrator.'
+            ]);
+            exit;
+        }
+    }
+
     // Authenticate user
+    error_log("Login attempt for username: $username");
     $user = $auth->authenticate($username, $password);
 
     if (!$user) {
+        error_log("Login failed for username: $username");
         http_response_code(401);
         echo json_encode(['error' => 'Invalid username or password']);
         exit;
     }
+
+    error_log("Login successful for username: $username (user_id: {$user['id']})");
 
     // Login successful - set session
     $session->login($user);

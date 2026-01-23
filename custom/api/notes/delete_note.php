@@ -66,8 +66,8 @@ try {
 
     error_log("Delete note: User $userId attempting to delete note $noteId");
 
-    // Get note details
-    $noteSql = "SELECT id, created_by, status, is_locked, signed_at
+    // Get note details - Phase 4 schema (no is_locked column)
+    $noteSql = "SELECT id, created_by, status, signed_at
                 FROM clinical_notes
                 WHERE id = ?";
     $note = $db->query($noteSql, [$noteId]);
@@ -78,18 +78,18 @@ try {
         exit;
     }
 
-    // Check if note is signed or locked
-    if ($note['is_locked'] || $note['status'] === 'signed' || !empty($note['signed_at'])) {
-        error_log("Delete note: Note $noteId is signed/locked - cannot delete");
+    // Check if note is signed (Phase 4: only check status and signed_at)
+    if ($note['status'] === 'signed' || !empty($note['signed_at'])) {
+        error_log("Delete note: Note $noteId is signed - cannot delete");
         http_response_code(403);
-        echo json_encode(['error' => 'Cannot delete signed or locked notes']);
+        echo json_encode(['error' => 'Cannot delete signed notes']);
         exit;
     }
 
     // Check if user is the provider (or admin)
-    $userSql = "SELECT is_admin FROM users WHERE id = ?";
+    $userSql = "SELECT user_type FROM users WHERE id = ?";
     $user = $db->query($userSql, [$userId]);
-    $isAdmin = ($user && $user['is_admin'] == 1);
+    $isAdmin = ($user && $user['user_type'] === 'admin');
 
     if (!$isAdmin && $note['created_by'] != $userId) {
         error_log("Delete note: User $userId is not authorized to delete note $noteId");
@@ -97,10 +97,6 @@ try {
         echo json_encode(['error' => 'Not authorized to delete this note']);
         exit;
     }
-
-    // Delete related drafts first
-    $deleteDraftsSql = "DELETE FROM note_drafts WHERE note_id = ?";
-    $db->execute($deleteDraftsSql, [$noteId]);
 
     // Delete the note
     $deleteNoteSql = "DELETE FROM clinical_notes WHERE id = ?";

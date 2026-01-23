@@ -77,20 +77,20 @@ try {
 
     // Build query to fetch diagnoses
     // A diagnosis is "active as of" a date if:
-    // - It has a start date (start_date) <= the target date
-    // - It has NO end date (end_date IS NULL or end_date = '0000-00-00'), OR
-    // - It has an end date > the target date
+    // - It has a diagnosis date (diagnosis_date) <= the target date
+    // - It has NO resolution date (resolution_date IS NULL or resolution_date = '0000-00-00'), OR
+    // - It has a resolution date > the target date
 
     $sql = "SELECT
                 id,
-                diagnosis_code,
-                diagnosis_description,
-                start_date,
-                end_date,
+                code,
+                code_type,
+                description,
+                diagnosis_date,
+                resolution_date,
+                is_primary,
                 is_active,
-                occurrence,
-                classification,
-                outcome
+                diagnosed_by
             FROM diagnoses
             WHERE client_id = ?";
 
@@ -98,46 +98,45 @@ try {
 
     if (!$includeRetired) {
         // Only include diagnoses that were active as of the specified date
-        $sql .= " AND start_date <= ?
-                  AND (end_date IS NULL
-                       OR end_date = '0000-00-00'
-                       OR end_date = ''
-                       OR end_date > ?)
+        $sql .= " AND diagnosis_date <= ?
+                  AND (resolution_date IS NULL
+                       OR resolution_date = '0000-00-00'
+                       OR resolution_date = ''
+                       OR resolution_date > ?)
                   AND is_active = 1";
         $params[] = $activeAsOf;
         $params[] = $activeAsOf;
     }
 
-    $sql .= " ORDER BY start_date DESC, id DESC";
+    $sql .= " ORDER BY diagnosis_date DESC, id DESC";
 
     $rows = $db->queryAll($sql, $params);
 
     $diagnoses = [];
     foreach ($rows as $row) {
         // Format dates
-        if ($row['start_date'] && $row['start_date'] !== '0000-00-00') {
-            $row['start_date'] = $row['start_date'];
+        if ($row['diagnosis_date'] && $row['diagnosis_date'] !== '0000-00-00') {
+            $row['diagnosis_date'] = $row['diagnosis_date'];
         } else {
-            $row['start_date'] = null;
+            $row['diagnosis_date'] = null;
         }
 
-        if ($row['end_date'] && $row['end_date'] !== '0000-00-00' && $row['end_date'] !== '') {
-            $row['end_date'] = $row['end_date'];
+        if ($row['resolution_date'] && $row['resolution_date'] !== '0000-00-00' && $row['resolution_date'] !== '') {
+            $row['resolution_date'] = $row['resolution_date'];
         } else {
-            $row['end_date'] = null;
+            $row['resolution_date'] = null;
         }
 
-        // Map to old field names for frontend compatibility
+        // Map to frontend-compatible field names
         $diagnoses[] = [
             'id' => $row['id'],
-            'diagnosis' => $row['diagnosis_code'],
-            'title' => $row['diagnosis_description'],
-            'begdate' => $row['start_date'],
-            'enddate' => $row['end_date'],
+            'diagnosis' => $row['code'],
+            'code_type' => $row['code_type'],
+            'title' => $row['description'],
+            'begdate' => $row['diagnosis_date'],
+            'enddate' => $row['resolution_date'],
             'activity' => $row['is_active'],
-            'occurrence' => $row['occurrence'],
-            'classification' => $row['classification'],
-            'outcome' => $row['outcome']
+            'is_primary' => $row['is_primary']
         ];
     }
 

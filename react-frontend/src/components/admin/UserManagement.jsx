@@ -242,8 +242,37 @@ function UserManagement() {
 
   const handleSaveNew = async () => {
     // Validation
-    if (!formData.username || !formData.password || !formData.fname || !formData.lname) {
-      setFormError('Username, password, first name, and last name are required');
+    if (!formData.username || !formData.password || !formData.fname || !formData.lname || !formData.email) {
+      setFormError('Username, password, email, first name, and last name are required');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setFormError('Please enter a valid email address');
+      return;
+    }
+
+    // Validate password strength
+    if (formData.password.length < 8) {
+      setFormError('Password must be at least 8 characters long');
+      return;
+    }
+    if (!/[a-z]/.test(formData.password)) {
+      setFormError('Password must contain at least one lowercase letter');
+      return;
+    }
+    if (!/[A-Z]/.test(formData.password)) {
+      setFormError('Password must contain at least one uppercase letter');
+      return;
+    }
+    if (!/[0-9]/.test(formData.password)) {
+      setFormError('Password must contain at least one number');
+      return;
+    }
+    if (!/[^a-zA-Z0-9]/.test(formData.password)) {
+      setFormError('Password must contain at least one special character');
       return;
     }
 
@@ -284,6 +313,30 @@ function UserManagement() {
     if (!formData.fname || !formData.lname) {
       setFormError('First name and last name are required');
       return;
+    }
+
+    // If password is provided, validate it
+    if (formData.password && formData.password.trim() !== '') {
+      if (formData.password.length < 8) {
+        setFormError('Password must be at least 8 characters long');
+        return;
+      }
+      if (!/[a-z]/.test(formData.password)) {
+        setFormError('Password must contain at least one lowercase letter');
+        return;
+      }
+      if (!/[A-Z]/.test(formData.password)) {
+        setFormError('Password must contain at least one uppercase letter');
+        return;
+      }
+      if (!/[0-9]/.test(formData.password)) {
+        setFormError('Password must contain at least one number');
+        return;
+      }
+      if (!/[^a-zA-Z0-9]/.test(formData.password)) {
+        setFormError('Password must contain at least one special character');
+        return;
+      }
     }
 
     try {
@@ -334,6 +387,29 @@ function UserManagement() {
     } catch (err) {
       console.error('Error deactivating user:', err);
       alert('Failed to deactivate user: ' + err.message);
+    }
+  };
+
+  const handleUnlock = async (userId) => {
+    if (!confirm('Unlock this user account? This will reset failed login attempts and allow them to log in again.')) return;
+
+    try {
+      const response = await fetch(`/custom/api/users.php?action=unlock&id=${userId}`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || 'Failed to unlock account');
+      }
+
+      await fetchUsers();
+      alert('Account unlocked successfully');
+
+    } catch (err) {
+      console.error('Error unlocking account:', err);
+      alert('Failed to unlock account: ' + err.message);
     }
   };
 
@@ -497,9 +573,16 @@ function UserManagement() {
                     <p className="text-xs text-gray-600">{user.title}</p>
                   )}
                 </div>
-                <span className={user.active === '1' ? 'badge-solid-success' : 'badge-solid-danger'}>
-                  {user.active === '1' ? 'ACTIVE' : 'INACTIVE'}
-                </span>
+                <div className="flex flex-col gap-1 items-end">
+                  <span className={user.active === '1' ? 'badge-solid-success' : 'badge-solid-danger'}>
+                    {user.active === '1' ? 'ACTIVE' : 'INACTIVE'}
+                  </span>
+                  {user.is_locked === '1' && (
+                    <span className="badge-solid-danger text-xs">
+                      LOCKED
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Card Body with User Details */}
@@ -538,6 +621,14 @@ function UserManagement() {
                 >
                   Edit
                 </button>
+                {user.is_locked === '1' && (
+                  <button
+                    onClick={() => handleUnlock(user.id)}
+                    className="flex-1 px-3 py-1.5 text-sm font-medium text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded-lg transition-colors"
+                  >
+                    Unlock
+                  </button>
+                )}
                 {user.active === '1' && (
                   <button
                     onClick={() => handleDeactivate(user.id)}
@@ -737,7 +828,7 @@ function UserFormModal({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Email
+                    Email <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"

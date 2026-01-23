@@ -35,6 +35,7 @@ $libDir = is_dir($baseDir . '/Lib') ? $baseDir . '/Lib' : $baseDir . '/lib';
 require_once $libDir . '/Database/Database.php';
 require_once $libDir . '/Auth/CustomAuth.php';
 require_once $libDir . '/Session/SessionManager.php';
+require_once $libDir . '/Services/SettingsService.php';
 require_once $libDir . '/Services/UserService.php';
 
 // Helper function to get current logged-in user ID from session

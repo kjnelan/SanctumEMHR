@@ -39,11 +39,19 @@ function Login() {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Invalid credentials');
-      }
-
       const data = await response.json();
+
+      if (!response.ok) {
+        // Handle specific error cases
+        if (data.error === 'Account locked') {
+          setError(data.message || 'This account has been locked due to multiple failed login attempts. Please contact an administrator.');
+        } else if (data.error === 'Account inactive') {
+          setError(data.message || 'This account has been deactivated. Please contact an administrator.');
+        } else {
+          setError(data.error || 'Invalid username or password');
+        }
+        return;
+      }
 
       if (data.success) {
         // Session is now established via cookie
@@ -54,11 +62,11 @@ function Login() {
 
         navigate('/dashboard');
       } else {
-        throw new Error(data.error || 'Login failed');
+        setError(data.error || 'Login failed');
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('Invalid username or password');
+      setError('An error occurred during login. Please try again.');
     } finally {
       setLoading(false);
     }

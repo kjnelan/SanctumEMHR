@@ -60,41 +60,41 @@ try {
     $startDate = $_GET['start_date'] ?? null;
     $endDate = $_GET['end_date'] ?? null;
 
-    // Build SQL query with optional filters - mapped to Mindline schema
+    // Build SQL query - using Phase 4 schema
     $sql = "SELECT
         n.id,
-        n.id AS note_uuid,
-        n.client_id AS patient_id,
-        n.provider_id AS created_by,
-        n.encounter_id AS appointment_id,
-        NULL AS billing_id,
+        n.note_uuid,
+        n.patient_id,
+        n.created_by,
+        n.appointment_id,
+        n.billing_id,
         n.note_type,
-        n.note_type AS template_type,
-        e.encounter_date AS service_date,
-        NULL AS service_duration,
-        f.name AS service_location,
-        n.subjective AS behavior_problem,
-        n.treatment_interventions AS intervention,
-        n.objective AS response,
+        n.template_type,
+        n.service_date,
+        n.service_duration,
+        n.service_location,
+        n.behavior_problem,
+        n.intervention,
+        n.response,
         n.plan,
         n.risk_assessment,
-        NULL AS risk_present,
-        n.treatment_goals AS goals_addressed,
-        n.treatment_interventions AS interventions_selected,
-        NULL AS client_presentation,
-        n.billing_codes AS diagnosis_codes,
-        n.subjective AS presenting_concerns,
-        n.objective AS clinical_observations,
+        n.risk_present,
+        n.goals_addressed,
+        n.interventions_selected,
+        n.client_presentation,
+        n.diagnosis_codes,
+        n.presenting_concerns,
+        n.clinical_observations,
         n.mental_status_exam,
         n.status,
         NULL AS is_locked,
         n.signed_at,
         n.signed_by,
-        NULL AS supervisor_review_required,
+        n.supervisor_review_required,
         NULL AS supervisor_review_status,
-        NULL AS supervisor_signed_at,
-        NULL AS supervisor_signed_by,
-        NULL AS supervisor_comments,
+        n.supervisor_reviewed_at AS supervisor_signed_at,
+        n.supervisor_reviewed_by AS supervisor_signed_by,
+        n.supervisor_comments,
         NULL AS parent_note_id,
         NULL AS is_addendum,
         n.amendment_reason AS addendum_reason,
@@ -103,13 +103,12 @@ try {
         NULL AS locked_at,
         CONCAT(p.first_name, ' ', p.last_name) AS provider_name,
         CONCAT(sb.first_name, ' ', sb.last_name) AS signed_by_name,
-        NULL AS supervisor_name
+        CONCAT(sup.first_name, ' ', sup.last_name) AS supervisor_name
     FROM clinical_notes n
-    LEFT JOIN users p ON p.id = n.provider_id
+    LEFT JOIN users p ON p.id = n.created_by
     LEFT JOIN users sb ON sb.id = n.signed_by
-    LEFT JOIN encounters e ON e.id = n.encounter_id
-    LEFT JOIN facilities f ON f.id = e.facility_id
-    WHERE n.client_id = ?";
+    LEFT JOIN users sup ON sup.id = n.supervisor_reviewed_by
+    WHERE n.patient_id = ?";
 
     $params = [$patientId];
 
@@ -125,12 +124,12 @@ try {
     }
 
     if ($startDate) {
-        $sql .= " AND e.encounter_date >= ?";
+        $sql .= " AND n.service_date >= ?";
         $params[] = $startDate;
     }
 
     if ($endDate) {
-        $sql .= " AND e.encounter_date <= ?";
+        $sql .= " AND n.service_date <= ?";
         $params[] = $endDate;
     }
 

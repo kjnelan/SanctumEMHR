@@ -4,6 +4,7 @@ namespace Custom\Lib\Auth;
 
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
+use Custom\Lib\Services\SettingsService;
 
 /**
  * Custom Authentication Class for MINDLINE
@@ -17,16 +18,42 @@ class CustomAuth
 {
     private Database $db;
     private SessionManager $session;
+    private SettingsService $settings;
 
-    // Security settings
-    private const MAX_LOGIN_ATTEMPTS = 5;
-    private const LOCKOUT_DURATION_MINUTES = 30;
-    private const PASSWORD_MIN_LENGTH = 8;
+    // Default security settings (used if settings table doesn't exist yet)
+    private const DEFAULT_MAX_LOGIN_ATTEMPTS = 5;
+    private const DEFAULT_LOCKOUT_DURATION_MINUTES = 30;
+    private const DEFAULT_PASSWORD_MIN_LENGTH = 8;
 
     public function __construct(?Database $db = null, ?SessionManager $session = null)
     {
         $this->db = $db ?? Database::getInstance();
         $this->session = $session ?? SessionManager::getInstance();
+        $this->settings = new SettingsService($this->db);
+    }
+
+    /**
+     * Get max login attempts from settings
+     */
+    private function getMaxLoginAttempts(): int
+    {
+        return $this->settings->getInt('security.max_login_attempts', self::DEFAULT_MAX_LOGIN_ATTEMPTS);
+    }
+
+    /**
+     * Get lockout duration from settings
+     */
+    private function getLockoutDurationMinutes(): int
+    {
+        return $this->settings->getInt('security.lockout_duration_minutes', self::DEFAULT_LOCKOUT_DURATION_MINUTES);
+    }
+
+    /**
+     * Get password min length from settings
+     */
+    private function getPasswordMinLength(): int
+    {
+        return $this->settings->getInt('security.password_min_length', self::DEFAULT_PASSWORD_MIN_LENGTH);
     }
 
     /**
@@ -39,6 +66,7 @@ class CustomAuth
     public function authenticate(string $username, string $password)
     {
         if (empty($username) || empty($password)) {
+            error_log("Auth failed: empty username or password");
             return false;
         }
 
@@ -46,25 +74,39 @@ class CustomAuth
         $user = $this->getUserByUsername($username);
 
         if (!$user) {
+            error_log("Auth failed: user not found for username: $username");
             // Sleep to prevent timing attacks
             usleep(500000); // 0.5 seconds
             return false;
         }
 
+        error_log("Auth: Found user $username (ID: {$user['id']}, hash type: " . substr($user['password_hash'], 0, 10) . ")");
+
+        // Check and reset expired failed attempts
+        $this->checkAndResetExpiredAttempts($user);
+
+        // Reload user after potential reset
+        $user = $this->getUserById($user['id']);
+
         // Check if account is locked
         if ($this->isAccountLocked($user)) {
+            error_log("Auth failed: account locked for username: $username");
             $this->logFailedLogin($user['id'], $username, 'Account locked');
             return false;
         }
 
         // Verify password
-        if (!$this->verifyPassword($password, $user['password_hash'])) {
+        $passwordValid = $this->verifyPassword($password, $user['password_hash']);
+        error_log("Auth: Password verification for $username: " . ($passwordValid ? "SUCCESS" : "FAILED"));
+
+        if (!$passwordValid) {
             $this->handleFailedLogin($user['id'], $username);
             return false;
         }
 
         // Check if user is active
         if (!$user['is_active']) {
+            error_log("Auth failed: account inactive for username: $username");
             $this->logFailedLogin($user['id'], $username, 'Account inactive');
             return false;
         }
@@ -95,7 +137,7 @@ class CustomAuth
      */
     public function hashPassword(string $password): string
     {
-        return password_hash($password, PASSWORD_ARGON2ID);
+        return password_hash($password, PASSWORD_BCRYPT);
     }
 
     /**
@@ -106,7 +148,7 @@ class CustomAuth
      */
     public function needsRehash(string $hash): bool
     {
-        return password_needs_rehash($hash, PASSWORD_ARGON2ID);
+        return password_needs_rehash($hash, PASSWORD_BCRYPT);
     }
 
     /**
@@ -119,24 +161,33 @@ class CustomAuth
     {
         $errors = [];
 
-        if (strlen($password) < self::PASSWORD_MIN_LENGTH) {
-            $errors[] = "Password must be at least " . self::PASSWORD_MIN_LENGTH . " characters";
+        $minLength = $this->getPasswordMinLength();
+        if (strlen($password) < $minLength) {
+            $errors[] = "Password must be at least $minLength characters";
         }
 
-        if (!preg_match('/[a-z]/', $password)) {
-            $errors[] = "Password must contain at least one lowercase letter";
+        if ($this->settings->getBool('security.require_password_lowercase', true)) {
+            if (!preg_match('/[a-z]/', $password)) {
+                $errors[] = "Password must contain at least one lowercase letter";
+            }
         }
 
-        if (!preg_match('/[A-Z]/', $password)) {
-            $errors[] = "Password must contain at least one uppercase letter";
+        if ($this->settings->getBool('security.require_password_uppercase', true)) {
+            if (!preg_match('/[A-Z]/', $password)) {
+                $errors[] = "Password must contain at least one uppercase letter";
+            }
         }
 
-        if (!preg_match('/[0-9]/', $password)) {
-            $errors[] = "Password must contain at least one number";
+        if ($this->settings->getBool('security.require_password_number', true)) {
+            if (!preg_match('/[0-9]/', $password)) {
+                $errors[] = "Password must contain at least one number";
+            }
         }
 
-        if (!preg_match('/[^a-zA-Z0-9]/', $password)) {
-            $errors[] = "Password must contain at least one special character";
+        if ($this->settings->getBool('security.require_password_special', true)) {
+            if (!preg_match('/[^a-zA-Z0-9]/', $password)) {
+                $errors[] = "Password must contain at least one special character";
+            }
         }
 
         return [
@@ -195,6 +246,53 @@ class CustomAuth
     }
 
     /**
+     * Check and reset expired failed login attempts
+     *
+     * @param array $user User data
+     */
+    private function checkAndResetExpiredAttempts(array $user): void
+    {
+        // Skip if no failed attempts
+        if (!$user['failed_login_attempts'] || $user['failed_login_attempts'] == 0) {
+            return;
+        }
+
+        // Get expiration hours setting
+        $expirationHours = $this->settings->getInt('security.failed_attempts_expiration_hours', 24);
+
+        // If set to 0, failed attempts never expire
+        if ($expirationHours === 0) {
+            return;
+        }
+
+        // Check if last_failed_login_at column exists and has a value
+        if (!isset($user['last_failed_login_at']) || !$user['last_failed_login_at']) {
+            // Column doesn't exist or no timestamp - can't determine expiration
+            return;
+        }
+
+        $lastFailedAt = strtotime($user['last_failed_login_at']);
+        $expirationTime = strtotime("-$expirationHours hours");
+
+        // If last failed attempt is older than expiration time, reset
+        if ($lastFailedAt < $expirationTime) {
+            error_log("Resetting expired failed attempts for user ID {$user['id']} (last attempt: {$user['last_failed_login_at']})");
+            $this->resetFailedAttempts($user['id']);
+        }
+    }
+
+    /**
+     * Reset failed login attempts
+     *
+     * @param int $userId User ID
+     */
+    private function resetFailedAttempts(int $userId): void
+    {
+        $sql = "UPDATE users SET failed_login_attempts = 0, last_failed_login_at = NULL WHERE id = ?";
+        $this->db->execute($sql, [$userId]);
+    }
+
+    /**
      * Handle failed login attempt
      *
      * @param int $userId User ID
@@ -202,17 +300,22 @@ class CustomAuth
      */
     private function handleFailedLogin(int $userId, string $username): void
     {
-        // Increment failed attempts
-        $sql = "UPDATE users SET failed_login_attempts = failed_login_attempts + 1 WHERE id = ?";
+        // Increment failed attempts and set timestamp
+        $sql = "UPDATE users
+                SET failed_login_attempts = failed_login_attempts + 1,
+                    last_failed_login_at = NOW()
+                WHERE id = ?";
         $this->db->execute($sql, [$userId]);
 
         // Check if we need to lock the account
         $user = $this->getUserById($userId);
-        if ($user['failed_login_attempts'] >= self::MAX_LOGIN_ATTEMPTS) {
+        $maxAttempts = $this->getMaxLoginAttempts();
+        if ($user['failed_login_attempts'] >= $maxAttempts) {
             $this->lockAccount($userId);
-            $this->logFailedLogin($userId, $username, 'Account locked due to too many failed attempts');
+            $this->logFailedLogin($userId, $username, "Account locked due to $maxAttempts failed login attempts");
         } else {
-            $this->logFailedLogin($userId, $username, 'Invalid password');
+            $remainingAttempts = $maxAttempts - $user['failed_login_attempts'];
+            $this->logFailedLogin($userId, $username, "Invalid password ($remainingAttempts attempts remaining)");
         }
     }
 
@@ -224,10 +327,11 @@ class CustomAuth
      */
     private function handleSuccessfulLogin(int $userId, string $username): void
     {
-        // Reset failed attempts and update last login
+        // Reset failed attempts, clear lock, and update last login
         $sql = "UPDATE users
                 SET failed_login_attempts = 0,
                     locked_until = NULL,
+                    last_failed_login_at = NULL,
                     last_login_at = NOW()
                 WHERE id = ?";
         $this->db->execute($sql, [$userId]);
@@ -243,9 +347,12 @@ class CustomAuth
      */
     private function lockAccount(int $userId): void
     {
-        $lockUntil = date('Y-m-d H:i:s', strtotime('+' . self::LOCKOUT_DURATION_MINUTES . ' minutes'));
+        $lockoutMinutes = $this->getLockoutDurationMinutes();
+        $lockUntil = date('Y-m-d H:i:s', strtotime("+$lockoutMinutes minutes"));
         $sql = "UPDATE users SET locked_until = ? WHERE id = ?";
         $this->db->execute($sql, [$lockUntil, $userId]);
+
+        error_log("Account locked for user ID $userId until $lockUntil ($lockoutMinutes minutes)");
     }
 
     /**
@@ -255,7 +362,11 @@ class CustomAuth
      */
     private function unlockAccount(int $userId): void
     {
-        $sql = "UPDATE users SET locked_until = NULL, failed_login_attempts = 0 WHERE id = ?";
+        $sql = "UPDATE users
+                SET locked_until = NULL,
+                    failed_login_attempts = 0,
+                    last_failed_login_at = NULL
+                WHERE id = ?";
         $this->db->execute($sql, [$userId]);
     }
 
@@ -421,6 +532,14 @@ class CustomAuth
         }
         if (isset($userData['portal_user'])) {
             $userData['portal_user'] = (int) $userData['portal_user'];
+        }
+
+        // Convert empty strings to NULL for integer fields
+        $intFields = ['supervisor_id', 'facility_id', 'npi'];
+        foreach ($intFields as $field) {
+            if (isset($userData[$field]) && $userData[$field] === '') {
+                $userData[$field] = null;
+            }
         }
 
         // Insert user

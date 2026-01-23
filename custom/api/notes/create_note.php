@@ -78,20 +78,91 @@ try {
     $response = $input['response'] ?? null;
     $plan = $input['plan'] ?? null;
 
-    // Risk assessment
-    $riskPresent = isset($input['riskPresent']) ? boolval($input['riskPresent']) : false;
-    $riskAssessment = $input['riskAssessment'] ?? null;
+    // Risk assessment - convert to integer for MySQL
+    $riskPresent = 0;
+    if (isset($input['riskPresent']) && $input['riskPresent'] !== '' && $input['riskPresent'] !== null) {
+        $riskPresent = ($input['riskPresent'] === true || $input['riskPresent'] === 'true' || $input['riskPresent'] === 1 || $input['riskPresent'] === '1') ? 1 : 0;
+    }
+    // Handle risk_assessment JSON - must be valid JSON or NULL
+    $riskAssessment = null;
+    if (isset($input['riskAssessment']) && $input['riskAssessment'] !== '' && $input['riskAssessment'] !== null) {
+        if (is_array($input['riskAssessment']) || is_object($input['riskAssessment'])) {
+            $riskAssessment = json_encode($input['riskAssessment']);
+        } else if (is_string($input['riskAssessment'])) {
+            // Validate it's already valid JSON
+            $decoded = json_decode($input['riskAssessment']);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $riskAssessment = $input['riskAssessment'];
+            }
+        }
+    }
 
-    // JSON fields - diagnosis_codes already JSON stringified by frontend
-    $goalsAddressed = isset($input['goalsAddressed']) ? json_encode($input['goalsAddressed']) : null;
-    $interventionsSelected = isset($input['interventionsSelected']) ? json_encode($input['interventionsSelected']) : null;
-    $clientPresentation = isset($input['clientPresentation']) ? json_encode($input['clientPresentation']) : null;
-    $diagnosisCodes = $input['diagnosis_codes'] ?? null; // Already stringified by frontend, don't encode again
+    // JSON fields - must be valid JSON or NULL
+    $goalsAddressed = null;
+    if (isset($input['goalsAddressed']) && $input['goalsAddressed'] !== '' && $input['goalsAddressed'] !== null) {
+        if (is_array($input['goalsAddressed']) || is_object($input['goalsAddressed'])) {
+            $goalsAddressed = json_encode($input['goalsAddressed']);
+        } else if (is_string($input['goalsAddressed'])) {
+            $decoded = json_decode($input['goalsAddressed']);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $goalsAddressed = $input['goalsAddressed'];
+            }
+        }
+    }
 
-    // Free-form fields
-    $presentingConcerns = $input['presentingConcerns'] ?? null;
-    $clinicalObservations = $input['clinicalObservations'] ?? null;
-    $mentalStatusExam = $input['mentalStatusExam'] ?? null;
+    $interventionsSelected = null;
+    if (isset($input['interventionsSelected']) && $input['interventionsSelected'] !== '' && $input['interventionsSelected'] !== null) {
+        if (is_array($input['interventionsSelected']) || is_object($input['interventionsSelected'])) {
+            $interventionsSelected = json_encode($input['interventionsSelected']);
+        } else if (is_string($input['interventionsSelected'])) {
+            $decoded = json_decode($input['interventionsSelected']);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $interventionsSelected = $input['interventionsSelected'];
+            }
+        }
+    }
+
+    $clientPresentation = null;
+    if (isset($input['clientPresentation']) && $input['clientPresentation'] !== '' && $input['clientPresentation'] !== null) {
+        if (is_array($input['clientPresentation']) || is_object($input['clientPresentation'])) {
+            $clientPresentation = json_encode($input['clientPresentation']);
+        } else if (is_string($input['clientPresentation'])) {
+            $decoded = json_decode($input['clientPresentation']);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $clientPresentation = $input['clientPresentation'];
+            }
+        }
+    }
+
+    // diagnosis_codes - handle empty string and validate JSON
+    $diagnosisCodes = null;
+    if (isset($input['diagnosis_codes']) && $input['diagnosis_codes'] !== '' && $input['diagnosis_codes'] !== null) {
+        if (is_array($input['diagnosis_codes']) || is_object($input['diagnosis_codes'])) {
+            $diagnosisCodes = json_encode($input['diagnosis_codes']);
+        } else if (is_string($input['diagnosis_codes'])) {
+            $decoded = json_decode($input['diagnosis_codes']);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $diagnosisCodes = $input['diagnosis_codes'];
+            }
+        }
+    }
+
+    // Free-form fields - convert empty strings to NULL
+    $presentingConcerns = (isset($input['presentingConcerns']) && $input['presentingConcerns'] !== '') ? $input['presentingConcerns'] : null;
+    $clinicalObservations = (isset($input['clinicalObservations']) && $input['clinicalObservations'] !== '') ? $input['clinicalObservations'] : null;
+
+    // Mental status exam - JSON field
+    $mentalStatusExam = null;
+    if (isset($input['mentalStatusExam']) && $input['mentalStatusExam'] !== '' && $input['mentalStatusExam'] !== null) {
+        if (is_array($input['mentalStatusExam']) || is_object($input['mentalStatusExam'])) {
+            $mentalStatusExam = json_encode($input['mentalStatusExam']);
+        } else if (is_string($input['mentalStatusExam'])) {
+            $decoded = json_decode($input['mentalStatusExam']);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $mentalStatusExam = $input['mentalStatusExam'];
+            }
+        }
+    }
 
     // Diagnosis note fields (Phase 4B)
     $symptomsReported = $input['symptoms_reported'] ?? null;
@@ -103,8 +174,11 @@ try {
     $durationOfSymptoms = $input['duration_of_symptoms'] ?? null;
     $previousDiagnoses = $input['previous_diagnoses'] ?? null;
 
-    // Supervision
-    $supervisorReviewRequired = isset($input['supervisorReviewRequired']) ? boolval($input['supervisorReviewRequired']) : false;
+    // Supervision - convert to integer for MySQL
+    $supervisorReviewRequired = 0;
+    if (isset($input['supervisorReviewRequired']) && $input['supervisorReviewRequired'] !== '' && $input['supervisorReviewRequired'] !== null) {
+        $supervisorReviewRequired = ($input['supervisorReviewRequired'] === true || $input['supervisorReviewRequired'] === 'true' || $input['supervisorReviewRequired'] === 1 || $input['supervisorReviewRequired'] === '1') ? 1 : 0;
+    }
 
     // Generate UUID for API security
     $noteUuid = sprintf(
