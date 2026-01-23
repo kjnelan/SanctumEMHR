@@ -61,13 +61,17 @@ try {
     $session->start();
 
     // Authenticate user
+    error_log("Login attempt for username: $username");
     $user = $auth->authenticate($username, $password);
 
     if (!$user) {
+        error_log("Login failed for username: $username");
         http_response_code(401);
         echo json_encode(['error' => 'Invalid username or password']);
         exit;
     }
+
+    error_log("Login successful for username: $username (user_id: {$user['id']})");
 
     // Login successful - set session
     $session->login($user);

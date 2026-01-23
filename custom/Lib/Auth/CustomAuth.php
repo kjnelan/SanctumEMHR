@@ -39,6 +39,7 @@ class CustomAuth
     public function authenticate(string $username, string $password)
     {
         if (empty($username) || empty($password)) {
+            error_log("Auth failed: empty username or password");
             return false;
         }
 
@@ -46,25 +47,33 @@ class CustomAuth
         $user = $this->getUserByUsername($username);
 
         if (!$user) {
+            error_log("Auth failed: user not found for username: $username");
             // Sleep to prevent timing attacks
             usleep(500000); // 0.5 seconds
             return false;
         }
 
+        error_log("Auth: Found user $username (ID: {$user['id']}, hash type: " . substr($user['password_hash'], 0, 10) . ")");
+
         // Check if account is locked
         if ($this->isAccountLocked($user)) {
+            error_log("Auth failed: account locked for username: $username");
             $this->logFailedLogin($user['id'], $username, 'Account locked');
             return false;
         }
 
         // Verify password
-        if (!$this->verifyPassword($password, $user['password_hash'])) {
+        $passwordValid = $this->verifyPassword($password, $user['password_hash']);
+        error_log("Auth: Password verification for $username: " . ($passwordValid ? "SUCCESS" : "FAILED"));
+
+        if (!$passwordValid) {
             $this->handleFailedLogin($user['id'], $username);
             return false;
         }
 
         // Check if user is active
         if (!$user['is_active']) {
+            error_log("Auth failed: account inactive for username: $username");
             $this->logFailedLogin($user['id'], $username, 'Account inactive');
             return false;
         }
