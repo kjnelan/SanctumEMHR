@@ -432,6 +432,14 @@ class CustomAuth
             $userData['portal_user'] = (int) $userData['portal_user'];
         }
 
+        // Convert empty strings to NULL for integer fields
+        $intFields = ['supervisor_id', 'facility_id', 'npi'];
+        foreach ($intFields as $field) {
+            if (isset($userData[$field]) && $userData[$field] === '') {
+                $userData[$field] = null;
+            }
+        }
+
         // Insert user
         try {
             $userId = $this->db->insertArray('users', $userData);
