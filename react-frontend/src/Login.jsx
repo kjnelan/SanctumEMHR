@@ -91,7 +91,7 @@ function Login() {
 
             {/* Left side - Logo and branding */}
             <div className="p-12 flex flex-col items-center justify-center">
-              <div className="w-full max-w-md rounded-2xl p-6" style={{ backdropFilter: 'blur(40px)', background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%)', boxShadow: '0 4px 16px rgba(107, 154, 196, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)', border: '1px solid rgba(255, 255, 255, 0.3)' }}>
+              <div className="w-full max-w-lg rounded-2xl p-6" style={{ backdropFilter: 'blur(40px)', background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%)', boxShadow: '0 4px 16px rgba(107, 154, 196, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)', border: '1px solid rgba(255, 255, 255, 0.3)' }}>
                 {branding.logoUrl ? (
                   <img src={branding.logoUrl} alt={`${branding.companyName} logo`} className="w-full h-auto object-contain" />
                 ) : (
