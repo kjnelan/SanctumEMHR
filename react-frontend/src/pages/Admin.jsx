@@ -45,7 +45,7 @@ function Admin() {
     },
     {
       id: 'clinical',
-      label: 'Clinical Data',
+      label: 'Documentation',
       icon: '🏥',
       sections: [
         { id: 'reference-lists', label: 'Reference Lists', available: true },
@@ -54,7 +54,7 @@ function Admin() {
     },
     {
       id: 'scheduling',
-      label: 'Scheduling',
+      label: 'Calendar',
       icon: '📅',
       sections: [
         { id: 'calendar-settings', label: 'Calendar Settings', available: true },
