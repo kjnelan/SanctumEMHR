@@ -135,6 +135,7 @@ function DemographicsTab({ data, onDataUpdate }) {
       sexual_orientation: patient.sexual_orientation || '',
       marital_status: patient.marital_status || '',
       ethnicity: patient.ethnicity || '',
+      previous_names: patient.previous_names || '', // TODO: Add UI in Admin Notes section for editing
       patient_categories: patient.patient_categories || '',
       ss: patient.ss || '',
 
