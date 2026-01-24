@@ -18,6 +18,8 @@ import ReferenceLists from '../components/admin/ReferenceLists';
 import UserManagement from '../components/admin/UserManagement';
 import Facilities from '../components/admin/Facilities';
 import SecuritySettings from '../components/admin/SecuritySettings';
+import CPTCodes from '../components/admin/CPTCodes';
+import BillingModifiers from '../components/admin/BillingModifiers';
 import About from '../components/admin/About';
 
 function Admin() {
@@ -66,6 +68,8 @@ function Admin() {
       label: 'Billing',
       icon: '💰',
       sections: [
+        { id: 'cpt-codes', label: 'CPT Codes', available: true },
+        { id: 'billing-modifiers', label: 'Billing Modifiers', available: true },
         { id: 'billing-settings', label: 'Billing Settings', available: false },
         { id: 'payment-methods', label: 'Payment Methods', available: false },
       ]
@@ -186,12 +190,14 @@ function Admin() {
           {activeSection === 'calendar-categories' && <CalendarCategories />}
           {activeSection === 'reference-lists' && <ReferenceLists />}
           {activeSection === 'document-categories' && <DocumentCategories />}
+          {activeSection === 'cpt-codes' && <CPTCodes />}
+          {activeSection === 'billing-modifiers' && <BillingModifiers />}
           {activeSection === 'facilities' && <Facilities />}
           {activeSection === 'users' && <UserManagement />}
           {activeSection === 'about' && <About />}
 
           {/* Coming Soon for unavailable sections */}
-          {!['security', 'calendar-settings', 'calendar-categories', 'reference-lists', 'document-categories', 'facilities', 'users', 'about'].includes(activeSection) && (
+          {!['security', 'calendar-settings', 'calendar-categories', 'reference-lists', 'document-categories', 'cpt-codes', 'billing-modifiers', 'facilities', 'users', 'about'].includes(activeSection) && (
             <div className="glass-card p-12 text-center">
               <div className="text-gray-700 text-lg font-semibold">
                 {sectionGroups.flatMap(g => g.sections).find(s => s.id === activeSection)?.label}
