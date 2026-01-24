@@ -33,6 +33,7 @@ function DemographicsTab({ data, onDataUpdate }) {
         ...dropdownOptions,
         sexual_orientation: referenceLists['sexual-orientation'] || [],
         gender_identity: referenceLists['gender-identity'] || [],
+        marital_status: referenceLists['marital-status'] || [],
         status: referenceLists['client-status'] || [], // Use 'status' to match DB column
         pronouns: referenceLists['pronouns'] || [],
         ethnicity: referenceLists['ethnicity'] || [],
@@ -132,6 +133,7 @@ function DemographicsTab({ data, onDataUpdate }) {
       sex: patient.sex || '',
       gender_identity: patient.gender_identity || '',
       sexual_orientation: patient.sexual_orientation || '',
+      marital_status: patient.marital_status || '',
       ethnicity: patient.ethnicity || '',
       previous_names: patient.previous_names || '',
       patient_categories: patient.patient_categories || '',
@@ -417,6 +419,11 @@ function DemographicsTab({ data, onDataUpdate }) {
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.sexual_orientation]
                         : null
                     )}
+                    {renderField('Marital Status', formData.marital_status, 'marital_status', 'text',
+                      dropdownOptions.marital_status && dropdownOptions.marital_status.length > 0
+                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.marital_status]
+                        : null
+                    )}
                     {renderField('Ethnicity', formData.ethnicity, 'ethnicity', 'text',
                       dropdownOptions.ethnicity && dropdownOptions.ethnicity.length > 0
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.ethnicity]
@@ -471,6 +478,11 @@ function DemographicsTab({ data, onDataUpdate }) {
                       <div className="form-field-label">S.S.</div>
                       <div className="form-field-value">{patient.ss ? '***-**-' + patient.ss.slice(-4) : ''}</div>
                     </div>
+                    {renderField('Marital Status', patient.marital_status, null, 'text',
+                      dropdownOptions.marital_status && dropdownOptions.marital_status.length > 0
+                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.marital_status]
+                        : null
+                    )}
                     {renderField('Ethnicity', patient.ethnicity, null, 'text',
                       dropdownOptions.ethnicity && dropdownOptions.ethnicity.length > 0
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.ethnicity]

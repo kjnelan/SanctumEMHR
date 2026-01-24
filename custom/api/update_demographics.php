@@ -84,7 +84,7 @@ try {
         'sex' => 'sex',
         'gender_identity' => 'gender_identity',
         'sexual_orientation' => 'sexual_orientation',
-        // 'marital_status' => 'marital_status', // Column doesn't exist in clients table
+        'marital_status' => 'marital_status',
         'previous_names' => 'previous_names',
         'patient_categories' => 'patient_categories',
         'ss' => 'ssn_encrypted',
