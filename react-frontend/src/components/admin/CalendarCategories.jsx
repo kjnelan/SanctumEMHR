@@ -13,6 +13,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { PrimaryButton } from '../PrimaryButton';
+import { SecondaryButton } from '../SecondaryButton';
 
 function CalendarCategories() {
   const [categories, setCategories] = useState([]);
@@ -575,16 +576,15 @@ function CalendarCategories() {
             </div>
 
             <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
-              <button
+              <SecondaryButton
                 onClick={() => {
                   setShowAddModal(false);
                   setShowEditModal(false);
                 }}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 disabled={saving}
               >
                 Cancel
-              </button>
+              </SecondaryButton>
 
               <PrimaryButton
                 onClick={handleSave}
