@@ -33,8 +33,7 @@ function DemographicsTab({ data, onDataUpdate }) {
         ...dropdownOptions,
         sexual_orientation: referenceLists['sexual-orientation'] || [],
         gender_identity: referenceLists['gender-identity'] || [],
-        marital_status: referenceLists['marital-status'] || [],
-        client_status: referenceLists['client-status'] || [],
+        status: referenceLists['client-status'] || [], // Use 'status' to match DB column
         pronouns: referenceLists['pronouns'] || [],
         ethnicity: referenceLists['ethnicity'] || [],
         insurance_type: referenceLists['insurance-type'] || [],
@@ -133,7 +132,6 @@ function DemographicsTab({ data, onDataUpdate }) {
       sex: patient.sex || '',
       gender_identity: patient.gender_identity || '',
       sexual_orientation: patient.sexual_orientation || '',
-      marital_status: patient.marital_status || '',
       ethnicity: patient.ethnicity || '',
       previous_names: patient.previous_names || '',
       patient_categories: patient.patient_categories || '',
@@ -157,8 +155,8 @@ function DemographicsTab({ data, onDataUpdate }) {
       // Risk & Protection
       protect_indicator: patient.protection_indicator_code || '',
 
-      // Care Team Status
-      care_team_status: patient.care_team_status || '',
+      // Client Status
+      status: patient.status || 'active',
 
       // Payment Type
       payment_type: patient.payment_type || 'insurance',
@@ -419,11 +417,6 @@ function DemographicsTab({ data, onDataUpdate }) {
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.sexual_orientation]
                         : null
                     )}
-                    {renderField('Marital Status', formData.marital_status, 'marital_status', 'text',
-                      dropdownOptions.marital_status && dropdownOptions.marital_status.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.marital_status]
-                        : null
-                    )}
                     {renderField('Ethnicity', formData.ethnicity, 'ethnicity', 'text',
                       dropdownOptions.ethnicity && dropdownOptions.ethnicity.length > 0
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.ethnicity]
@@ -478,11 +471,6 @@ function DemographicsTab({ data, onDataUpdate }) {
                       <div className="form-field-label">S.S.</div>
                       <div className="form-field-value">{patient.ss ? '***-**-' + patient.ss.slice(-4) : ''}</div>
                     </div>
-                    {renderField('Marital Status', patient.marital_status, null, 'text',
-                      dropdownOptions.marital_status && dropdownOptions.marital_status.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.marital_status]
-                        : null
-                    )}
                     {renderField('Ethnicity', patient.ethnicity, null, 'text',
                       dropdownOptions.ethnicity && dropdownOptions.ethnicity.length > 0
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.ethnicity]
@@ -617,9 +605,9 @@ function DemographicsTab({ data, onDataUpdate }) {
             <div className="card-inner">
               {isEditing ? (
                 <div className="space-y-3">
-                  {renderField('Status', formData.care_team_status, 'care_team_status', 'text',
-                    dropdownOptions.care_team_status && dropdownOptions.care_team_status.length > 0
-                      ? [{ value: '', label: 'Select...' }, ...dropdownOptions.care_team_status]
+                  {renderField('Client Status', formData.status, 'status', 'text',
+                    dropdownOptions.status && dropdownOptions.status.length > 0
+                      ? [{ value: '', label: 'Select...' }, ...dropdownOptions.status]
                       : null
                   )}
                   {renderField('Payment Type', formData.payment_type, 'payment_type', 'text',
@@ -638,9 +626,9 @@ function DemographicsTab({ data, onDataUpdate }) {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {renderField('Status', patient.care_team_status, null, 'text',
-                    dropdownOptions.care_team_status && dropdownOptions.care_team_status.length > 0
-                      ? dropdownOptions.care_team_status
+                  {renderField('Client Status', patient.status, null, 'text',
+                    dropdownOptions.status && dropdownOptions.status.length > 0
+                      ? dropdownOptions.status
                       : null
                   )}
                   {renderField('Payment Type', patient.payment_type, null, 'text',

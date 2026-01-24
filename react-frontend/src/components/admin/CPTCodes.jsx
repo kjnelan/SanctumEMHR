@@ -200,13 +200,20 @@ function CPTCodes() {
     }
   };
 
-  // Filter codes
-  const filteredCodes = cptCodes.filter(code => {
-    const matchesSearch = code.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         code.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || code.category === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
+  // Filter and sort codes
+  const filteredCodes = cptCodes
+    .filter(code => {
+      const matchesSearch = code.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           code.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = categoryFilter === 'all' || code.category === categoryFilter;
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      // Sort by CPT code (numeric comparison for numeric codes)
+      const aCode = a.code.toString();
+      const bCode = b.code.toString();
+      return aCode.localeCompare(bCode, undefined, { numeric: true });
+    });
 
   const uniqueCategories = [...new Set(cptCodes.map(c => c.category))];
 

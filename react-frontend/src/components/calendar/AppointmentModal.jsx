@@ -77,6 +77,15 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
     }
   }, [isOpen]);
 
+  // Debug: Log categories and rooms when they change
+  useEffect(() => {
+    console.log('Categories state updated:', categories);
+  }, [categories]);
+
+  useEffect(() => {
+    console.log('Rooms state updated:', rooms);
+  }, [rooms]);
+
   // Update provider when prop changes
   useEffect(() => {
     if (providerId) {
@@ -136,16 +145,20 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
   const loadCategories = async () => {
     try {
       const response = await getAppointmentCategories();
-      console.log('Loaded categories:', response.categories);
+      console.log('getAppointmentCategories response:', response);
+      console.log('Categories array:', response.categories);
       setCategories(response.categories || []);
 
       // Auto-select first category if available AND we're not editing an existing appointment
       if (response.categories && response.categories.length > 0 && !appointment) {
+        console.log('Auto-selecting first category:', response.categories[0]);
         setCategoryId(response.categories[0].id);
         // Set default duration from category (already in minutes from API)
         if (response.categories[0].defaultDuration > 0) {
           setDuration(response.categories[0].defaultDuration);
         }
+      } else {
+        console.log('No categories to auto-select or editing existing appointment');
       }
     } catch (err) {
       console.error('Failed to load appointment categories:', err);
@@ -156,6 +169,8 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
   const loadRooms = async () => {
     try {
       const response = await getRooms();
+      console.log('getRooms response:', response);
+      console.log('Rooms array:', response.rooms);
       setRooms(response.rooms || []);
     } catch (err) {
       console.error('Failed to load rooms:', err);

@@ -84,7 +84,7 @@ try {
         'sex' => 'sex',
         'gender_identity' => 'gender_identity',
         'sexual_orientation' => 'sexual_orientation',
-        'marital_status' => 'marital_status',
+        // 'marital_status' => 'marital_status', // Column doesn't exist in clients table
         'previous_names' => 'previous_names',
         'patient_categories' => 'patient_categories',
         'ss' => 'ssn_encrypted',
@@ -107,8 +107,8 @@ try {
         // Risk & Protection
         'protect_indicator' => 'protect_indicator',
 
-        // Care Team Status
-        'care_team_status' => 'status',
+        // Client Status
+        'status' => 'status',
 
         // Payment Type
         'payment_type' => 'payment_type',
