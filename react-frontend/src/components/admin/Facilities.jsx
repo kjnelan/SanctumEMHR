@@ -535,7 +535,7 @@ function FacilityFormModal({
           <div className="mb-4">
             <FormLabel>
               Facility Name <span className="text-red-600">*</span>
-            </label>
+            </FormLabel>
             <input
               type="text"
               value={formData.name || ''}
