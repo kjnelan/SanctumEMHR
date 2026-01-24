@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { FormLabel } from '../FormLabel';
 
 function DocumentsTab({ data }) {
   const [documents, setDocuments] = useState([]);
@@ -400,9 +401,9 @@ function DocumentsTab({ data }) {
               <div className="space-y-4">
                 {/* File Selector */}
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
+                  <FormLabel>
                     Select File <span className="text-red-600">*</span>
-                  </label>
+                  </FormLabel>
                   <input
                     type="file"
                     onChange={handleFileSelect}
@@ -417,9 +418,9 @@ function DocumentsTab({ data }) {
 
                 {/* Document Name */}
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
+                  <FormLabel>
                     Document Name
-                  </label>
+                  </FormLabel>
                   <input
                     type="text"
                     value={uploadForm.name}
@@ -434,9 +435,9 @@ function DocumentsTab({ data }) {
 
                 {/* Category Selector */}
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
+                  <FormLabel>
                     Category (Optional)
-                  </label>
+                  </FormLabel>
                   <select
                     value={uploadForm.category_id}
                     onChange={(e) => handleUploadFormChange('category_id', e.target.value)}

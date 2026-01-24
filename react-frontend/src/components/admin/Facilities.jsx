@@ -12,6 +12,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { FormLabel } from '../FormLabel';
 
 function Facilities() {
   const [facilities, setFacilities] = useState([]);
@@ -532,7 +533,7 @@ function FacilityFormModal({
 
           {/* Facility Name */}
           <div className="mb-4">
-            <label className="block text-gray-700 font-semibold mb-2">
+            <FormLabel>
               Facility Name <span className="text-red-600">*</span>
             </label>
             <input
@@ -583,7 +584,7 @@ function FacilityFormModal({
             {addressTab === 'physical' ? (
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">Street Address Line 1</label>
+                  <FormLabel>Street Address Line 1</FormLabel>
                   <input
                     type="text"
                     value={formData.street || ''}
@@ -593,7 +594,7 @@ function FacilityFormModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">Street Address Line 2</label>
+                  <FormLabel>Street Address Line 2</FormLabel>
                   <input
                     type="text"
                     value={formData.address_line2 || ''}
@@ -604,7 +605,7 @@ function FacilityFormModal({
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-gray-700 font-semibold mb-2">City</label>
+                    <FormLabel>City</FormLabel>
                     <input
                       type="text"
                       value={formData.city || ''}
@@ -614,7 +615,7 @@ function FacilityFormModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-700 font-semibold mb-2">State</label>
+                    <FormLabel>State</FormLabel>
                     <input
                       type="text"
                       value={formData.state || ''}
@@ -625,7 +626,7 @@ function FacilityFormModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-700 font-semibold mb-2">Zip Code</label>
+                    <FormLabel>Zip Code</FormLabel>
                     <input
                       type="text"
                       value={formData.postal_code || ''}
@@ -661,7 +662,7 @@ function FacilityFormModal({
                   <span className="text-gray-700 font-semibold">Same as Physical Address</span>
                 </label>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">Mailing Address Line 1</label>
+                  <FormLabel>Mailing Address Line 1</FormLabel>
                   <input
                     type="text"
                     value={formData.mail_street || ''}
@@ -672,7 +673,7 @@ function FacilityFormModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">Mailing Address Line 2</label>
+                  <FormLabel>Mailing Address Line 2</FormLabel>
                   <input
                     type="text"
                     value={formData.mailing_address_line2 || ''}
@@ -684,7 +685,7 @@ function FacilityFormModal({
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-gray-700 font-semibold mb-2">City</label>
+                    <FormLabel>City</FormLabel>
                     <input
                       type="text"
                       value={formData.mail_city || ''}
@@ -695,7 +696,7 @@ function FacilityFormModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-700 font-semibold mb-2">State</label>
+                    <FormLabel>State</FormLabel>
                     <input
                       type="text"
                       value={formData.mail_state || ''}
@@ -707,7 +708,7 @@ function FacilityFormModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-700 font-semibold mb-2">Zip Code</label>
+                    <FormLabel>Zip Code</FormLabel>
                     <input
                       type="text"
                       value={formData.mail_zip || ''}
@@ -744,7 +745,7 @@ function FacilityFormModal({
                   <span className="text-gray-700 font-semibold">Same as Physical Address</span>
                 </label>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">Billing Address Line 1</label>
+                  <FormLabel>Billing Address Line 1</FormLabel>
                   <input
                     type="text"
                     value={formData.billing_street || ''}
@@ -755,7 +756,7 @@ function FacilityFormModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">Billing Address Line 2</label>
+                  <FormLabel>Billing Address Line 2</FormLabel>
                   <input
                     type="text"
                     value={formData.billing_address_line2 || ''}
@@ -767,7 +768,7 @@ function FacilityFormModal({
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-gray-700 font-semibold mb-2">City</label>
+                    <FormLabel>City</FormLabel>
                     <input
                       type="text"
                       value={formData.billing_city || ''}
@@ -778,7 +779,7 @@ function FacilityFormModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-700 font-semibold mb-2">State</label>
+                    <FormLabel>State</FormLabel>
                     <input
                       type="text"
                       value={formData.billing_state || ''}
@@ -790,7 +791,7 @@ function FacilityFormModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-700 font-semibold mb-2">Zip Code</label>
+                    <FormLabel>Zip Code</FormLabel>
                     <input
                       type="text"
                       value={formData.billing_zip || ''}
@@ -808,7 +809,7 @@ function FacilityFormModal({
           {/* Contact Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Phone</label>
+              <FormLabel>Phone</FormLabel>
               <input
                 type="tel"
                 value={formData.phone || ''}
@@ -818,7 +819,7 @@ function FacilityFormModal({
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Fax</label>
+              <FormLabel>Fax</FormLabel>
               <input
                 type="tel"
                 value={formData.fax || ''}
@@ -828,7 +829,7 @@ function FacilityFormModal({
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Website</label>
+              <FormLabel>Website</FormLabel>
               <input
                 type="url"
                 value={formData.website || ''}
@@ -838,7 +839,7 @@ function FacilityFormModal({
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Email</label>
+              <FormLabel>Email</FormLabel>
               <input
                 type="email"
                 value={formData.email || ''}
@@ -852,7 +853,7 @@ function FacilityFormModal({
           {/* Administrative Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Color</label>
+              <FormLabel>Color</FormLabel>
               <input
                 type="color"
                 value={formData.color || '#99FFFF'}
@@ -861,7 +862,7 @@ function FacilityFormModal({
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">POS Code</label>
+              <FormLabel>POS Code</FormLabel>
               <select
                 value={formData.pos_code || '11'}
                 onChange={(e) => onFormChange('pos_code', e.target.value)}
@@ -875,7 +876,7 @@ function FacilityFormModal({
               </select>
             </div>
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Facility NPI</label>
+              <FormLabel>Facility NPI</FormLabel>
               <input
                 type="text"
                 value={formData.facility_npi || ''}
@@ -885,7 +886,7 @@ function FacilityFormModal({
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Tax ID</label>
+              <FormLabel>Tax ID</FormLabel>
               <div className="flex gap-2 items-center">
                 <select
                   value={formData.tax_id_type || 'EIN'}
@@ -906,7 +907,7 @@ function FacilityFormModal({
               </div>
             </div>
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Facility Taxonomy</label>
+              <FormLabel>Facility Taxonomy</FormLabel>
               <input
                 type="text"
                 value={formData.facility_taxonomy || ''}
@@ -916,7 +917,7 @@ function FacilityFormModal({
               />
             </div>
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Attn</label>
+              <FormLabel>Attn</FormLabel>
               <input
                 type="text"
                 value={formData.attn || ''}
@@ -978,7 +979,7 @@ function FacilityFormModal({
 
           {/* Info Textarea */}
           <div className="mb-4">
-            <label className="block text-gray-700 font-semibold mb-2">Info</label>
+            <FormLabel>Info</FormLabel>
             <textarea
               value={formData.info || ''}
               onChange={(e) => onFormChange('info', e.target.value)}
