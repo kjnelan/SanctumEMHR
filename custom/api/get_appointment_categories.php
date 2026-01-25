@@ -63,6 +63,12 @@ try {
         $categoryType = null;
     }
 
+    // Get optional exclude parameter to filter out certain category types
+    // exclude can be: 'holiday' to exclude vacation/out of office categories
+    $excludeType = isset($_GET['exclude']) ? $_GET['exclude'] : null;
+
+    error_log("Get appointment categories (type: " . ($categoryType ?? 'all') . ", exclude: " . ($excludeType ?? 'none') . ")");
+
     // Fetch all active appointment categories with new billing fields
     $sql = "SELECT
         id,
@@ -84,6 +90,12 @@ try {
     if ($categoryType !== null && in_array($categoryType, ['client', 'clinic', 'holiday'])) {
         $sql .= " AND category_type = ?";
         $params[] = $categoryType;
+    }
+
+    // Exclude certain category types if specified
+    if ($excludeType !== null && in_array($excludeType, ['client', 'clinic', 'holiday'])) {
+        $sql .= " AND category_type != ?";
+        $params[] = $excludeType;
     }
 
     $sql .= " ORDER BY sort_order, name";

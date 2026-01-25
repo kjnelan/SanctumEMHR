@@ -541,10 +541,13 @@ export async function getAppointments(startDate, endDate, providerId = null) {
  *   2 = Group therapy
  *   3 = Clinic/Facility events
  */
-export async function getAppointmentCategories(type = 0) {
-  console.log('Fetching appointment categories (type:', type, ')');
-  const params = type !== null ? `?type=${type}` : '';
-  return apiRequest(`/custom/api/get_appointment_categories.php${params}`);
+export async function getAppointmentCategories(type = 0, exclude = null) {
+  console.log('Fetching appointment categories (type:', type, ', exclude:', exclude, ')');
+  let params = [];
+  if (type !== null) params.push(`type=${type}`);
+  if (exclude !== null) params.push(`exclude=${exclude}`);
+  const queryString = params.length > 0 ? `?${params.join('&')}` : '';
+  return apiRequest(`/custom/api/get_appointment_categories.php${queryString}`);
 }
 
 /**
