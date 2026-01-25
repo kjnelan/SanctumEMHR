@@ -346,15 +346,26 @@ function CPTCodes() {
 
       {/* Add/Edit Modal */}
       {(showAddModal || showEditModal) && createPortal(
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <h3 className="text-xl font-bold text-gray-900">
+        <div className="modal-backdrop">
+          <div className="modal-container modal-md">
+            <div className="modal-header">
+              <h2 className="text-2xl font-bold text-gray-800">
                 {formData.id ? 'Edit CPT Code' : 'Add CPT Code'}
-              </h3>
+              </h2>
+              <button
+                onClick={() => {
+                  setShowAddModal(false);
+                  setShowEditModal(false);
+                }}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="modal-body space-y-4">
               {formError && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
                   {formError}
@@ -469,25 +480,25 @@ function CPTCodes() {
                   <p className="text-xs text-gray-500 mt-1">Which primary CPT code is required for this add-on?</p>
                 </div>
               )}
-            </div>
 
-            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
-              <SecondaryButton
-                onClick={() => {
-                  setShowAddModal(false);
-                  setShowEditModal(false);
-                }}
-                disabled={saving}
-              >
-                Cancel
-              </SecondaryButton>
+              <div className="modal-footer">
+                <SecondaryButton
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setShowEditModal(false);
+                  }}
+                  disabled={saving}
+                >
+                  Cancel
+                </SecondaryButton>
 
-              <PrimaryButton
-                onClick={handleSave}
-              >
-                {saving ? 'Saving...' : 'Save CPT Code'}
-              </PrimaryButton>
-
+                <PrimaryButton
+                  onClick={handleSave}
+                  disabled={saving}
+                >
+                  {saving ? 'Saving...' : 'Save CPT Code'}
+                </PrimaryButton>
+              </div>
             </div>
           </div>
         </div>,
