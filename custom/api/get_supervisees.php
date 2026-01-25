@@ -63,21 +63,24 @@ try {
     // Initialize database
     $db = Database::getInstance();
 
-    // Fetch supervisees for this supervisor
+    // Fetch supervisees for this supervisor using the junction table
     $sql = "SELECT
-        id,
-        CONCAT(first_name, ' ', last_name) AS full_name,
-        first_name,
-        last_name,
-        username,
-        title
-    FROM users
-    WHERE supervisor_id = ? AND is_active = 1
-    ORDER BY last_name, first_name";
+        u.id,
+        CONCAT(u.first_name, ' ', u.last_name) AS full_name,
+        u.first_name,
+        u.last_name,
+        u.username,
+        u.title
+    FROM users u
+    JOIN user_supervisors us ON u.id = us.user_id
+    WHERE us.supervisor_id = ?
+      AND u.is_active = 1
+      AND (us.ended_at IS NULL OR us.ended_at > CURDATE())
+    ORDER BY u.last_name, u.first_name";
 
     $supervisees = $db->queryAll($sql, [$supervisorId]);
 
-    error_log("Get supervisees: Found " . count($supervisees) . " supervisees for supervisor ID $supervisorId");
+    error_log("Get supervisees: Found " . count($supervisees) . " active supervisees for supervisor ID $supervisorId (via user_supervisors table)");
 
     http_response_code(200);
     echo json_encode([
