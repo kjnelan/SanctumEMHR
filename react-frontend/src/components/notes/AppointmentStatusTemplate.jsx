@@ -41,7 +41,7 @@ function AppointmentStatusTemplate({ note, onChange, autoSave }) {
     <div className="space-y-6">
       {/* Status Type Selection */}
       <div className="card-main bg-gray-50">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        <h3 className="section-header-gray">
           <span className="mr-2">📅</span>
           Appointment Status
         </h3>
@@ -75,7 +75,7 @@ function AppointmentStatusTemplate({ note, onChange, autoSave }) {
 
       {/* Reason/Details */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        <h3 className="section-header-gray">
           <span className="mr-2">📝</span>
           Reason / Additional Details
         </h3>
@@ -90,7 +90,7 @@ function AppointmentStatusTemplate({ note, onChange, autoSave }) {
 
       {/* Billing Impact (Optional) */}
       <div className="card-main bg-yellow-50 border-2 border-yellow-300">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        <h3 className="section-header-gray">
           <span className="mr-2">💰</span>
           Billing Impact
         </h3>
@@ -100,9 +100,9 @@ function AppointmentStatusTemplate({ note, onChange, autoSave }) {
               type="checkbox"
               checked={note.chargeApplied || false}
               onChange={(e) => handleChange('chargeApplied', e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              className="checkbox"
             />
-            <span className="text-sm text-gray-700">Late cancellation/no-show charge applied</span>
+            <span className="checkbox-label">Late cancellation/no-show charge applied</span>
           </label>
 
           {note.chargeApplied && (
@@ -119,7 +119,7 @@ function AppointmentStatusTemplate({ note, onChange, autoSave }) {
 
       {/* Follow-up Action */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        <h3 className="section-header-gray">
           <span className="mr-2">📞</span>
           Follow-up Action
         </h3>

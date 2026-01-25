@@ -58,7 +58,7 @@ function AdministrativeTemplate({ note, onChange, autoSave }) {
                 type="checkbox"
                 className="w-4 h-4 text-gray-600 rounded"
               />
-              <span className="text-sm text-gray-700">{type}</span>
+              <span className="checkbox-label">{type}</span>
             </label>
           ))}
         </div>
@@ -147,14 +147,14 @@ function AdministrativeTemplate({ note, onChange, autoSave }) {
 
       {/* Time Documentation */}
       <div className="card-main bg-blue-50 border-2 border-blue-300">
-        <h3 className="text-lg font-semibold text-blue-700 mb-4">
+        <h3 className="section-header-blue">
           <span className="mr-2">⏱️</span>
           Time Documentation
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Duration (minutes)</span>
+              <span className="text-label block mb-2">Duration (minutes)</span>
               <input
                 type="number"
                 className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
@@ -165,7 +165,7 @@ function AdministrativeTemplate({ note, onChange, autoSave }) {
           </div>
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Billable?</span>
+              <span className="text-label block mb-2">Billable?</span>
               <select className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white shadow-sm">
                 <option>Yes</option>
                 <option>No</option>

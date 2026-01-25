@@ -14,6 +14,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { PrimaryButton } from '../PrimaryButton';
+import { FormLabel } from '../FormLabel';
+import { RequiredAsterisk } from '../RequiredAsterisk';
+import { ErrorInline } from '../ErrorInline';
+import { DangerButton } from '../DangerButton';
 
 function DocumentCategories() {
   const [categories, setCategories] = useState([]);
@@ -275,7 +279,7 @@ function DocumentCategories() {
   if (error) {
     return (
       <div className="glass-card p-8">
-        <div className="text-center text-red-600">Error: {error}</div>
+        <ErrorInline>Error: {error}</ErrorInline>
         <div className="text-center mt-4">
 		<PrimaryButton onClick={fetchCategories}>
 			Retry
@@ -292,12 +296,9 @@ function DocumentCategories() {
           <h2 className="text-2xl font-semibold text-gray-800">Document Categories</h2>
           <p className="text-gray-600 mt-1">Manage categories for organizing client documents</p>
         </div>
-        <button
-          onClick={handleAdd}
-          className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-        >
+        <PrimaryButton onClick={handleAdd}>
           + Add Category
-        </button>
+        </PrimaryButton>
       </div>
 
       {categories.length === 0 ? (
@@ -332,12 +333,7 @@ function DocumentCategories() {
                 >
                   Edit
                 </button>
-                <button
-                  onClick={() => handleDeleteClick(category)}
-                  className="px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  Delete
-                </button>
+                <DangerButton onClick={() => handleDeleteClick(category)} > Delete </DangerButton>
               </div>
             </div>
           ))}
@@ -371,9 +367,9 @@ function DocumentCategories() {
               )}
 
               <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Category Name <span className="text-red-500">*</span>
-                </label>
+                <FormLabel>
+                  Category Name <RequiredAsterisk />
+                </FormLabel>
                 <input
                   type="text"
                   value={formData.name}
@@ -385,9 +381,9 @@ function DocumentCategories() {
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Parent Category (Optional)
-                </label>
+                </FormLabel>
                 <select
                   value={formData.parent_id || ''}
                   onChange={(e) => {
@@ -460,9 +456,9 @@ function DocumentCategories() {
               )}
 
               <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Category Name <span className="text-red-500">*</span>
-                </label>
+                <FormLabel>
+                  Category Name <RequiredAsterisk />
+                </FormLabel>
                 <input
                   type="text"
                   value={formData.name}
@@ -473,9 +469,9 @@ function DocumentCategories() {
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Parent Category (Optional)
-                </label>
+                </FormLabel>
                 <select
                   value={formData.parent_id || ''}
                   onChange={(e) => {

@@ -41,7 +41,7 @@ function ClientCommunicationTemplate({ note, onChange, autoSave }) {
     <div className="space-y-6">
       {/* Contact Method */}
       <div className="card-main bg-blue-50">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        <h3 className="section-header-gray">
           <span className="mr-2">📞</span>
           Contact Method
         </h3>
@@ -74,14 +74,14 @@ function ClientCommunicationTemplate({ note, onChange, autoSave }) {
 
       {/* Contact Date/Time */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        <h3 className="section-header-gray">
           <span className="mr-2">🕐</span>
           Date & Time of Contact
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Date</span>
+              <span className="text-label block mb-2">Date</span>
               <input
                 type="date"
                 value={note.contactDate || ''}
@@ -92,7 +92,7 @@ function ClientCommunicationTemplate({ note, onChange, autoSave }) {
           </div>
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Time</span>
+              <span className="text-label block mb-2">Time</span>
               <input
                 type="time"
                 value={note.contactTime || ''}
@@ -106,7 +106,7 @@ function ClientCommunicationTemplate({ note, onChange, autoSave }) {
 
       {/* Reason for Contact */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        <h3 className="section-header-gray">
           <span className="mr-2">❓</span>
           Reason for Contact
         </h3>
@@ -121,7 +121,7 @@ function ClientCommunicationTemplate({ note, onChange, autoSave }) {
 
       {/* Summary of Communication */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        <h3 className="section-header-gray">
           <span className="mr-2">💬</span>
           Summary of Communication
         </h3>
@@ -136,7 +136,7 @@ function ClientCommunicationTemplate({ note, onChange, autoSave }) {
 
       {/* Action Taken / Response */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        <h3 className="section-header-gray">
           <span className="mr-2">✅</span>
           Action Taken / Response Provided
         </h3>

@@ -41,7 +41,7 @@ function DischargeTemplate({ note, onChange, autoSave }) {
     <div className="space-y-6">
       {/* Reason for Discharge */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-emerald-700 mb-4">
+        <h3 className="section-header-emerald">
           <span className="mr-2">✅</span>
           Reason for Discharge
         </h3>
@@ -57,7 +57,7 @@ function DischargeTemplate({ note, onChange, autoSave }) {
                   onChange={(e) => setField('dischargeReason', e.target.value)}
                   className="w-4 h-4 text-emerald-600"
                 />
-                <span className="text-sm text-gray-700">{reason}</span>
+                <span className="checkbox-label">{reason}</span>
               </label>
             ))}
           </div>
@@ -73,14 +73,14 @@ function DischargeTemplate({ note, onChange, autoSave }) {
 
       {/* Treatment Summary */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-emerald-700 mb-4">
+        <h3 className="section-header-emerald">
           <span className="mr-2">📋</span>
           Treatment Summary
         </h3>
         <div className="space-y-4">
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Dates of Treatment</span>
+              <span className="text-label block mb-2">Dates of Treatment</span>
               <input
                 type="text"
                 value={getField('treatmentDates')}
@@ -92,7 +92,7 @@ function DischargeTemplate({ note, onChange, autoSave }) {
           </div>
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Presenting Problem (at intake)</span>
+              <span className="text-label block mb-2">Presenting Problem (at intake)</span>
               <textarea
                 value={note.behaviorProblem || ''}
                 onChange={(e) => handleChange('behaviorProblem', e.target.value)}
@@ -104,7 +104,7 @@ function DischargeTemplate({ note, onChange, autoSave }) {
           </div>
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Diagnosis/Diagnoses</span>
+              <span className="text-label block mb-2">Diagnosis/Diagnoses</span>
               <textarea
                 value={getField('diagnoses')}
                 onChange={(e) => setField('diagnoses', e.target.value)}
@@ -119,7 +119,7 @@ function DischargeTemplate({ note, onChange, autoSave }) {
 
       {/* Interventions Used */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-emerald-700 mb-4">
+        <h3 className="section-header-emerald">
           <span className="mr-2">🛠️</span>
           Interventions & Treatment Modalities
         </h3>
@@ -134,7 +134,7 @@ function DischargeTemplate({ note, onChange, autoSave }) {
 
       {/* Progress & Outcomes */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-emerald-700 mb-4">
+        <h3 className="section-header-emerald">
           <span className="mr-2">📈</span>
           Progress & Treatment Outcomes
         </h3>
@@ -149,7 +149,7 @@ function DischargeTemplate({ note, onChange, autoSave }) {
 
       {/* Current Status at Discharge */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-emerald-700 mb-4">
+        <h3 className="section-header-emerald">
           <span className="mr-2">🎯</span>
           Current Status at Discharge
         </h3>
@@ -164,7 +164,7 @@ function DischargeTemplate({ note, onChange, autoSave }) {
 
       {/* Recommendations & Follow-Up */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-emerald-700 mb-4">
+        <h3 className="section-header-emerald">
           <span className="mr-2">💡</span>
           Recommendations & Follow-Up Plan
         </h3>
@@ -179,7 +179,7 @@ function DischargeTemplate({ note, onChange, autoSave }) {
 
       {/* Prognosis */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-emerald-700 mb-4">
+        <h3 className="section-header-emerald">
           <span className="mr-2">🔮</span>
           Prognosis
         </h3>
@@ -195,7 +195,7 @@ function DischargeTemplate({ note, onChange, autoSave }) {
                   onChange={(e) => setField('prognosis', e.target.value)}
                   className="w-4 h-4 text-emerald-600"
                 />
-                <span className="text-sm text-gray-700">{prog}</span>
+                <span className="checkbox-label">{prog}</span>
               </label>
             ))}
           </div>

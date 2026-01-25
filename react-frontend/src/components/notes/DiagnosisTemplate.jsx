@@ -26,6 +26,7 @@
 
 import React from 'react';
 import ICD10Picker from './ICD10Picker';
+import { FormLabel } from '../FormLabel';
 
 function DiagnosisTemplate({ note, onChange, disabled = false }) {
   const handleFieldChange = (field, value) => {
@@ -93,12 +94,12 @@ function DiagnosisTemplate({ note, onChange, disabled = false }) {
         <div className="card-inner space-y-6">
           {/* Symptoms Reported */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <FormLabel>
               Symptoms Reported by Client
               <span className="ml-2 text-gray-500 font-normal">
                 (What the client describes)
               </span>
-            </label>
+            </FormLabel>
             <textarea
               value={note.symptoms_reported || ''}
               onChange={(e) => handleFieldChange('symptoms_reported', e.target.value)}
@@ -111,12 +112,12 @@ function DiagnosisTemplate({ note, onChange, disabled = false }) {
 
           {/* Symptoms Observed */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <FormLabel>
               Symptoms Observed by Clinician
               <span className="ml-2 text-gray-500 font-normal">
                 (What you directly observe)
               </span>
-            </label>
+            </FormLabel>
             <textarea
               value={note.symptoms_observed || ''}
               onChange={(e) => handleFieldChange('symptoms_observed', e.target.value)}
@@ -129,9 +130,9 @@ function DiagnosisTemplate({ note, onChange, disabled = false }) {
 
           {/* Duration */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <FormLabel>
               Duration of Symptoms
-            </label>
+            </FormLabel>
             <textarea
               value={note.duration_of_symptoms || ''}
               onChange={(e) => handleFieldChange('duration_of_symptoms', e.target.value)}
@@ -152,12 +153,12 @@ function DiagnosisTemplate({ note, onChange, disabled = false }) {
         <div className="card-inner space-y-6">
           {/* Clinical Justification */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <FormLabel>
               Clinical Justification
               <span className="ml-2 text-gray-500 font-normal">
                 (Why this diagnosis?)
               </span>
-            </label>
+            </FormLabel>
             <textarea
               value={note.clinical_justification || ''}
               onChange={(e) => handleFieldChange('clinical_justification', e.target.value)}
@@ -170,12 +171,12 @@ function DiagnosisTemplate({ note, onChange, disabled = false }) {
 
           {/* Differential Diagnosis */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <FormLabel>
               Differential Diagnosis
               <span className="ml-2 text-gray-500 font-normal">
                 (What else was considered and ruled out?)
               </span>
-            </label>
+            </FormLabel>
             <textarea
               value={note.differential_diagnosis || ''}
               onChange={(e) => handleFieldChange('differential_diagnosis', e.target.value)}
@@ -188,12 +189,12 @@ function DiagnosisTemplate({ note, onChange, disabled = false }) {
 
           {/* Severity/Specifiers */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <FormLabel>
               Severity & Specifiers
               <span className="ml-2 text-gray-500 font-normal">
                 (Additional clinical details)
               </span>
-            </label>
+            </FormLabel>
             <textarea
               value={note.severity_specifiers || ''}
               onChange={(e) => handleFieldChange('severity_specifiers', e.target.value)}
@@ -212,12 +213,12 @@ function DiagnosisTemplate({ note, onChange, disabled = false }) {
           Functional Impact
         </h3>
         <div className="card-inner">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <FormLabel>
             Functional Impairment
             <span className="ml-2 text-gray-500 font-normal">
               (How symptoms affect daily life and functioning)
             </span>
-          </label>
+          </FormLabel>
           <textarea
             value={note.functional_impairment || ''}
             onChange={(e) => handleFieldChange('functional_impairment', e.target.value)}
@@ -235,12 +236,12 @@ function DiagnosisTemplate({ note, onChange, disabled = false }) {
           Diagnosis History
         </h3>
         <div className="card-inner">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <FormLabel>
             Previous Diagnoses
             <span className="ml-2 text-gray-500 font-normal">
               (Prior diagnostic history and changes)
             </span>
-          </label>
+          </FormLabel>
           <textarea
             value={note.previous_diagnoses || ''}
             onChange={(e) => handleFieldChange('previous_diagnoses', e.target.value)}

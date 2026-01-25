@@ -16,6 +16,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getInterventions } from '../../utils/api';
+import { ErrorInline } from '../ErrorInline';
 
 /**
  * Props:
@@ -73,7 +74,7 @@ function InterventionPicker({ selectedInterventions = [], onChange, riskPresent 
   }
 
   if (error) {
-    return <div className="text-red-600">Error loading interventions: {error}</div>;
+    return <ErrorInline>Error loading interventions: {error}</ErrorInline>;
   }
 
   if (!interventions) {
@@ -112,7 +113,7 @@ function InterventionPicker({ selectedInterventions = [], onChange, riskPresent 
       {/* Search Results */}
       {searchTerm && filteredInterventions && (
         <div>
-          <h4 className="text-sm font-semibold text-gray-700 mb-3">
+          <h4 className="text-label mb-3">
             Search Results ({filteredInterventions.length})
           </h4>
           {filteredInterventions.length > 0 ? (
@@ -126,7 +127,7 @@ function InterventionPicker({ selectedInterventions = [], onChange, riskPresent 
                     type="checkbox"
                     checked={selectedInterventions.includes(intervention.intervention_name)}
                     onChange={() => handleToggle(intervention.intervention_name)}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    className="checkbox"
                   />
                   <span className="text-sm text-gray-800">{intervention.intervention_name}</span>
                 </label>
@@ -144,7 +145,7 @@ function InterventionPicker({ selectedInterventions = [], onChange, riskPresent 
           {/* Favorites Section */}
           {showFavorites && favorites && favorites.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <h4 className="text-label mb-3 flex items-center gap-2">
             <span>⭐</span>
             <span>Your Favorites</span>
           </h4>
@@ -158,7 +159,7 @@ function InterventionPicker({ selectedInterventions = [], onChange, riskPresent 
                   type="checkbox"
                   checked={selectedInterventions.includes(intervention.intervention_name)}
                   onChange={() => handleToggle(intervention.intervention_name)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  className="checkbox"
                 />
                 <span className="text-sm text-gray-800">{intervention.intervention_name}</span>
               </label>
@@ -169,7 +170,7 @@ function InterventionPicker({ selectedInterventions = [], onChange, riskPresent 
 
       {/* Tier 1: Core Interventions (Always Visible) */}
       <div>
-        <h4 className="text-sm font-semibold text-gray-700 mb-3">Core Interventions</h4>
+        <h4 className="text-label mb-3">Core Interventions</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {grouped.tier1.map((intervention) => (
             <label
@@ -180,7 +181,7 @@ function InterventionPicker({ selectedInterventions = [], onChange, riskPresent 
                 type="checkbox"
                 checked={selectedInterventions.includes(intervention.intervention_name)}
                 onChange={() => handleToggle(intervention.intervention_name)}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                className="checkbox"
               />
               <span className="text-sm text-gray-800">{intervention.intervention_name}</span>
             </label>
@@ -191,7 +192,7 @@ function InterventionPicker({ selectedInterventions = [], onChange, riskPresent 
       {/* Tier 2: Modality-Specific (Collapsible) */}
       {Object.keys(grouped.tier2).length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-gray-700 mb-3">Modality-Specific Interventions</h4>
+          <h4 className="text-label mb-3">Modality-Specific Interventions</h4>
           <div className="space-y-2">
             {Object.entries(grouped.tier2).map(([modality, modalityInterventions]) => (
               <div key={modality} className="card-inner">
@@ -225,7 +226,7 @@ function InterventionPicker({ selectedInterventions = [], onChange, riskPresent 
                           type="checkbox"
                           checked={selectedInterventions.includes(intervention.intervention_name)}
                           onChange={() => handleToggle(intervention.intervention_name)}
-                          className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                          className="checkbox"
                         />
                         <span className="text-sm text-gray-800">{intervention.intervention_name}</span>
                       </label>
@@ -267,7 +268,7 @@ function InterventionPicker({ selectedInterventions = [], onChange, riskPresent 
       {/* Tier 4: Administrative */}
       {grouped.tier4.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-gray-700 mb-3">Administrative/Clinical Process</h4>
+          <h4 className="text-label mb-3">Administrative/Clinical Process</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {grouped.tier4.map((intervention) => (
               <label
@@ -278,7 +279,7 @@ function InterventionPicker({ selectedInterventions = [], onChange, riskPresent 
                   type="checkbox"
                   checked={selectedInterventions.includes(intervention.intervention_name)}
                   onChange={() => handleToggle(intervention.intervention_name)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  className="checkbox"
                 />
                 <span className="text-sm text-gray-800">{intervention.intervention_name}</span>
               </label>

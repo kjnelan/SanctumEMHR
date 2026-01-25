@@ -41,7 +41,7 @@ function TreatmentPlanTemplate({ note, onChange, autoSave }) {
     <div className="space-y-6">
       {/* Treatment Goals */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-blue-700 mb-4">
+        <h3 className="section-header-blue">
           <span className="mr-2">🎯</span>
           Treatment Goals
         </h3>
@@ -59,7 +59,7 @@ function TreatmentPlanTemplate({ note, onChange, autoSave }) {
 
       {/* Target Behaviors & Objectives */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-blue-700 mb-4">
+        <h3 className="section-header-blue">
           <span className="mr-2">📍</span>
           Target Behaviors & Objectives
         </h3>
@@ -77,7 +77,7 @@ function TreatmentPlanTemplate({ note, onChange, autoSave }) {
 
       {/* Interventions & Modalities */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-blue-700 mb-4">
+        <h3 className="section-header-blue">
           <span className="mr-2">🛠️</span>
           Interventions & Treatment Modalities
         </h3>
@@ -95,14 +95,14 @@ function TreatmentPlanTemplate({ note, onChange, autoSave }) {
 
       {/* Treatment Frequency & Duration */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-blue-700 mb-4">
+        <h3 className="section-header-blue">
           <span className="mr-2">📅</span>
           Treatment Frequency & Expected Duration
         </h3>
         <div className="space-y-4">
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Session Frequency</span>
+              <span className="text-label block mb-2">Session Frequency</span>
               <textarea
                 value={getField('frequency')}
                 onChange={(e) => setField('frequency', e.target.value)}
@@ -114,7 +114,7 @@ function TreatmentPlanTemplate({ note, onChange, autoSave }) {
           </div>
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Expected Duration of Treatment</span>
+              <span className="text-label block mb-2">Expected Duration of Treatment</span>
               <textarea
                 value={getField('duration')}
                 onChange={(e) => setField('duration', e.target.value)}
@@ -129,7 +129,7 @@ function TreatmentPlanTemplate({ note, onChange, autoSave }) {
 
       {/* Barriers to Treatment */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-blue-700 mb-4">
+        <h3 className="section-header-blue">
           <span className="mr-2">⚠️</span>
           Potential Barriers & Mitigation Strategies
         </h3>
@@ -147,7 +147,7 @@ function TreatmentPlanTemplate({ note, onChange, autoSave }) {
 
       {/* Discharge Criteria */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-blue-700 mb-4">
+        <h3 className="section-header-blue">
           <span className="mr-2">✅</span>
           Discharge Criteria & Success Indicators
         </h3>
@@ -165,7 +165,7 @@ function TreatmentPlanTemplate({ note, onChange, autoSave }) {
 
       {/* Client Agreement */}
       <div className="card-main bg-blue-50 border-2 border-blue-300">
-        <h3 className="text-lg font-semibold text-blue-700 mb-4">
+        <h3 className="section-header-blue">
           <span className="mr-2">🤝</span>
           Client Agreement & Collaboration
         </h3>

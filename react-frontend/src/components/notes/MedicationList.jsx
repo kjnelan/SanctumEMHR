@@ -12,6 +12,7 @@
  */
 
 import React, { useState } from 'react';
+import { RequiredAsterisk } from '../RequiredAsterisk';
 
 /**
  * Props:
@@ -129,7 +130,7 @@ function MedicationList({ medications = [], onChange }) {
             <div>
               <label className="block">
                 <span className="text-sm font-semibold text-gray-700 mb-1 block">
-                  Medication Name <span className="text-red-500">*</span>
+                  Medication Name <RequiredAsterisk />
                 </span>
                 <input
                   type="text"

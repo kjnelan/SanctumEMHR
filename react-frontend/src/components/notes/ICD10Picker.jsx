@@ -20,6 +20,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { searchCodes } from '../../utils/api';
+import { FormLabel } from '../FormLabel';
+import { ErrorMessage } from '../ErrorMessage';
 
 const SEVERITY_OPTIONS = [
   'Mild',
@@ -249,12 +251,12 @@ function ICD10Picker({
     <div className="space-y-4">
       {/* Search Input */}
       <div className="relative">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <FormLabel>
           Search ICD-10 Codes
           <span className="ml-2 text-xs text-gray-500">
             ({billableCount}/{maxBillable} billable selected)
           </span>
-        </label>
+        </FormLabel>
 
         <div className="relative">
           <input
@@ -280,9 +282,9 @@ function ICD10Picker({
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3 text-red-800 text-sm">
+        <ErrorMessage>
           {error}
-        </div>
+        </ErrorMessage>
       )}
 
       {/* Selected Codes */}
@@ -315,7 +317,7 @@ function ICD10Picker({
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-700">{dx.description}</p>
+                  <p className="checkbox-label">{dx.description}</p>
 
                   {/* Controls */}
                   <div className="mt-3 flex flex-wrap gap-3">
@@ -326,9 +328,9 @@ function ICD10Picker({
                           checked={dx.billable}
                           onChange={(e) => updateCode(dx.code, 'billable', e.target.checked)}
                           disabled={disabled || (!dx.billable && billableCount >= maxBillable)}
-                          className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                          className="checkbox"
                         />
-                        <span className="text-sm text-gray-700">Billable</span>
+                        <span className="checkbox-label">Billable</span>
                       </label>
                     )}
 
@@ -342,7 +344,7 @@ function ICD10Picker({
                           disabled={disabled}
                           className="w-4 h-4 text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="text-sm text-gray-700">Primary</span>
+                        <span className="checkbox-label">Primary</span>
                       </label>
                     )}
 

@@ -162,7 +162,7 @@ function BIRPTemplate({ note, onChange, patientId, autoSave }) {
 
         {/* Intervention Picker */}
         <div className="border-t border-gray-200 pt-4">
-          <div className="text-sm font-semibold text-gray-700 mb-3">Select Interventions Used</div>
+          <div className="text-label mb-3">Select Interventions Used</div>
           <InterventionPicker
             selectedInterventions={note.interventionsSelected || []}
             onChange={(interventions) => handleChange('interventionsSelected', interventions)}
@@ -213,7 +213,7 @@ function BIRPTemplate({ note, onChange, patientId, autoSave }) {
         {/* Goals Addressed */}
         {!loadingGoals && goals.length > 0 && (
           <div className="border-t border-gray-200 pt-4">
-            <div className="text-sm font-semibold text-gray-700 mb-3">
+            <div className="text-label mb-3">
               Treatment Goals Addressed This Session
             </div>
             <div className="space-y-2">

@@ -14,6 +14,10 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { PrimaryButton } from '../PrimaryButton';
 import { SecondaryButton } from '../SecondaryButton';
+import { FormLabel } from '../FormLabel';
+import { RequiredAsterisk } from '../RequiredAsterisk';
+import { ErrorMessage } from '../ErrorMessage';
+import { DangerButton } from '../DangerButton';
 
 function BillingModifiers() {
   const [modifiers, setModifiers] = useState([]);
@@ -216,9 +220,9 @@ function BillingModifiers() {
       </div>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <ErrorMessage>
           {error}
-        </div>
+        </ErrorMessage>
       )}
 
       {/* Filters */}
@@ -301,12 +305,11 @@ function BillingModifiers() {
                     >
                       Edit
                     </button>
-                    <button
+                    <DangerButton
                       onClick={() => handleDelete(modifier.id)}
-                      className="text-red-600 hover:text-red-800"
                     >
                       Delete
-                    </button>
+                    </DangerButton>
                   </td>
                 </tr>
               ))
@@ -338,16 +341,16 @@ function BillingModifiers() {
 
             <div className="modal-body space-y-4">
               {formError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                <ErrorMessage>
                   {formError}
-                </div>
+                </ErrorMessage>
               )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Modifier Code <span className="text-red-500">*</span>
-                  </label>
+                  <FormLabel>
+                    Modifier Code <RequiredAsterisk />
+                  </FormLabel>
                   <input
                     type="text"
                     value={formData.code}
@@ -359,9 +362,7 @@ function BillingModifiers() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Type
-                  </label>
+                  <FormLabel>Type</FormLabel>
                   <select
                     value={formData.modifier_type}
                     onChange={(e) => setFormData({ ...formData, modifier_type: e.target.value })}
@@ -375,9 +376,9 @@ function BillingModifiers() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <FormLabel>
                   Description <span className="text-red-500">*</span>
-                </label>
+                </FormLabel>
                 <input
                   type="text"
                   value={formData.description}
@@ -393,9 +394,9 @@ function BillingModifiers() {
                     type="checkbox"
                     checked={formData.is_active === 1}
                     onChange={(e) => setFormData({ ...formData, is_active: e.target.checked ? 1 : 0 })}
-                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="mr-2 checkbox"
                   />
-                  <span className="text-sm text-gray-700">Active</span>
+                  <span className="checkbox-label">Active</span>
                 </label>
               </div>
 

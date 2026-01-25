@@ -1,1 +1,1 @@
-cd /var/www/html/sacwan.org/sacwanmed.sacwan.org && rm -rf app/* && git pull origin claude/setup-sanctum-emhr-sk1gj && cd react-frontend && npm run deploy
+cd /var/www/html/sacwan.org/sacwanmed.sacwan.org && rm -rf app/* && git pull origin claude/review-code-changes-Ns0a7 && cd react-frontend && npm run deploy

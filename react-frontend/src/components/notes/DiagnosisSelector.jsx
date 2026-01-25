@@ -13,6 +13,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getPatientDiagnoses } from '../../utils/api';
+import { ErrorInline } from '../ErrorInline';
 
 /**
  * Props:
@@ -123,9 +124,9 @@ function DiagnosisSelector({ patientId, serviceDate, selectedDiagnoses = [], onC
 
   if (error) {
     return (
-      <div className="text-sm text-red-600">
+      <ErrorInline>
         Error loading diagnoses: {error}
-      </div>
+      </ErrorInline>
     );
   }
 

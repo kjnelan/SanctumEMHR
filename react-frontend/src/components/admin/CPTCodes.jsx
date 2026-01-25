@@ -14,6 +14,10 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { PrimaryButton } from '../PrimaryButton';
 import { SecondaryButton } from '../SecondaryButton';
+import { FormLabel } from '../FormLabel';
+import { RequiredAsterisk } from '../RequiredAsterisk';
+import { ErrorMessage } from '../ErrorMessage';
+import { DangerButton } from '../DangerButton';
 
 function CPTCodes() {
   const [cptCodes, setCptCodes] = useState([]);
@@ -245,9 +249,9 @@ function CPTCodes() {
       </div>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <ErrorMessage>
           {error}
-        </div>
+        </ErrorMessage>
       )}
 
       {/* Filters */}
@@ -330,12 +334,11 @@ function CPTCodes() {
                     >
                       Edit
                     </button>
-                    <button
+                    <DangerButton
                       onClick={() => handleDelete(code.id)}
-                      className="text-red-600 hover:text-red-800"
                     >
                       Delete
-                    </button>
+                    </DangerButton>
                   </td>
                 </tr>
               ))
@@ -367,16 +370,16 @@ function CPTCodes() {
 
             <div className="modal-body space-y-4">
               {formError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                <ErrorMessage>
                   {formError}
-                </div>
+                </ErrorMessage>
               )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    CPT Code <span className="text-red-500">*</span>
-                  </label>
+                  <FormLabel>
+                    CPT Code <RequiredAsterisk />
+                  </FormLabel>
                   <input
                     type="text"
                     value={formData.code}
@@ -387,9 +390,7 @@ function CPTCodes() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category
-                  </label>
+                  <FormLabel>Category</FormLabel>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -403,9 +404,9 @@ function CPTCodes() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description <span className="text-red-500">*</span>
-                </label>
+                <FormLabel>
+                  Description <RequiredAsterisk />
+                </FormLabel>
                 <input
                   type="text"
                   value={formData.description}
@@ -417,9 +418,7 @@ function CPTCodes() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Standard Duration (minutes)
-                  </label>
+                  <FormLabel>Standard Duration (minutes)</FormLabel>
                   <input
                     type="number"
                     value={formData.standard_duration_minutes}
@@ -429,9 +428,7 @@ function CPTCodes() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Standard Fee ($)
-                  </label>
+                  <FormLabel>Standard Fee ($)</FormLabel>
                   <input
                     type="number"
                     step="0.01"
@@ -449,9 +446,9 @@ function CPTCodes() {
                     type="checkbox"
                     checked={formData.is_addon === 1}
                     onChange={(e) => setFormData({ ...formData, is_addon: e.target.checked ? 1 : 0 })}
-                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="mr-2 checkbox"
                   />
-                  <span className="text-sm text-gray-700">Add-on Code</span>
+                  <span className="checkbox-label">Add-on Code</span>
                 </label>
 
                 <label className="flex items-center">
@@ -459,17 +456,15 @@ function CPTCodes() {
                     type="checkbox"
                     checked={formData.is_active === 1}
                     onChange={(e) => setFormData({ ...formData, is_active: e.target.checked ? 1 : 0 })}
-                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="mr-2 checkbox"
                   />
-                  <span className="text-sm text-gray-700">Active</span>
+                  <span className="checkbox-label">Active</span>
                 </label>
               </div>
 
               {formData.is_addon === 1 && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Requires Primary Code
-                  </label>
+                  <FormLabel>Requires Primary Code</FormLabel>
                   <input
                     type="text"
                     value={formData.requires_primary_code}

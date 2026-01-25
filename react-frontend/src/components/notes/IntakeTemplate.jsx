@@ -49,7 +49,7 @@ function IntakeTemplate({ note, onChange, autoSave }) {
     <div className="space-y-6">
       {/* Presenting Problem / Chief Complaint */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-indigo-700 mb-4">
+        <h3 className="section-header-indigo">
           <span className="mr-2">📋</span>
           Presenting Problem / Chief Complaint
         </h3>
@@ -64,14 +64,14 @@ function IntakeTemplate({ note, onChange, autoSave }) {
 
       {/* History of Present Illness */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-indigo-700 mb-4">
+        <h3 className="section-header-indigo">
           <span className="mr-2">📖</span>
           History of Present Illness
         </h3>
         <div className="space-y-4">
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Duration & Onset</span>
+              <span className="text-label block mb-2">Duration & Onset</span>
               <textarea
                 value={getField('duration')}
                 onChange={(e) => setField('duration', e.target.value)}
@@ -83,7 +83,7 @@ function IntakeTemplate({ note, onChange, autoSave }) {
           </div>
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Frequency & Severity</span>
+              <span className="text-label block mb-2">Frequency & Severity</span>
               <textarea
                 value={getField('frequency')}
                 onChange={(e) => setField('frequency', e.target.value)}
@@ -98,14 +98,14 @@ function IntakeTemplate({ note, onChange, autoSave }) {
 
       {/* Previous Treatment History */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-indigo-700 mb-4">
+        <h3 className="section-header-indigo">
           <span className="mr-2">🏥</span>
           Previous Mental Health Treatment
         </h3>
         <div className="space-y-4">
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Prior Therapy/Counseling</span>
+              <span className="text-label block mb-2">Prior Therapy/Counseling</span>
               <textarea
                 value={getField('priorTherapy')}
                 onChange={(e) => setField('priorTherapy', e.target.value)}
@@ -117,7 +117,7 @@ function IntakeTemplate({ note, onChange, autoSave }) {
           </div>
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Psychiatric Hospitalizations</span>
+              <span className="text-label block mb-2">Psychiatric Hospitalizations</span>
               <textarea
                 value={getField('hospitalizations')}
                 onChange={(e) => setField('hospitalizations', e.target.value)}
@@ -132,7 +132,7 @@ function IntakeTemplate({ note, onChange, autoSave }) {
 
       {/* Family History */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-indigo-700 mb-4">
+        <h3 className="section-header-indigo">
           <span className="mr-2">👨‍👩‍👧‍👦</span>
           Family History
         </h3>
@@ -147,14 +147,14 @@ function IntakeTemplate({ note, onChange, autoSave }) {
 
       {/* Substance Use */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-indigo-700 mb-4">
+        <h3 className="section-header-indigo">
           <span className="mr-2">🍺</span>
           Substance Use
         </h3>
         <div className="space-y-4">
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Alcohol Use</span>
+              <span className="text-label block mb-2">Alcohol Use</span>
               <textarea
                 value={getField('alcoholUse')}
                 onChange={(e) => setField('alcoholUse', e.target.value)}
@@ -166,7 +166,7 @@ function IntakeTemplate({ note, onChange, autoSave }) {
           </div>
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Drug Use (Recreational/Prescription)</span>
+              <span className="text-label block mb-2">Drug Use (Recreational/Prescription)</span>
               <textarea
                 value={getField('drugUse')}
                 onChange={(e) => setField('drugUse', e.target.value)}
@@ -181,7 +181,7 @@ function IntakeTemplate({ note, onChange, autoSave }) {
 
       {/* Medical History */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-indigo-700 mb-4">
+        <h3 className="section-header-indigo">
           <span className="mr-2">⚕️</span>
           Medical History
         </h3>
@@ -196,7 +196,7 @@ function IntakeTemplate({ note, onChange, autoSave }) {
 
       {/* Current Medications */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-indigo-700 mb-4">
+        <h3 className="section-header-indigo">
           <span className="mr-2">💊</span>
           Current Medications
         </h3>
@@ -212,14 +212,14 @@ function IntakeTemplate({ note, onChange, autoSave }) {
 
       {/* Social & Developmental History */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-indigo-700 mb-4">
+        <h3 className="section-header-indigo">
           <span className="mr-2">🌱</span>
           Social & Developmental History
         </h3>
         <div className="space-y-4">
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Childhood/Development</span>
+              <span className="text-label block mb-2">Childhood/Development</span>
               <textarea
                 value={getField('childhood')}
                 onChange={(e) => setField('childhood', e.target.value)}
@@ -231,7 +231,7 @@ function IntakeTemplate({ note, onChange, autoSave }) {
           </div>
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Education & Employment</span>
+              <span className="text-label block mb-2">Education & Employment</span>
               <textarea
                 value={getField('education')}
                 onChange={(e) => setField('education', e.target.value)}
@@ -243,7 +243,7 @@ function IntakeTemplate({ note, onChange, autoSave }) {
           </div>
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Relationships & Support System</span>
+              <span className="text-label block mb-2">Relationships & Support System</span>
               <textarea
                 value={getField('relationships')}
                 onChange={(e) => setField('relationships', e.target.value)}
@@ -258,14 +258,14 @@ function IntakeTemplate({ note, onChange, autoSave }) {
 
       {/* Current Functioning */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-indigo-700 mb-4">
+        <h3 className="section-header-indigo">
           <span className="mr-2">⚡</span>
           Current Functioning
         </h3>
         <div className="space-y-4">
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Sleep</span>
+              <span className="text-label block mb-2">Sleep</span>
               <input
                 type="text"
                 value={getField('sleep')}
@@ -277,7 +277,7 @@ function IntakeTemplate({ note, onChange, autoSave }) {
           </div>
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Appetite/Eating</span>
+              <span className="text-label block mb-2">Appetite/Eating</span>
               <input
                 type="text"
                 value={getField('appetite')}
@@ -289,7 +289,7 @@ function IntakeTemplate({ note, onChange, autoSave }) {
           </div>
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Energy Level</span>
+              <span className="text-label block mb-2">Energy Level</span>
               <input
                 type="text"
                 value={getField('energy')}
@@ -304,7 +304,7 @@ function IntakeTemplate({ note, onChange, autoSave }) {
 
       {/* Treatment Goals */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-indigo-700 mb-4">
+        <h3 className="section-header-indigo">
           <span className="mr-2">🎯</span>
           Treatment Goals
         </h3>
@@ -319,7 +319,7 @@ function IntakeTemplate({ note, onChange, autoSave }) {
 
       {/* Clinical Impressions */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-indigo-700 mb-4">
+        <h3 className="section-header-indigo">
           <span className="mr-2">💡</span>
           Clinical Impressions & Diagnostic Considerations
         </h3>

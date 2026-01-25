@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { getBilling } from '../../utils/api';
 import EncounterDetailModal from './EncounterDetailModal';
+import { ErrorInline } from '../ErrorInline';
 
 function BillingTab({ data }) {
   const [billingData, setBillingData] = useState(null);
@@ -70,9 +71,9 @@ function BillingTab({ data }) {
 
   if (error) {
     return (
-      <div className="text-red-600 text-center py-8">
+      <ErrorInline>
         Error: {error}
-      </div>
+      </ErrorInline>
     );
   }
 

@@ -14,6 +14,9 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { createAppointment, updateAppointment, deleteAppointment } from '../../utils/api';
 import { useAuth } from '../../hooks/useAuth';
+import { FormLabel } from '../FormLabel';
+import { RequiredAsterisk } from '../RequiredAsterisk';
+import { ErrorMessage } from '../ErrorMessage';
 
 function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, categories, block }) {
   const { user } = useAuth();
@@ -372,12 +375,12 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
           )}
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg text-red-700 flex items-start gap-3">
+            <ErrorMessage className="flex items-start gap-3">
               <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
               <span>{error}</span>
-            </div>
+            </ErrorMessage>
           )}
 
           {success && (
@@ -447,9 +450,9 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Block Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Reason <span className="text-red-500">*</span>
-              </label>
+              <FormLabel>
+                Reason <RequiredAsterisk />
+              </FormLabel>
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
@@ -467,9 +470,9 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
 
             {/* Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date <span className="text-red-500">*</span>
-              </label>
+              <FormLabel>
+                Date <RequiredAsterisk />
+              </FormLabel>
               <input
                 type="date"
                 value={eventDate}
@@ -482,9 +485,9 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
             {/* Start and End Time */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Start Time <span className="text-red-500">*</span>
-                </label>
+                <FormLabel>
+                  Start Time <RequiredAsterisk />
+                </FormLabel>
                 <input
                   type="time"
                   value={startTime}
@@ -495,9 +498,9 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <FormLabel>
                   End Time
-                </label>
+                </FormLabel>
                 <input
                   type="time"
                   value={endTime}
@@ -509,9 +512,9 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
 
             {/* Duration */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Duration (minutes) <span className="text-red-500">*</span>
-              </label>
+              <FormLabel>
+                Duration (minutes) <RequiredAsterisk />
+              </FormLabel>
               <div className="flex flex-wrap gap-2 mb-3 items-center">
                 {durationPresets.map((preset) => (
                   <button
@@ -558,9 +561,9 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
                 <div className="space-y-4 pl-6 border-l-2 border-purple-200">
                   {/* Day Selection */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Repeat on <span className="text-red-500">*</span>
-                    </label>
+                    <FormLabel>
+                      Repeat on <RequiredAsterisk />
+                    </FormLabel>
                     <div className="flex flex-wrap gap-2">
                       {[
                         { key: 'sun', label: 'Sun' },
@@ -589,9 +592,9 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
 
                   {/* Interval Selection */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Frequency <span className="text-red-500">*</span>
-                    </label>
+                    <FormLabel>
+                      Frequency <RequiredAsterisk />
+                    </FormLabel>
                     <select
                       value={recurInterval}
                       onChange={(e) => setRecurInterval(e.target.value)}
@@ -606,9 +609,9 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
 
                   {/* End Condition */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Ends <span className="text-red-500">*</span>
-                    </label>
+                    <FormLabel>
+                      Ends <RequiredAsterisk />
+                    </FormLabel>
                     <div className="space-y-3">
                       <label className="flex items-center gap-2">
                         <input
@@ -617,7 +620,7 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
                           onChange={() => setRecurEndType('count')}
                           className="text-purple-600 focus:ring-purple-500"
                         />
-                        <span className="text-sm text-gray-700">After</span>
+                        <span className="checkbox-label">After</span>
                         <input
                           type="number"
                           value={recurCount}
@@ -627,7 +630,7 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
                           max="52"
                           className="w-20 px-2 py-1 border border-gray-300 rounded text-sm disabled:bg-gray-100 focus:ring-2 focus:ring-purple-500"
                         />
-                        <span className="text-sm text-gray-700">occurrences</span>
+                        <span className="checkbox-label">occurrences</span>
                       </label>
                       <label className="flex items-center gap-2">
                         <input
@@ -636,7 +639,7 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
                           onChange={() => setRecurEndType('date')}
                           className="text-purple-600 focus:ring-purple-500"
                         />
-                        <span className="text-sm text-gray-700">On</span>
+                        <span className="checkbox-label">On</span>
                         <input
                           type="date"
                           value={recurEndDate}
@@ -653,9 +656,9 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
 
             {/* Comments */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <FormLabel>
                 Notes (Optional)
-              </label>
+              </FormLabel>
               <textarea
                 value={comments}
                 onChange={(e) => setComments(e.target.value)}

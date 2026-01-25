@@ -15,6 +15,9 @@ import { createPortal } from 'react-dom';
 import { FormLabel } from '../FormLabel';
 import { TabButton } from '../TabButton';
 import { PrimaryButton } from '../PrimaryButton';
+import { RequiredAsterisk } from '../RequiredAsterisk';
+import { ErrorMessage } from '../ErrorMessage';
+import { DangerButton } from '../DangerButton';
 
 function Facilities() {
   const [facilities, setFacilities] = useState([]);
@@ -306,7 +309,7 @@ function Facilities() {
   if (error) {
     return (
       <div className="glass-card p-8">
-        <div className="text-center text-red-600">Error: {error}</div>
+        <ErrorMessage className="text-center">Error: {error}</ErrorMessage>
         <div className="text-center mt-4">
           <PrimaryButton
             onClick={fetchFacilities}
@@ -458,12 +461,11 @@ function Facilities() {
                   Edit
                 </button>
                 {(facility.inactive === '0' || facility.inactive === 0) && (
-                  <button
+                  <DangerButton
                     onClick={() => handleDeactivate(facility.id)}
-                    className="flex-1 px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     Deactivate
-                  </button>
+                  </DangerButton>
                 )}
               </div>
             </div>
@@ -535,7 +537,7 @@ function FacilityFormModal({
           {/* Facility Name */}
           <div className="mb-4">
             <FormLabel>
-              Facility Name <span className="text-red-600">*</span>
+              Facility Name <RequiredAsterisk />
             </FormLabel>
             <input
               type="text"

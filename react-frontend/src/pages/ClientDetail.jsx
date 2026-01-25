@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getClientDetail, logout } from '../utils/api';
 import { useAuth } from '../hooks/useAuth';
+import { ErrorInline } from '../components/ErrorInline';
 import AppShell from '../components/layout/AppShell';
 import ClientHeader from '../components/client/ClientHeader';
 import TabNavigation from '../components/client/TabNavigation';
@@ -69,7 +70,7 @@ function ClientDetail() {
     if (error) {
       return (
         <div className="card-main p-12 text-center">
-          <div className="text-red-600 font-semibold">Error: {error}</div>
+          <ErrorInline>Error: {error}</ErrorInline>
         </div>
       );
     }

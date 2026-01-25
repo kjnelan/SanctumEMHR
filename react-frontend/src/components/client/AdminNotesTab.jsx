@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import NoteEditor from '../notes/NoteEditor';
 import NoteViewer from '../notes/NoteViewer';
+import { PrimaryButton } from '../PrimaryButton';
 
 function AdminNotesTab({ data }) {
   const [editingDemo, setEditingDemo] = useState(false);
@@ -228,12 +229,9 @@ function AdminNotesTab({ data }) {
             </div>
             {editingDemo && (
               <div className="flex gap-3 mt-4 pt-4 border-t border-gray-200">
-                <button
-                  onClick={handleSaveDemo}
-                  className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                >
+                <PrimaryButton onClick={handleSaveDemo}>
                   💾 Save Changes
-                </button>
+                </PrimaryButton>
                 <button
                   onClick={handleCancelDemo}
                   className="px-4 py-2 bg-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-400 transition-colors"
@@ -322,12 +320,9 @@ function AdminNotesTab({ data }) {
             </div>
             {editingFinancial && (
               <div className="flex gap-3 mt-4 pt-4 border-t border-gray-200">
-                <button
-                  onClick={handleSaveFinancial}
-                  className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                >
+                <PrimaryButton onClick={handleSaveFinancial}>
                   💾 Save Changes
-                </button>
+                </PrimaryButton>
                 <button
                   onClick={handleCancelFinancial}
                   className="px-4 py-2 bg-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-400 transition-colors"
@@ -345,12 +340,9 @@ function AdminNotesTab({ data }) {
         <div className="card-main">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-800">Administrative Notes</h2>
-            <button
-              onClick={handleCreateAdminNote}
-              className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-            >
+            <PrimaryButton onClick={handleCreateAdminNote}>
               + New Admin Note
-            </button>
+            </PrimaryButton>
           </div>
           <div className="text-gray-600 text-sm">
             Create administrative notes for this client's record

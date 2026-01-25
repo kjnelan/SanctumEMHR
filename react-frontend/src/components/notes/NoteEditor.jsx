@@ -30,6 +30,7 @@ import AppointmentStatusTemplate from './AppointmentStatusTemplate';
 import ClientCommunicationTemplate from './ClientCommunicationTemplate';
 import QuickNoteForm from './QuickNoteForm';
 import NoteMetadata from './NoteMetadata';
+import { ErrorMessage } from '../ErrorMessage';
 
 /**
  * Map note type to template type
@@ -440,9 +441,9 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+        <ErrorMessage>
           {error}
-        </div>
+        </ErrorMessage>
       )}
 
       {/* Auto-populated Metadata */}

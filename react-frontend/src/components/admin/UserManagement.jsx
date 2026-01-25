@@ -14,6 +14,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { PrimaryButton } from '../PrimaryButton';
+import { FormLabel } from '../FormLabel';
+import { RequiredAsterisk } from '../RequiredAsterisk';
+import { ErrorMessage } from '../ErrorMessage';
+import { DangerButton } from '../DangerButton';
 
 function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -463,7 +467,7 @@ function UserManagement() {
   if (error) {
     return (
       <div className="glass-card p-8">
-        <div className="text-center text-red-600">Error: {error}</div>
+        <ErrorMessage className="text-center">Error: {error}</ErrorMessage>
         <div className="text-center mt-4">
 
           <PrimaryButton
@@ -632,12 +636,11 @@ function UserManagement() {
                   </button>
                 )}
                 {user.active === '1' && (
-                  <button
+                  <DangerButton
                     onClick={() => handleDeactivate(user.id)}
-                    className="flex-1 px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     Deactivate
-                  </button>
+                  </DangerButton>
                 )}
               </div>
             </div>
@@ -712,12 +715,12 @@ function UserFormModal({
           <div className="space-y-6">
             {/* Login Credentials */}
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Login Credentials</h3>
+              <h3 className="section-header-gray">Login Credentials</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Username <span className="text-red-500">*</span>
-                  </label>
+                  <FormLabel>
+                    Username <RequiredAsterisk />
+                  </FormLabel>
                   <input
                     type="text"
                     value={formData.username}
@@ -727,9 +730,9 @@ function UserFormModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    {isEdit ? 'New Password (leave blank to keep current)' : 'Password'} {!isEdit && <span className="text-red-500">*</span>}
-                  </label>
+                  <FormLabel>
+                    {isEdit ? 'New Password (leave blank to keep current)' : 'Password'} {!isEdit && <RequiredAsterisk />}
+                  </FormLabel>
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
@@ -751,12 +754,12 @@ function UserFormModal({
 
             {/* Personal Information */}
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Personal Information</h3>
+              <h3 className="section-header-gray">Personal Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Legal First Name <span className="text-red-500">*</span>
-                  </label>
+                  <FormLabel>
+                    Legal First Name <RequiredAsterisk />
+                  </FormLabel>
                   <input
                     type="text"
                     value={formData.fname}
@@ -765,9 +768,9 @@ function UserFormModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <FormLabel>
                     Middle Name
-                  </label>
+                  </FormLabel>
                   <input
                     type="text"
                     value={formData.mname}
@@ -776,9 +779,9 @@ function UserFormModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Legal Last Name <span className="text-red-500">*</span>
-                  </label>
+                  <FormLabel>
+                    Legal Last Name <RequiredAsterisk />
+                  </FormLabel>
                   <input
                     type="text"
                     value={formData.lname}
@@ -787,9 +790,9 @@ function UserFormModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <FormLabel>
                     Professional Credentials
-                  </label>
+                  </FormLabel>
                   <input
                     type="text"
                     value={formData.title}
@@ -799,9 +802,9 @@ function UserFormModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <FormLabel>
                     Suffix
-                  </label>
+                  </FormLabel>
                   <input
                     type="text"
                     value={formData.suffix}
@@ -811,9 +814,9 @@ function UserFormModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <FormLabel>
                     State License Number
-                  </label>
+                  </FormLabel>
                   <input
                     type="text"
                     value={formData.state_license_number}
@@ -826,12 +829,12 @@ function UserFormModal({
 
             {/* Contact Information */}
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Contact Information</h3>
+              <h3 className="section-header-gray">Contact Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Email <span className="text-red-500">*</span>
-                  </label>
+                  <FormLabel>
+                    Email <RequiredAsterisk />
+                  </FormLabel>
                   <input
                     type="email"
                     value={formData.email}
@@ -840,9 +843,9 @@ function UserFormModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <FormLabel>
                     Office Phone
-                  </label>
+                  </FormLabel>
                   <input
                     type="tel"
                     value={formData.phone}
@@ -851,9 +854,9 @@ function UserFormModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <FormLabel>
                     Cell Phone
-                  </label>
+                  </FormLabel>
                   <input
                     type="tel"
                     value={formData.phonecell}
@@ -866,12 +869,12 @@ function UserFormModal({
 
             {/* Professional Information */}
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Professional Information</h3>
+              <h3 className="section-header-gray">Professional Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <FormLabel>
                     NPI
-                  </label>
+                  </FormLabel>
                   <input
                     type="text"
                     value={formData.npi}
@@ -880,9 +883,9 @@ function UserFormModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <FormLabel>
                     Federal Tax ID
-                  </label>
+                  </FormLabel>
                   <input
                     type="text"
                     value={formData.federaltaxid}
@@ -891,9 +894,9 @@ function UserFormModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <FormLabel>
                     Taxonomy Code
-                  </label>
+                  </FormLabel>
                   <input
                     type="text"
                     value={formData.taxonomy}
@@ -907,14 +910,14 @@ function UserFormModal({
 
             {/* Access Control */}
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Access Control</h3>
+              <h3 className="section-header-gray">Access Control</h3>
               <div className="space-y-3">
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={formData.authorized}
                     onChange={(e) => onFormChange('authorized', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="checkbox"
                   />
                   <span className="text-sm font-medium text-gray-700">
                     Provider (Can create clinical notes)
@@ -925,7 +928,7 @@ function UserFormModal({
                     type="checkbox"
                     checked={formData.is_supervisor}
                     onChange={(e) => onFormChange('is_supervisor', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="checkbox"
                   />
                   <span className="text-sm font-medium text-gray-700">
                     Supervisor (Can supervise other providers)
@@ -936,7 +939,7 @@ function UserFormModal({
                     type="checkbox"
                     checked={formData.calendar}
                     onChange={(e) => onFormChange('calendar', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="checkbox"
                   />
                   <span className="text-sm font-medium text-gray-700">
                     Administrator (Access to Settings)
@@ -947,7 +950,7 @@ function UserFormModal({
                     type="checkbox"
                     checked={formData.portal_user}
                     onChange={(e) => onFormChange('portal_user', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="checkbox"
                   />
                   <span className="text-sm font-medium text-gray-700">
                     Portal Access
@@ -958,7 +961,7 @@ function UserFormModal({
                     type="checkbox"
                     checked={formData.active}
                     onChange={(e) => onFormChange('active', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="checkbox"
                   />
                   <span className="text-sm font-medium text-gray-700">
                     Active
@@ -969,12 +972,12 @@ function UserFormModal({
 
             {/* Organization */}
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Organization</h3>
+              <h3 className="section-header-gray">Organization</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <FormLabel>
                     Supervisors (select one or more)
-                  </label>
+                  </FormLabel>
                   <div className="border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto bg-white">
                     {supervisors.length === 0 ? (
                       <div className="text-sm text-gray-500 italic">
@@ -988,9 +991,9 @@ function UserFormModal({
                               type="checkbox"
                               checked={formData.supervisor_ids.includes(String(sup.id))}
                               onChange={() => onToggleSupervisor(sup.id)}
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              className="checkbox"
                             />
-                            <span className="text-sm text-gray-700">
+                            <span className="checkbox-label">
                               {sup.fname} {sup.lname} {sup.title && `(${sup.title})`}
                             </span>
                           </label>
@@ -1000,9 +1003,9 @@ function UserFormModal({
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <FormLabel>
                     Default Facility
-                  </label>
+                  </FormLabel>
                   <select
                     value={formData.facility_id}
                     onChange={(e) => onFormChange('facility_id', e.target.value)}
@@ -1021,9 +1024,9 @@ function UserFormModal({
 
             {/* Notes */}
             <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <FormLabel>
                 Notes
-              </label>
+              </FormLabel>
               <textarea
                 value={formData.notes}
                 onChange={(e) => onFormChange('notes', e.target.value)}

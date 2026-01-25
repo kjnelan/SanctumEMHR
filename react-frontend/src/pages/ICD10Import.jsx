@@ -14,6 +14,7 @@
  */
 
 import React, { useState } from 'react';
+import { FormLabel } from '../components/FormLabel';
 
 function ICD10Import() {
   const [file, setFile] = useState(null);
@@ -171,9 +172,9 @@ function ICD10Import() {
 
           {/* File Selection */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <FormLabel>
               Select ICD-10-CM File
-            </label>
+            </FormLabel>
             <input
               id="file-input"
               type="file"

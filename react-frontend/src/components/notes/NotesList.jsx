@@ -13,6 +13,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getPatientNotes } from '../../utils/api';
+import { ErrorInline } from '../ErrorInline';
 
 /**
  * Props:
@@ -126,7 +127,7 @@ function NotesList({ patientId, onNoteClick, onCreateNote }) {
   if (error) {
     return (
       <div className="p-6 text-center">
-        <div className="text-red-600 mb-4">Error loading notes: {error}</div>
+        <ErrorInline>Error loading notes: {error}</ErrorInline>
         <button onClick={loadNotes} className="px-6 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-purple-700 transition-all shadow-lg">
           Retry
         </button>
