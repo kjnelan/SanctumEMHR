@@ -14,6 +14,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { PrimaryButton } from '../PrimaryButton';
 import { SecondaryButton } from '../SecondaryButton';
+import { FormLabel } from '../FormLabel';
 
 function CalendarCategories() {
   const [categories, setCategories] = useState([]);
@@ -427,9 +428,9 @@ function CalendarCategories() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <FormLabel>
                         Category Name <span className="text-red-500">*</span>
-                      </label>
+                      </FormLabel>
                       <input
                         type="text"
                         value={formData.name}
@@ -440,9 +441,7 @@ function CalendarCategories() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Category Type
-                      </label>
+                      <FormLabel>Category Type</FormLabel>
                       <select
                         value={formData.category_type}
                         onChange={(e) => setFormData({ ...formData, category_type: e.target.value })}
@@ -456,9 +455,7 @@ function CalendarCategories() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Description
-                    </label>
+                    <FormLabel>Description</FormLabel>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -470,9 +467,7 @@ function CalendarCategories() {
 
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Color
-                      </label>
+                      <FormLabel>Color</FormLabel>
                       <input
                         type="color"
                         value={formData.color}
@@ -482,9 +477,7 @@ function CalendarCategories() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Default Duration (min)
-                      </label>
+                      <FormLabel>Default Duration (min)</FormLabel>
                       <input
                         type="number"
                         value={formData.default_duration}
@@ -494,9 +487,7 @@ function CalendarCategories() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Sort Order
-                      </label>
+                      <FormLabel>Sort Order</FormLabel>
                       <input
                         type="number"
                         value={formData.sort_order}
@@ -517,9 +508,9 @@ function CalendarCategories() {
                       type="checkbox"
                       checked={formData.is_billable === 1}
                       onChange={(e) => setFormData({ ...formData, is_billable: e.target.checked ? 1 : 0 })}
-                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="mr-2 checkbox"
                     />
-                    <span className="text-sm text-gray-700">Billable</span>
+                    <span className="checkbox-label">Billable</span>
                   </label>
 
                   <label className="flex items-center">
@@ -527,9 +518,9 @@ function CalendarCategories() {
                       type="checkbox"
                       checked={formData.requires_cpt_selection === 1}
                       onChange={(e) => setFormData({ ...formData, requires_cpt_selection: e.target.checked ? 1 : 0 })}
-                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="mr-2 checkbox"
                     />
-                    <span className="text-sm text-gray-700">Requires CPT Code Selection</span>
+                    <span className="checkbox-label">Requires CPT Code Selection</span>
                   </label>
 
                   <label className="flex items-center">
@@ -537,9 +528,9 @@ function CalendarCategories() {
                       type="checkbox"
                       checked={formData.blocks_availability === 1}
                       onChange={(e) => setFormData({ ...formData, blocks_availability: e.target.checked ? 1 : 0 })}
-                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="mr-2 checkbox"
                     />
-                    <span className="text-sm text-gray-700">Blocks Provider Availability</span>
+                    <span className="checkbox-label">Blocks Provider Availability</span>
                   </label>
 
                   <label className="flex items-center">
@@ -547,9 +538,9 @@ function CalendarCategories() {
                       type="checkbox"
                       checked={formData.is_active === 1}
                       onChange={(e) => setFormData({ ...formData, is_active: e.target.checked ? 1 : 0 })}
-                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="mr-2 checkbox"
                     />
-                    <span className="text-sm text-gray-700">Active</span>
+                    <span className="checkbox-label">Active</span>
                   </label>
                 </div>
               </div>
@@ -569,9 +560,9 @@ function CalendarCategories() {
                               type="checkbox"
                               checked={formData.linked_cpt_codes.includes(code.id)}
                               onChange={() => toggleCPTCode(code.id)}
-                              className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              className="mr-2 checkbox"
                             />
-                            <span className="text-sm text-gray-700">
+                            <span className="checkbox-label">
                               <span className="font-mono font-semibold">{code.code}</span> - {code.description}
                             </span>
                           </label>

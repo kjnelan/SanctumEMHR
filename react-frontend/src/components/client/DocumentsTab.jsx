@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { FormLabel } from '../FormLabel';
+import { PrimaryButton } from '../PrimaryButton';
 
 function DocumentsTab({ data }) {
   const [documents, setDocuments] = useState([]);
@@ -232,12 +233,9 @@ function DocumentsTab({ data }) {
     <div className="space-y-6">
       {/* Upload Button */}
       <div className="flex justify-end">
-        <button
-          onClick={handleOpenUploadModal}
-          className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-        >
+        <PrimaryButton onClick={handleOpenUploadModal}>
           📤 Upload Document
-        </button>
+        </PrimaryButton>
       </div>
 
       {/* Empty state */}

@@ -14,6 +14,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { createAppointment, updateAppointment, deleteAppointment } from '../../utils/api';
 import { useAuth } from '../../hooks/useAuth';
+import { FormLabel } from '../FormLabel';
 
 function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, categories, block }) {
   const { user } = useAuth();
@@ -447,9 +448,9 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Block Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <FormLabel>
                 Reason <span className="text-red-500">*</span>
-              </label>
+              </FormLabel>
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
@@ -467,9 +468,9 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
 
             {/* Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <FormLabel>
                 Date <span className="text-red-500">*</span>
-              </label>
+              </FormLabel>
               <input
                 type="date"
                 value={eventDate}
@@ -482,9 +483,9 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
             {/* Start and End Time */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <FormLabel>
                   Start Time <span className="text-red-500">*</span>
-                </label>
+                </FormLabel>
                 <input
                   type="time"
                   value={startTime}
@@ -495,9 +496,9 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <FormLabel>
                   End Time
-                </label>
+                </FormLabel>
                 <input
                   type="time"
                   value={endTime}
@@ -509,9 +510,9 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
 
             {/* Duration */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <FormLabel>
                 Duration (minutes) <span className="text-red-500">*</span>
-              </label>
+              </FormLabel>
               <div className="flex flex-wrap gap-2 mb-3 items-center">
                 {durationPresets.map((preset) => (
                   <button
@@ -558,9 +559,9 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
                 <div className="space-y-4 pl-6 border-l-2 border-purple-200">
                   {/* Day Selection */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <FormLabel>
                       Repeat on <span className="text-red-500">*</span>
-                    </label>
+                    </FormLabel>
                     <div className="flex flex-wrap gap-2">
                       {[
                         { key: 'sun', label: 'Sun' },
@@ -589,9 +590,9 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
 
                   {/* Interval Selection */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <FormLabel>
                       Frequency <span className="text-red-500">*</span>
-                    </label>
+                    </FormLabel>
                     <select
                       value={recurInterval}
                       onChange={(e) => setRecurInterval(e.target.value)}
@@ -606,9 +607,9 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
 
                   {/* End Condition */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <FormLabel>
                       Ends <span className="text-red-500">*</span>
-                    </label>
+                    </FormLabel>
                     <div className="space-y-3">
                       <label className="flex items-center gap-2">
                         <input
@@ -617,7 +618,7 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
                           onChange={() => setRecurEndType('count')}
                           className="text-purple-600 focus:ring-purple-500"
                         />
-                        <span className="text-sm text-gray-700">After</span>
+                        <span className="checkbox-label">After</span>
                         <input
                           type="number"
                           value={recurCount}
@@ -627,7 +628,7 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
                           max="52"
                           className="w-20 px-2 py-1 border border-gray-300 rounded text-sm disabled:bg-gray-100 focus:ring-2 focus:ring-purple-500"
                         />
-                        <span className="text-sm text-gray-700">occurrences</span>
+                        <span className="checkbox-label">occurrences</span>
                       </label>
                       <label className="flex items-center gap-2">
                         <input
@@ -636,7 +637,7 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
                           onChange={() => setRecurEndType('date')}
                           className="text-purple-600 focus:ring-purple-500"
                         />
-                        <span className="text-sm text-gray-700">On</span>
+                        <span className="checkbox-label">On</span>
                         <input
                           type="date"
                           value={recurEndDate}
@@ -653,9 +654,9 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
 
             {/* Comments */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <FormLabel>
                 Notes (Optional)
-              </label>
+              </FormLabel>
               <textarea
                 value={comments}
                 onChange={(e) => setComments(e.target.value)}

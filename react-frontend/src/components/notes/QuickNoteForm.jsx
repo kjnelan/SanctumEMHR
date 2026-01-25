@@ -114,7 +114,7 @@ function QuickNoteForm({ noteType, patientId, appointmentId = null, serviceDate,
           {/* Reason */}
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">
+              <span className="text-label block mb-2">
                 {isNoShow ? 'Reason (if known)' : 'Reason for Cancellation'}
               </span>
               <textarea
@@ -137,7 +137,7 @@ function QuickNoteForm({ noteType, patientId, appointmentId = null, serviceDate,
                     type="checkbox"
                     checked={attemptedContact}
                     onChange={(e) => setAttemptedContact(e.target.checked)}
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="checkbox"
                   />
                   <span className="font-semibold text-gray-800">
                     Attempted to contact client
@@ -195,7 +195,7 @@ function QuickNoteForm({ noteType, patientId, appointmentId = null, serviceDate,
                     type="checkbox"
                     checked={billable}
                     onChange={(e) => setBillable(e.target.checked)}
-                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                    className="checkbox"
                   />
                   <span className="font-semibold text-gray-800">
                     Apply no-show fee (billable)
@@ -212,7 +212,7 @@ function QuickNoteForm({ noteType, patientId, appointmentId = null, serviceDate,
                 type="checkbox"
                 checked={signImmediately}
                 onChange={(e) => setSignImmediately(e.target.checked)}
-                className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                className="checkbox"
               />
               <span className="font-semibold text-gray-800">
                 Sign and lock note immediately

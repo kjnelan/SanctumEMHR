@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getCalendarSettings, updateCalendarSettings } from '../../utils/api';
+import { FormLabel } from '../FormLabel';
 
 function CalendarSettings() {
   const [settings, setSettings] = useState({
@@ -87,9 +88,9 @@ function CalendarSettings() {
       <div className="space-y-6">
         {/* Calendar Starting Hour */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <FormLabel>
             Calendar Starting Hour
-          </label>
+          </FormLabel>
           <select
             value={settings.startHour}
             onChange={(e) => handleChange('startHour', parseInt(e.target.value))}
@@ -105,9 +106,9 @@ function CalendarSettings() {
 
         {/* Calendar Ending Hour */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <FormLabel>
             Calendar Ending Hour
-          </label>
+          </FormLabel>
           <select
             value={settings.endHour}
             onChange={(e) => handleChange('endHour', parseInt(e.target.value))}
@@ -123,9 +124,9 @@ function CalendarSettings() {
 
         {/* Calendar Interval */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <FormLabel>
             Calendar Interval (minutes)
-          </label>
+          </FormLabel>
           <select
             value={settings.interval}
             onChange={(e) => handleChange('interval', parseInt(e.target.value))}
@@ -139,9 +140,9 @@ function CalendarSettings() {
 
         {/* Default Calendar View */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <FormLabel>
             Default Calendar View
-          </label>
+          </FormLabel>
           <select
             value={settings.viewType}
             onChange={(e) => handleChange('viewType', e.target.value)}
@@ -155,9 +156,9 @@ function CalendarSettings() {
 
         {/* Appointment/Event Color */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <FormLabel>
             Appointment/Event Color
-          </label>
+          </FormLabel>
           <select
             value={settings.eventColor}
             onChange={(e) => handleChange('eventColor', e.target.value)}
@@ -175,7 +176,7 @@ function CalendarSettings() {
               type="checkbox"
               checked={settings.providersSeeAll}
               onChange={(e) => handleChange('providersSeeAll', e.target.checked)}
-              className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="checkbox"
             />
             <span className="ml-3 text-sm font-medium text-gray-700">
               Providers See Entire Calendar

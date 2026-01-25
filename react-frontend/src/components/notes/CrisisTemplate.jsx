@@ -42,7 +42,7 @@ function CrisisTemplate({ note, onChange, autoSave }) {
 
       {/* Crisis Presentation */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-red-700 mb-4">
+        <h3 className="section-header-red">
           <span className="mr-2">🚨</span>
           Crisis Presentation
         </h3>
@@ -104,7 +104,7 @@ function CrisisTemplate({ note, onChange, autoSave }) {
 
       {/* Crisis Interventions */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-red-700 mb-4">
+        <h3 className="section-header-red">
           <span className="mr-2">🛟</span>
           Crisis Interventions Provided
         </h3>
@@ -120,7 +120,7 @@ function CrisisTemplate({ note, onChange, autoSave }) {
 
       {/* Client Response */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-red-700 mb-4">
+        <h3 className="section-header-red">
           <span className="mr-2">💬</span>
           Client Response to Intervention
         </h3>
@@ -160,14 +160,14 @@ function CrisisTemplate({ note, onChange, autoSave }) {
 
       {/* Disposition & Follow-Up */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-red-700 mb-4">
+        <h3 className="section-header-red">
           <span className="mr-2">📍</span>
           Disposition & Follow-Up Plan
         </h3>
         <div className="space-y-4">
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Disposition</span>
+              <span className="text-label block mb-2">Disposition</span>
               <div className="flex flex-wrap gap-3">
                 {['Returned home with safety plan', 'Emergency contact notified', 'Referred to higher level of care', 'Voluntary hospitalization', 'Involuntary commitment initiated', 'Police/EMS contacted', 'Other'].map(disp => (
                   <label key={disp} className="flex items-center gap-2 cursor-pointer">
@@ -175,7 +175,7 @@ function CrisisTemplate({ note, onChange, autoSave }) {
                       type="checkbox"
                       className="w-4 h-4 text-red-600 rounded"
                     />
-                    <span className="text-sm text-gray-700">{disp}</span>
+                    <span className="checkbox-label">{disp}</span>
                   </label>
                 ))}
               </div>
@@ -191,7 +191,7 @@ function CrisisTemplate({ note, onChange, autoSave }) {
 
       {/* Collateral Contacts */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-red-700 mb-4">
+        <h3 className="section-header-red">
           <span className="mr-2">📞</span>
           Collateral Contacts (if any)
         </h3>

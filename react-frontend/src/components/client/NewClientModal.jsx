@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { createClient } from '../../utils/api';
+import { FormLabel } from '../FormLabel';
 
 function NewClientModal({ onClose, onClientCreated }) {
   const [formData, setFormData] = useState({
@@ -90,12 +91,12 @@ function NewClientModal({ onClose, onClientCreated }) {
 
           {/* Personal Information */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Personal Information</h3>
+            <h3 className="section-header-gray">Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   First Name <span className="text-red-500">*</span>
-                </label>
+                </FormLabel>
                 <input
                   type="text"
                   required
@@ -106,9 +107,9 @@ function NewClientModal({ onClose, onClientCreated }) {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Middle Name
-                </label>
+                </FormLabel>
                 <input
                   type="text"
                   value={formData.mname}
@@ -118,9 +119,9 @@ function NewClientModal({ onClose, onClientCreated }) {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Last Name <span className="text-red-500">*</span>
-                </label>
+                </FormLabel>
                 <input
                   type="text"
                   required
@@ -131,9 +132,9 @@ function NewClientModal({ onClose, onClientCreated }) {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Date of Birth <span className="text-red-500">*</span>
-                </label>
+                </FormLabel>
                 <input
                   type="date"
                   required
@@ -144,9 +145,9 @@ function NewClientModal({ onClose, onClientCreated }) {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Sex
-                </label>
+                </FormLabel>
                 <select
                   value={formData.sex}
                   onChange={(e) => handleChange('sex', e.target.value)}
@@ -159,9 +160,9 @@ function NewClientModal({ onClose, onClientCreated }) {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Social Security Number
-                </label>
+                </FormLabel>
                 <input
                   type="text"
                   value={formData.ss}
@@ -173,9 +174,9 @@ function NewClientModal({ onClose, onClientCreated }) {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Status
-                </label>
+                </FormLabel>
                 <select
                   value={formData.care_team_status}
                   onChange={(e) => handleChange('care_team_status', e.target.value)}
@@ -191,12 +192,12 @@ function NewClientModal({ onClose, onClientCreated }) {
 
           {/* Contact Information */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Contact Information</h3>
+            <h3 className="section-header-gray">Contact Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Street Address
-                </label>
+                </FormLabel>
                 <input
                   type="text"
                   value={formData.street}
@@ -206,9 +207,9 @@ function NewClientModal({ onClose, onClientCreated }) {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   City
-                </label>
+                </FormLabel>
                 <input
                   type="text"
                   value={formData.city}
@@ -218,9 +219,9 @@ function NewClientModal({ onClose, onClientCreated }) {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   State
-                </label>
+                </FormLabel>
                 <input
                   type="text"
                   value={formData.state}
@@ -232,9 +233,9 @@ function NewClientModal({ onClose, onClientCreated }) {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Postal Code
-                </label>
+                </FormLabel>
                 <input
                   type="text"
                   value={formData.postal_code}
@@ -244,9 +245,9 @@ function NewClientModal({ onClose, onClientCreated }) {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Mobile Phone
-                </label>
+                </FormLabel>
                 <input
                   type="tel"
                   value={formData.phone_cell}
@@ -256,9 +257,9 @@ function NewClientModal({ onClose, onClientCreated }) {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Home Phone
-                </label>
+                </FormLabel>
                 <input
                   type="tel"
                   value={formData.phone_home}
@@ -268,9 +269,9 @@ function NewClientModal({ onClose, onClientCreated }) {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Email
-                </label>
+                </FormLabel>
                 <input
                   type="email"
                   value={formData.email}

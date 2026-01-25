@@ -49,7 +49,7 @@ function MSETemplate({ note, onChange, autoSave }) {
   const SelectField = ({ label, field, options }) => (
     <div>
       <label className="block">
-        <span className="text-sm font-semibold text-gray-700 mb-2 block">{label}</span>
+        <span className="text-label block mb-2">{label}</span>
         <select
           value={getMSEField(field)}
           onChange={(e) => setMSEField(field, e.target.value)}
@@ -67,7 +67,7 @@ function MSETemplate({ note, onChange, autoSave }) {
   const TextAreaField = ({ label, field, placeholder, rows = 3 }) => (
     <div>
       <label className="block">
-        <span className="text-sm font-semibold text-gray-700 mb-2 block">{label}</span>
+        <span className="text-label block mb-2">{label}</span>
         <textarea
           value={getMSEField(field)}
           onChange={(e) => setMSEField(field, e.target.value)}
@@ -83,7 +83,7 @@ function MSETemplate({ note, onChange, autoSave }) {
     <div className="space-y-6">
       {/* Appearance & Grooming */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-teal-700 mb-4">
+        <h3 className="section-header-teal">
           <span className="mr-2">👤</span>
           Appearance & Grooming
         </h3>
@@ -111,7 +111,7 @@ function MSETemplate({ note, onChange, autoSave }) {
 
       {/* Behavior & Motor Activity */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-teal-700 mb-4">
+        <h3 className="section-header-teal">
           <span className="mr-2">🏃</span>
           Behavior & Motor Activity
         </h3>
@@ -139,7 +139,7 @@ function MSETemplate({ note, onChange, autoSave }) {
 
       {/* Speech */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-teal-700 mb-4">
+        <h3 className="section-header-teal">
           <span className="mr-2">💬</span>
           Speech
         </h3>
@@ -172,14 +172,14 @@ function MSETemplate({ note, onChange, autoSave }) {
 
       {/* Mood & Affect */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-teal-700 mb-4">
+        <h3 className="section-header-teal">
           <span className="mr-2">😊</span>
           Mood & Affect
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Mood (subjective)</span>
+              <span className="text-label block mb-2">Mood (subjective)</span>
               <input
                 type="text"
                 value={getMSEField('mood')}
@@ -207,7 +207,7 @@ function MSETemplate({ note, onChange, autoSave }) {
 
       {/* Thought Process */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-teal-700 mb-4">
+        <h3 className="section-header-teal">
           <span className="mr-2">🧩</span>
           Thought Process
         </h3>
@@ -235,7 +235,7 @@ function MSETemplate({ note, onChange, autoSave }) {
 
       {/* Thought Content */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-teal-700 mb-4">
+        <h3 className="section-header-teal">
           <span className="mr-2">💭</span>
           Thought Content
         </h3>
@@ -255,7 +255,7 @@ function MSETemplate({ note, onChange, autoSave }) {
                   }}
                   className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
                 />
-                <span className="text-sm text-gray-700">{item}</span>
+                <span className="checkbox-label">{item}</span>
               </label>
             ))}
           </div>
@@ -270,7 +270,7 @@ function MSETemplate({ note, onChange, autoSave }) {
 
       {/* Perception */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-teal-700 mb-4">
+        <h3 className="section-header-teal">
           <span className="mr-2">👁️</span>
           Perception
         </h3>
@@ -290,7 +290,7 @@ function MSETemplate({ note, onChange, autoSave }) {
                   }}
                   className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
                 />
-                <span className="text-sm text-gray-700">{item}</span>
+                <span className="checkbox-label">{item}</span>
               </label>
             ))}
           </div>
@@ -305,7 +305,7 @@ function MSETemplate({ note, onChange, autoSave }) {
 
       {/* Cognition */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-teal-700 mb-4">
+        <h3 className="section-header-teal">
           <span className="mr-2">🧠</span>
           Cognition
         </h3>
@@ -338,7 +338,7 @@ function MSETemplate({ note, onChange, autoSave }) {
 
       {/* Insight & Judgment */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-teal-700 mb-4">
+        <h3 className="section-header-teal">
           <span className="mr-2">💡</span>
           Insight & Judgment
         </h3>
@@ -366,7 +366,7 @@ function MSETemplate({ note, onChange, autoSave }) {
 
       {/* Summary & Impressions */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-teal-700 mb-4">
+        <h3 className="section-header-teal">
           <span className="mr-2">📋</span>
           Clinical Summary & Impressions
         </h3>

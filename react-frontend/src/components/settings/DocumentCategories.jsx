@@ -14,6 +14,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { PrimaryButton } from '../PrimaryButton';
+import { FormLabel } from '../FormLabel';
 
 function DocumentCategories() {
   const [categories, setCategories] = useState([]);
@@ -292,12 +293,9 @@ function DocumentCategories() {
           <h2 className="text-2xl font-semibold text-gray-800">Document Categories</h2>
           <p className="text-gray-600 mt-1">Manage categories for organizing client documents</p>
         </div>
-        <button
-          onClick={handleAdd}
-          className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-        >
+        <PrimaryButton onClick={handleAdd}>
           + Add Category
-        </button>
+        </PrimaryButton>
       </div>
 
       {categories.length === 0 ? (
@@ -371,9 +369,9 @@ function DocumentCategories() {
               )}
 
               <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Category Name <span className="text-red-500">*</span>
-                </label>
+                </FormLabel>
                 <input
                   type="text"
                   value={formData.name}
@@ -385,9 +383,9 @@ function DocumentCategories() {
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Parent Category (Optional)
-                </label>
+                </FormLabel>
                 <select
                   value={formData.parent_id || ''}
                   onChange={(e) => {
@@ -460,9 +458,9 @@ function DocumentCategories() {
               )}
 
               <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Category Name <span className="text-red-500">*</span>
-                </label>
+                </FormLabel>
                 <input
                   type="text"
                   value={formData.name}
@@ -473,9 +471,9 @@ function DocumentCategories() {
               </div>
 
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Parent Category (Optional)
-                </label>
+                </FormLabel>
                 <select
                   value={formData.parent_id || ''}
                   onChange={(e) => {

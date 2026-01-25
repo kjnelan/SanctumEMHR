@@ -81,7 +81,7 @@ function RiskAssessmentTemplate({ note, onChange, autoSave }) {
 
       {/* Reason for Assessment */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-orange-700 mb-4">
+        <h3 className="section-header-orange">
           <span className="mr-2">📋</span>
           Reason for Assessment
         </h3>
@@ -115,7 +115,7 @@ function RiskAssessmentTemplate({ note, onChange, autoSave }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block">
-                <span className="text-sm font-semibold text-gray-700 mb-2 block">Ideation Frequency</span>
+                <span className="text-label block mb-2">Ideation Frequency</span>
                 <select
                   className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg bg-white shadow-sm"
                   value={riskAssessment.suicidalIdeation.frequency}
@@ -132,7 +132,7 @@ function RiskAssessmentTemplate({ note, onChange, autoSave }) {
             </div>
             <div>
               <label className="block">
-                <span className="text-sm font-semibold text-gray-700 mb-2 block">Intent Level</span>
+                <span className="text-label block mb-2">Intent Level</span>
                 <select
                   className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg bg-white shadow-sm"
                   value={riskAssessment.suicidalIdeation.intentLevel}
@@ -149,7 +149,7 @@ function RiskAssessmentTemplate({ note, onChange, autoSave }) {
           </div>
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Plan Details</span>
+              <span className="text-label block mb-2">Plan Details</span>
               <textarea
                 className="w-full px-4 py-3 border-2 border-red-400 rounded-lg focus:ring-2 focus:ring-red-500 resize-none bg-white shadow-sm"
                 rows="2"
@@ -161,7 +161,7 @@ function RiskAssessmentTemplate({ note, onChange, autoSave }) {
           </div>
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Access to Means</span>
+              <span className="text-label block mb-2">Access to Means</span>
               <textarea
                 className="w-full px-4 py-3 border-2 border-red-400 rounded-lg focus:ring-2 focus:ring-red-500 resize-none bg-white shadow-sm"
                 rows="2"
@@ -173,7 +173,7 @@ function RiskAssessmentTemplate({ note, onChange, autoSave }) {
           </div>
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Timeline</span>
+              <span className="text-label block mb-2">Timeline</span>
               <input
                 type="text"
                 className="w-full px-4 py-3 border-2 border-red-400 rounded-lg focus:ring-2 focus:ring-red-500 bg-white shadow-sm"
@@ -185,7 +185,7 @@ function RiskAssessmentTemplate({ note, onChange, autoSave }) {
           </div>
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Previous Attempts</span>
+              <span className="text-label block mb-2">Previous Attempts</span>
               <textarea
                 className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-red-500 resize-none bg-white shadow-sm"
                 rows="2"
@@ -228,7 +228,7 @@ function RiskAssessmentTemplate({ note, onChange, autoSave }) {
 
       {/* Self-Harm Assessment */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-orange-700 mb-4">
+        <h3 className="section-header-orange">
           <span className="mr-2">🩹</span>
           Self-Harm Assessment
         </h3>
@@ -256,7 +256,7 @@ function RiskAssessmentTemplate({ note, onChange, autoSave }) {
 
       {/* Risk & Protective Factors */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-orange-700 mb-4">
+        <h3 className="section-header-orange">
           <span className="mr-2">⚖️</span>
           Risk & Protective Factors
         </h3>
@@ -328,7 +328,7 @@ function RiskAssessmentTemplate({ note, onChange, autoSave }) {
           </div>
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Clinical Rationale</span>
+              <span className="text-label block mb-2">Clinical Rationale</span>
               <textarea
                 value={riskAssessment.dispositionRecommendations}
                 onChange={(e) => handleRiskChange('dispositionRecommendations', e.target.value)}
@@ -351,7 +351,7 @@ function RiskAssessmentTemplate({ note, onChange, autoSave }) {
         <div className="space-y-4">
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Interventions Provided</span>
+              <span className="text-label block mb-2">Interventions Provided</span>
               <textarea
                 value={note.intervention || ''}
                 onChange={(e) => handleChange('intervention', e.target.value)}
@@ -363,7 +363,7 @@ function RiskAssessmentTemplate({ note, onChange, autoSave }) {
           </div>
           <div>
             <label className="block">
-              <span className="text-sm font-semibold text-gray-700 mb-2 block">Safety Plan</span>
+              <span className="text-label block mb-2">Safety Plan</span>
               <textarea
                 value={note.plan || ''}
                 onChange={(e) => handleChange('plan', e.target.value)}
@@ -387,7 +387,7 @@ function RiskAssessmentTemplate({ note, onChange, autoSave }) {
 
       {/* Follow-Up Plan */}
       <div className="card-main">
-        <h3 className="text-lg font-semibold text-orange-700 mb-4">
+        <h3 className="section-header-orange">
           <span className="mr-2">📅</span>
           Follow-Up Plan & Recommendations
         </h3>

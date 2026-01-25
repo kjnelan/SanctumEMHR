@@ -13,6 +13,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createAppointment, updateAppointment, deleteAppointment, getAppointmentCategories, searchPatients, getRooms, getSupervisees } from '../../utils/api';
+import { FormLabel } from '../FormLabel';
 
 /**
  * Props:
@@ -743,9 +744,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
 
           {/* Appointment Type - FIRST */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <FormLabel>
               Appointment Type <span className="text-red-500">*</span>
-            </label>
+            </FormLabel>
             <select
               value={categoryId}
               onChange={(e) => handleCategoryChange(e.target.value)}
@@ -772,9 +773,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
                 <>
                   {/* Client Search */}
                   <div className="relative">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <FormLabel>
                       Client <span className="text-red-500">*</span>
-                    </label>
+                    </FormLabel>
                     <input
                       type="text"
                       value={patientSearchQuery}
@@ -811,9 +812,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
 
                   {/* Provider */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <FormLabel>
                       Provider <span className="text-red-500">*</span>
-                    </label>
+                    </FormLabel>
                     <select
                       value={selectedProvider}
                       onChange={(e) => handleProviderChange(e.target.value)}
@@ -838,9 +839,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
                 <>
                   {/* Supervisor */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <FormLabel>
                       Supervisor <span className="text-red-500">*</span>
-                    </label>
+                    </FormLabel>
                     <select
                       value={selectedProvider}
                       onChange={(e) => handleProviderChange(e.target.value)}
@@ -859,9 +860,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
                   {/* Supervisees Multi-Select */}
                   {selectedProvider && supervisees.length > 0 && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <FormLabel>
                         Supervisees <span className="text-red-500">*</span>
-                      </label>
+                      </FormLabel>
                       <div className="border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
                         {supervisees.map((supervisee) => (
                           <label key={supervisee.id} className="flex items-center gap-2 hover:bg-gray-50 p-2 rounded cursor-pointer">
@@ -902,9 +903,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
             if (category.categoryType === 'clinic') {
               return (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <FormLabel>
                     Provider <span className="text-red-500">*</span>
-                  </label>
+                  </FormLabel>
                   <select
                     value={selectedProvider}
                     onChange={(e) => handleProviderChange(e.target.value)}
@@ -934,10 +935,10 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
             if (showCptDropdown) {
               return (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <FormLabel>
                     CPT Code {cptRequired && <span className="text-red-500">*</span>}
                     {!cptRequired && <span className="text-gray-500 text-xs ml-2">(Optional for {patientPaymentType})</span>}
-                  </label>
+                  </FormLabel>
                   <select
                     value={cptCodeId}
                     onChange={(e) => handleCptCodeChange(e.target.value)}
@@ -965,9 +966,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
           {/* Date and Time - Side by side */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <FormLabel>
                 Date <span className="text-red-500">*</span>
-              </label>
+              </FormLabel>
               <input
                 type="date"
                 value={eventDate}
@@ -978,9 +979,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <FormLabel>
                 Time <span className="text-red-500">*</span>
-              </label>
+              </FormLabel>
               <input
                 type="time"
                 value={startTime}
@@ -994,9 +995,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
           {/* Duration and Room - Side by side */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <FormLabel>
                 Duration (minutes) <span className="text-red-500">*</span>
-              </label>
+              </FormLabel>
               {/* Duration preset buttons */}
               <div className="flex flex-wrap gap-2 mb-3">
                 {durationPresets.map((preset) => (
@@ -1026,9 +1027,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <FormLabel>
                 Location
-              </label>
+              </FormLabel>
               <select
                 value={room}
                 onChange={(e) => setRoom(e.target.value)}
@@ -1062,9 +1063,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
               <div className="space-y-4 pl-6 border-l-2 border-blue-200">
                 {/* Day Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <FormLabel>
                     Repeat on <span className="text-red-500">*</span>
-                  </label>
+                  </FormLabel>
                   <div className="flex flex-wrap gap-2">
                     {[
                       { key: 'sun', label: 'Sun' },
@@ -1093,9 +1094,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
 
                 {/* Interval Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <FormLabel>
                     Frequency <span className="text-red-500">*</span>
-                  </label>
+                  </FormLabel>
                   <select
                     value={recurInterval}
                     onChange={(e) => setRecurInterval(e.target.value)}
@@ -1110,9 +1111,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
 
                 {/* End Condition */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <FormLabel>
                     Ends <span className="text-red-500">*</span>
-                  </label>
+                  </FormLabel>
                   <div className="space-y-3">
                     <label className="flex items-center gap-2">
                       <input
@@ -1121,7 +1122,7 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
                         onChange={() => setRecurEndType('count')}
                         className="text-blue-600 focus:ring-blue-500"
                       />
-                      <span className="text-sm text-gray-700">After</span>
+                      <span className="checkbox-label">After</span>
                       <input
                         type="number"
                         value={recurCount}
@@ -1131,7 +1132,7 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
                         max="52"
                         className="w-20 px-2 py-1 border border-gray-300 rounded text-sm disabled:bg-gray-100 focus:ring-2 focus:ring-blue-500"
                       />
-                      <span className="text-sm text-gray-700">occurrences</span>
+                      <span className="checkbox-label">occurrences</span>
                     </label>
                     <label className="flex items-center gap-2">
                       <input
@@ -1140,7 +1141,7 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
                         onChange={() => setRecurEndType('date')}
                         className="text-blue-600 focus:ring-blue-500"
                       />
-                      <span className="text-sm text-gray-700">On</span>
+                      <span className="checkbox-label">On</span>
                       <input
                         type="date"
                         value={recurEndDate}
@@ -1157,9 +1158,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
 
           {/* Title (Optional) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <FormLabel>
               Title (Optional)
-            </label>
+            </FormLabel>
             <input
               type="text"
               value={title}
@@ -1171,9 +1172,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
 
           {/* Comments */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <FormLabel>
               Comments
-            </label>
+            </FormLabel>
             <textarea
               value={comments}
               onChange={(e) => setComments(e.target.value)}

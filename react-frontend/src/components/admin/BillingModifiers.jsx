@@ -14,6 +14,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { PrimaryButton } from '../PrimaryButton';
 import { SecondaryButton } from '../SecondaryButton';
+import { FormLabel } from '../FormLabel';
 
 function BillingModifiers() {
   const [modifiers, setModifiers] = useState([]);
@@ -345,9 +346,9 @@ function BillingModifiers() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <FormLabel>
                     Modifier Code <span className="text-red-500">*</span>
-                  </label>
+                  </FormLabel>
                   <input
                     type="text"
                     value={formData.code}
@@ -359,9 +360,7 @@ function BillingModifiers() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Type
-                  </label>
+                  <FormLabel>Type</FormLabel>
                   <select
                     value={formData.modifier_type}
                     onChange={(e) => setFormData({ ...formData, modifier_type: e.target.value })}
@@ -375,9 +374,9 @@ function BillingModifiers() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <FormLabel>
                   Description <span className="text-red-500">*</span>
-                </label>
+                </FormLabel>
                 <input
                   type="text"
                   value={formData.description}
@@ -393,9 +392,9 @@ function BillingModifiers() {
                     type="checkbox"
                     checked={formData.is_active === 1}
                     onChange={(e) => setFormData({ ...formData, is_active: e.target.checked ? 1 : 0 })}
-                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="mr-2 checkbox"
                   />
-                  <span className="text-sm text-gray-700">Active</span>
+                  <span className="checkbox-label">Active</span>
                 </label>
               </div>
 

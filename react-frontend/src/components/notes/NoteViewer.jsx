@@ -397,7 +397,7 @@ function NoteViewer({ noteId, onClose, onEdit, onAddendum }) {
               <span className="text-2xl">✅</span>
               <div className="flex-1">
                 <div className="font-semibold text-green-800">Digitally Signed</div>
-                <div className="text-sm text-gray-700">
+                <div className="checkbox-label">
                   {note.signed_by_name} • {formatDateTime(note.signed_at)}
                 </div>
               </div>

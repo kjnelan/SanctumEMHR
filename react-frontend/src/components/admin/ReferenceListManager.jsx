@@ -14,6 +14,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { PrimaryButton } from '../PrimaryButton';
+import { FormLabel } from '../FormLabel';
 
 function ReferenceListManager({ listType, title, description, apiEndpoint }) {
   const [items, setItems] = useState([]);
@@ -228,12 +229,9 @@ function ReferenceListManager({ listType, title, description, apiEndpoint }) {
           <h2 className="text-2xl font-semibold text-gray-800">{title}</h2>
           <p className="text-gray-600 mt-1">{description}</p>
         </div>
-        <button
-          onClick={handleAdd}
-          className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-        >
+        <PrimaryButton onClick={handleAdd}>
           + Add {title.replace(/s$/, '')}
-        </button>
+        </PrimaryButton>
       </div>
 
       {items.length === 0 ? (
@@ -317,9 +315,9 @@ function ReferenceListManager({ listType, title, description, apiEndpoint }) {
               )}
 
               <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Name <span className="text-red-500">*</span>
-                </label>
+                </FormLabel>
                 <input
                   type="text"
                   value={formData.name}
@@ -331,9 +329,9 @@ function ReferenceListManager({ listType, title, description, apiEndpoint }) {
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Description (Optional)
-                </label>
+                </FormLabel>
                 <input
                   type="text"
                   value={formData.description}
@@ -405,9 +403,9 @@ function ReferenceListManager({ listType, title, description, apiEndpoint }) {
               )}
 
               <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Name <span className="text-red-500">*</span>
-                </label>
+                </FormLabel>
                 <input
                   type="text"
                   value={formData.name}
@@ -418,9 +416,9 @@ function ReferenceListManager({ listType, title, description, apiEndpoint }) {
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FormLabel>
                   Description (Optional)
-                </label>
+                </FormLabel>
                 <input
                   type="text"
                   value={formData.description}
