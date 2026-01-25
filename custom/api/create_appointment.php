@@ -321,13 +321,14 @@ try {
             duration,
             notes,
             status,
+            room,
             facility_id,
             cpt_code_id,
             billing_fee,
             fee_type,
             created_at,
             updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
 
         // Determine fee_type based on payment type and billing fee
         $feeType = null;
@@ -351,6 +352,7 @@ try {
             $duration,
             $notes,
             $sanctumEMHRStatus,
+            $room,
             $facilityId,
             $cptCodeId,
             $billingFee,

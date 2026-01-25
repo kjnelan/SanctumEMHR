@@ -1,6 +1,6 @@
 /**
- * SanctumEMHR EMHR - Facilities Management
- * Manage practice facilities/locations
+ * SanctumEMHR EMHR - Facilities & Counseling Rooms Management
+ * Manage practice facilities/locations and counseling rooms
  *
  * Author: Kenneth J. Nelan
  * License: Proprietary and Confidential
@@ -21,6 +21,41 @@ import { ErrorMessage } from '../ErrorMessage';
 import { DangerButton } from '../DangerButton';
 
 function Facilities() {
+  // Main tab state - 'facilities' or 'rooms'
+  const [mainTab, setMainTab] = useState('facilities');
+
+  return (
+    <div className="glass-card p-6">
+      {/* Main Tab Navigation */}
+      <div className="flex border-b border-gray-300 mb-6">
+        <TabButton
+          active={mainTab === 'facilities'}
+          onClick={() => setMainTab('facilities')}
+        >
+          Facilities
+        </TabButton>
+        <TabButton
+          active={mainTab === 'rooms'}
+          onClick={() => setMainTab('rooms')}
+        >
+          Counseling Rooms
+        </TabButton>
+      </div>
+
+      {/* Tab Content */}
+      {mainTab === 'facilities' ? (
+        <FacilitiesTab />
+      ) : (
+        <CounselingRoomsTab />
+      )}
+    </div>
+  );
+}
+
+// ============================================
+// FACILITIES TAB COMPONENT
+// ============================================
+function FacilitiesTab() {
   const [facilities, setFacilities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -301,20 +336,16 @@ function Facilities() {
 
   if (loading) {
     return (
-      <div className="glass-card p-8">
-        <div className="text-center text-gray-700">Loading facilities...</div>
-      </div>
+      <div className="text-center text-gray-700 py-8">Loading facilities...</div>
     );
   }
 
   if (error) {
     return (
-      <div className="glass-card p-8">
+      <div>
         <ErrorMessage className="text-center">Error: {error}</ErrorMessage>
         <div className="text-center mt-4">
-          <PrimaryButton
-            onClick={fetchFacilities}
-          >
+          <PrimaryButton onClick={fetchFacilities}>
             Retry
           </PrimaryButton>
         </div>
@@ -323,7 +354,7 @@ function Facilities() {
   }
 
   return (
-    <div className="glass-card p-6">
+    <>
       {/* Header Section */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -489,11 +520,346 @@ function Facilities() {
         onSave={showEditModal ? handleSaveEdit : handleSaveNew}
         onClose={handleCloseModals}
       />
-    </div>
+    </>
   );
 }
 
-// Separate modal component
+// ============================================
+// COUNSELING ROOMS TAB COMPONENT
+// ============================================
+function CounselingRoomsTab() {
+  const [rooms, setRooms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Modal states
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [formData, setFormData] = useState({
+    option_id: '',
+    title: '',
+    sort_order: 0,
+    is_default: 0,
+    notes: ''
+  });
+  const [formError, setFormError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  const fetchRooms = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/custom/api/get_rooms.php', {
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch rooms');
+      }
+
+      const data = await response.json();
+      setRooms(data.rooms || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdd = () => {
+    setFormData({
+      option_id: '',
+      title: '',
+      sort_order: rooms.length + 1,
+      is_default: 0,
+      notes: ''
+    });
+    setFormError('');
+    setShowAddModal(true);
+  };
+
+  const handleEdit = (room) => {
+    setFormData({
+      option_id: room.value || room.option_id,
+      title: room.label || room.title,
+      sort_order: room.sort_order || 0,
+      is_default: room.is_default || 0,
+      notes: room.notes || ''
+    });
+    setFormError('');
+    setShowEditModal(true);
+  };
+
+  const handleSave = async () => {
+    if (!formData.option_id?.trim()) {
+      setFormError('Room ID is required');
+      return;
+    }
+    if (!formData.title?.trim()) {
+      setFormError('Room name is required');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setFormError('');
+
+      const method = showEditModal ? 'PUT' : 'POST';
+      const response = await fetch('/custom/api/rooms.php', {
+        method,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          ...formData,
+          list_id: 'rooms'
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || `Failed to ${showEditModal ? 'update' : 'create'} room`);
+      }
+
+      await fetchRooms();
+      setShowAddModal(false);
+      setShowEditModal(false);
+    } catch (err) {
+      setFormError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (optionId) => {
+    if (!confirm('Are you sure you want to delete this room?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/custom/api/rooms.php?option_id=${optionId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete room');
+      }
+
+      await fetchRooms();
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  };
+
+  const handleCloseModals = () => {
+    setShowAddModal(false);
+    setShowEditModal(false);
+    setFormError('');
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center text-gray-700 py-8">Loading rooms...</div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div>
+        <ErrorMessage className="text-center">Error: {error}</ErrorMessage>
+        <div className="text-center mt-4">
+          <PrimaryButton onClick={fetchRooms}>
+            Retry
+          </PrimaryButton>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* Header Section */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-800">Counseling Rooms</h2>
+          <p className="text-gray-600 mt-1">Manage rooms/offices for appointment scheduling</p>
+        </div>
+        <button
+          onClick={handleAdd}
+          className="btn-solid btn-solid-green btn-icon"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Add Room
+        </button>
+      </div>
+
+      {/* Room Count */}
+      {rooms.length > 0 && (
+        <div className="mb-4">
+          <p className="text-label">
+            {rooms.length} room{rooms.length !== 1 ? 's' : ''} configured
+          </p>
+        </div>
+      )}
+
+      {/* Room List */}
+      {rooms.length === 0 ? (
+        <div className="text-center py-12">
+          <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+          </svg>
+          <p className="text-gray-600 text-lg">No rooms configured</p>
+          <p className="text-gray-500 text-sm mt-1">Click "Add Room" to create your first counseling room</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sort Order</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Default</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {rooms.map((room, index) => (
+                <tr key={room.value || room.option_id || index} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                    {room.value || room.option_id}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {room.label || room.title}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {room.sort_order || 0}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    {room.is_default === 1 || room.is_default === '1' ? (
+                      <span className="badge-solid-success">Yes</span>
+                    ) : (
+                      <span className="text-gray-400">No</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                    {room.notes || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => handleEdit(room)}
+                      className="text-blue-600 hover:text-blue-900 mr-4"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(room.value || room.option_id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Add/Edit Room Modal */}
+      <Modal
+        isOpen={showAddModal || showEditModal}
+        onClose={handleCloseModals}
+        title={showEditModal ? 'Edit Room' : 'Add Room'}
+        size="sm"
+      >
+        <div className="space-y-4">
+          {formError && <ErrorMessage>{formError}</ErrorMessage>}
+
+          <div>
+            <FormLabel>Room ID <RequiredAsterisk /></FormLabel>
+            <input
+              type="text"
+              value={formData.option_id}
+              onChange={(e) => setFormData({ ...formData, option_id: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
+              className="input-field"
+              placeholder="office1"
+              disabled={showEditModal}
+            />
+            <p className="text-xs text-gray-500 mt-1">Unique identifier (no spaces)</p>
+          </div>
+
+          <div>
+            <FormLabel>Room Name <RequiredAsterisk /></FormLabel>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="input-field"
+              placeholder="Office 1"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <FormLabel>Sort Order</FormLabel>
+              <input
+                type="number"
+                value={formData.sort_order}
+                onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <FormLabel>Default Room</FormLabel>
+              <label className="flex items-center mt-2">
+                <input
+                  type="checkbox"
+                  checked={formData.is_default === 1}
+                  onChange={(e) => setFormData({ ...formData, is_default: e.target.checked ? 1 : 0 })}
+                  className="checkbox mr-2"
+                />
+                <span className="checkbox-label">Set as default</span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <FormLabel>Notes</FormLabel>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="input-field"
+              rows={2}
+              placeholder="Optional notes about this room..."
+            />
+          </div>
+
+          <Modal.Footer>
+            <SecondaryButton onClick={handleCloseModals} disabled={saving}>
+              Cancel
+            </SecondaryButton>
+            <PrimaryButton onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving...' : (showEditModal ? 'Save Changes' : 'Add Room')}
+            </PrimaryButton>
+          </Modal.Footer>
+        </div>
+      </Modal>
+    </>
+  );
+}
+
+// ============================================
+// FACILITY FORM MODAL COMPONENT
+// ============================================
 function FacilityFormModal({
   isOpen,
   isEdit,
@@ -545,14 +911,14 @@ function FacilityFormModal({
                   >
                     Physical Address
                   </TabButton>
-                  
+
                   <TabButton
                     active={addressTab === 'mailing'}
                     onClick={() => setAddressTab('mailing')}
                   >
                     Mailing Address
                   </TabButton>
-                  
+
                   <TabButton
                     active={addressTab === 'billing'}
                     onClick={() => setAddressTab('billing')}
@@ -626,7 +992,6 @@ function FacilityFormModal({
                     onChange={(e) => {
                       const checked = e.target.checked;
                       if (checked) {
-                        // Copy physical address to mailing
                         onFormChange('mailing_same_as_physical', '1');
                         onFormChange('mail_street', formData.street || '');
                         onFormChange('mailing_address_line2', formData.address_line2 || '');
@@ -709,7 +1074,6 @@ function FacilityFormModal({
                     onChange={(e) => {
                       const checked = e.target.checked;
                       if (checked) {
-                        // Copy physical address to billing
                         onFormChange('billing_same_as_physical', '1');
                         onFormChange('billing_street', formData.street || '');
                         onFormChange('billing_address_line2', formData.address_line2 || '');
