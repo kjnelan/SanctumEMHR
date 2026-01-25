@@ -12,8 +12,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { Modal } from '../Modal';
 import { PrimaryButton } from '../PrimaryButton';
+import { SecondaryButton } from '../SecondaryButton';
 import { FormLabel } from '../FormLabel';
 import { RequiredAsterisk } from '../RequiredAsterisk';
 import { ErrorMessage } from '../ErrorMessage';
@@ -649,29 +650,28 @@ function UserManagement() {
       )}
 
       {/* Add/Edit Modal */}
-      {(showAddModal || showEditModal) && createPortal(
-        <UserFormModal
-          isEdit={showEditModal}
-          formData={formData}
-          formError={formError}
-          saving={saving}
-          showPassword={showPassword}
-          setShowPassword={setShowPassword}
-          supervisors={supervisors}
-          facilities={facilities}
-          onFormChange={handleFormChange}
-          onToggleSupervisor={toggleSupervisor}
-          onSave={showEditModal ? handleSaveEdit : handleSaveNew}
-          onClose={handleCloseModals}
-        />,
-        document.body
-      )}
+      <UserFormModal
+        isOpen={showAddModal || showEditModal}
+        isEdit={showEditModal}
+        formData={formData}
+        formError={formError}
+        saving={saving}
+        showPassword={showPassword}
+        setShowPassword={setShowPassword}
+        supervisors={supervisors}
+        facilities={facilities}
+        onFormChange={handleFormChange}
+        onToggleSupervisor={toggleSupervisor}
+        onSave={showEditModal ? handleSaveEdit : handleSaveNew}
+        onClose={handleCloseModals}
+      />
     </div>
   );
 }
 
 // Separate modal component to keep main component clean
 function UserFormModal({
+  isOpen,
   isEdit,
   formData,
   formError,
@@ -686,25 +686,13 @@ function UserFormModal({
   onClose
 }) {
   return (
-    <div className="modal-backdrop">
-      <div className="modal-container modal-lg">
-        {/* Header */}
-        <div className="modal-header">
-          <h2 className="text-2xl font-bold text-gray-800">
-            {isEdit ? 'Edit User' : 'Add New User'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={(e) => { e.preventDefault(); onSave(); }} className="modal-body">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isEdit ? 'Edit User' : 'Add New User'}
+      size="lg"
+    >
+      <form onSubmit={(e) => { e.preventDefault(); onSave(); }}>
           {/* Error message */}
           {formError && (
             <div className="error-message">
@@ -1038,26 +1026,16 @@ function UserFormModal({
           </div>
 
           {/* Action Buttons */}
-          <div className="modal-footer">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={saving}
-              className="btn-action btn-cancel btn-compact disabled:opacity-50"
-            >
+          <Modal.Footer>
+            <SecondaryButton type="button" onClick={onClose} disabled={saving}>
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="btn-action btn-primary btn-compact disabled:opacity-50"
-            >
+            </SecondaryButton>
+            <PrimaryButton type="submit" disabled={saving}>
               {saving ? 'Saving...' : (isEdit ? 'Save Changes' : 'Create User')}
-            </button>
-          </div>
+            </PrimaryButton>
+          </Modal.Footer>
         </form>
-      </div>
-    </div>
+      </Modal>
   );
 }
 

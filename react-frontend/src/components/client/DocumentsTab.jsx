@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { Modal } from '../Modal';
 import { FormLabel } from '../FormLabel';
+import { RequiredAsterisk } from '../RequiredAsterisk';
 import { PrimaryButton } from '../PrimaryButton';
+import { SecondaryButton } from '../SecondaryButton';
+import { ErrorMessage } from '../ErrorMessage';
 
 function DocumentsTab({ data }) {
   const [documents, setDocuments] = useState([]);
@@ -371,110 +374,74 @@ function DocumentsTab({ data }) {
       )}
 
       {/* Upload Modal */}
-      {showUploadModal && createPortal(
-        <div className="modal-backdrop">
-          <div className="modal-container max-w-lg">
-            {/* Modal Header */}
-            <div className="modal-header">
-              <h3 className="text-xl font-bold text-gray-800">Upload Document</h3>
-              <button
-                onClick={handleCloseUploadModal}
-                disabled={uploading}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+      <Modal
+        isOpen={showUploadModal}
+        onClose={handleCloseUploadModal}
+        title="Upload Document"
+        size="sm"
+      >
+        <div className="space-y-4">
+          {uploadError && <ErrorMessage>{uploadError}</ErrorMessage>}
 
-            {/* Modal Body */}
-            <div className="modal-body">
-              {uploadError && (
-                <div className="error-message mb-4">
-                  {uploadError}
-                </div>
-              )}
-
-              <div className="space-y-4">
-                {/* File Selector */}
-                <div>
-                  <FormLabel>
-                    Select File <span className="text-red-600">*</span>
-                  </FormLabel>
-                  <input
-                    type="file"
-                    onChange={handleFileSelect}
-                    className="input-field"
-                  />
-                  {selectedFile && (
-                    <div className="mt-2 text-sm text-gray-600">
-                      Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
-                    </div>
-                  )}
-                </div>
-
-                {/* Document Name */}
-                <div>
-                  <FormLabel>
-                    Document Name
-                  </FormLabel>
-                  <input
-                    type="text"
-                    value={uploadForm.name}
-                    onChange={(e) => handleUploadFormChange('name', e.target.value)}
-                    placeholder="Enter document name"
-                    className="input-field"
-                  />
-                  <div className="mt-1 text-xs text-gray-500">
-                    Leave blank to use filename
-                  </div>
-                </div>
-
-                {/* Category Selector */}
-                <div>
-                  <FormLabel>
-                    Category (Optional)
-                  </FormLabel>
-                  <select
-                    value={uploadForm.category_id}
-                    onChange={(e) => handleUploadFormChange('category_id', e.target.value)}
-                    className="input-field"
-                  >
-                    <option value="">Select a category...</option>
-                    {allCategories.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
+          {/* File Selector */}
+          <div>
+            <FormLabel>Select File <RequiredAsterisk /></FormLabel>
+            <input
+              type="file"
+              onChange={handleFileSelect}
+              className="input-field"
+            />
+            {selectedFile && (
+              <div className="mt-2 text-sm text-gray-600">
+                Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
               </div>
+            )}
+          </div>
 
-              <p className="text-sm text-gray-600 mt-4">
-                <span className="text-red-600">*</span> Required
-              </p>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="modal-footer">
-              <button
-                onClick={handleCloseUploadModal}
-                disabled={uploading}
-                className="btn-action btn-cancel"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpload}
-                disabled={uploading || !selectedFile}
-                className="btn-action btn-primary"
-              >
-                {uploading ? 'Uploading...' : 'Upload'}
-              </button>
+          {/* Document Name */}
+          <div>
+            <FormLabel>Document Name</FormLabel>
+            <input
+              type="text"
+              value={uploadForm.name}
+              onChange={(e) => handleUploadFormChange('name', e.target.value)}
+              placeholder="Enter document name"
+              className="input-field"
+            />
+            <div className="mt-1 text-xs text-gray-500">
+              Leave blank to use filename
             </div>
           </div>
-        </div>,
-        document.body
-      )}
+
+          {/* Category Selector */}
+          <div>
+            <FormLabel>Category (Optional)</FormLabel>
+            <select
+              value={uploadForm.category_id}
+              onChange={(e) => handleUploadFormChange('category_id', e.target.value)}
+              className="input-field"
+            >
+              <option value="">Select a category...</option>
+              {allCategories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <p className="text-sm text-gray-600">
+            <span className="text-red-600">*</span> Required
+          </p>
+
+          <Modal.Footer>
+            <SecondaryButton onClick={handleCloseUploadModal} disabled={uploading}>
+              Cancel
+            </SecondaryButton>
+            <PrimaryButton onClick={handleUpload} disabled={uploading || !selectedFile}>
+              {uploading ? 'Uploading...' : 'Upload'}
+            </PrimaryButton>
+          </Modal.Footer>
+        </div>
+      </Modal>
     </div>
   );
 }

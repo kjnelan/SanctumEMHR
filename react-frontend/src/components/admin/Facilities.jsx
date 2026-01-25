@@ -11,10 +11,11 @@
  */
 
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { Modal } from '../Modal';
 import { FormLabel } from '../FormLabel';
 import { TabButton } from '../TabButton';
 import { PrimaryButton } from '../PrimaryButton';
+import { SecondaryButton } from '../SecondaryButton';
 import { RequiredAsterisk } from '../RequiredAsterisk';
 import { ErrorMessage } from '../ErrorMessage';
 import { DangerButton } from '../DangerButton';
@@ -474,28 +475,27 @@ function Facilities() {
       )}
 
       {/* Add/Edit Modal */}
-      {(showAddModal || showEditModal) && createPortal(
-        <FacilityFormModal
-          isEdit={showEditModal}
-          formData={formData}
-          formError={formError}
-          saving={saving}
-          addressTab={addressTab}
-          setAddressTab={setAddressTab}
-          posCodeOptions={posCodeOptions}
-          onFormChange={handleFormChange}
-          onToggle={handleToggle}
-          onSave={showEditModal ? handleSaveEdit : handleSaveNew}
-          onClose={handleCloseModals}
-        />,
-        document.body
-      )}
+      <FacilityFormModal
+        isOpen={showAddModal || showEditModal}
+        isEdit={showEditModal}
+        formData={formData}
+        formError={formError}
+        saving={saving}
+        addressTab={addressTab}
+        setAddressTab={setAddressTab}
+        posCodeOptions={posCodeOptions}
+        onFormChange={handleFormChange}
+        onToggle={handleToggle}
+        onSave={showEditModal ? handleSaveEdit : handleSaveNew}
+        onClose={handleCloseModals}
+      />
     </div>
   );
 }
 
 // Separate modal component
 function FacilityFormModal({
+  isOpen,
   isEdit,
   formData,
   formError,
@@ -509,25 +509,13 @@ function FacilityFormModal({
   onClose
 }) {
   return (
-    <div className="modal-backdrop">
-      <div className="modal-container max-w-4xl">
-        {/* Modal Header */}
-        <div className="modal-header">
-          <h3 className="text-xl font-bold text-gray-800">
-            {isEdit ? 'Edit Facility' : 'Add New Facility'}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Modal Body */}
-        <div className="modal-body">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isEdit ? 'Edit Facility' : 'Add New Facility'}
+      size="lg"
+    >
+      <div>
           {formError && (
             <div className="error-message mb-4">
               {formError}
@@ -982,27 +970,17 @@ function FacilityFormModal({
           </div>
 
           <p className="text-sm text-gray-600"><span className="text-red-600">*</span> Required</p>
-        </div>
 
-        {/* Modal Footer */}
-        <div className="modal-footer">
-          <button
-            onClick={onClose}
-            disabled={saving}
-            className="btn-action btn-cancel"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onSave}
-            disabled={saving}
-            className="btn-action btn-primary"
-          >
-            {saving ? 'Saving...' : (isEdit ? 'Save Changes' : 'Add Facility')}
-          </button>
+          <Modal.Footer>
+            <SecondaryButton onClick={onClose} disabled={saving}>
+              Cancel
+            </SecondaryButton>
+            <PrimaryButton onClick={onSave} disabled={saving}>
+              {saving ? 'Saving...' : (isEdit ? 'Save Changes' : 'Add Facility')}
+            </PrimaryButton>
+          </Modal.Footer>
         </div>
-      </div>
-    </div>
+      </Modal>
   );
 }
 

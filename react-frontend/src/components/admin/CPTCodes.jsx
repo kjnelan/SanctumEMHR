@@ -11,7 +11,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { Modal } from '../Modal';
 import { PrimaryButton } from '../PrimaryButton';
 import { SecondaryButton } from '../SecondaryButton';
 import { FormLabel } from '../FormLabel';
@@ -348,157 +348,125 @@ function CPTCodes() {
       </div>
 
       {/* Add/Edit Modal */}
-      {(showAddModal || showEditModal) && createPortal(
-        <div className="modal-backdrop">
-          <div className="modal-container modal-md">
-            <div className="modal-header">
-              <h2 className="text-2xl font-bold text-gray-800">
-                {formData.id ? 'Edit CPT Code' : 'Add CPT Code'}
-              </h2>
-              <button
-                onClick={() => {
-                  setShowAddModal(false);
-                  setShowEditModal(false);
-                }}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+      <Modal
+        isOpen={showAddModal || showEditModal}
+        onClose={() => { setShowAddModal(false); setShowEditModal(false); }}
+        title={formData.id ? 'Edit CPT Code' : 'Add CPT Code'}
+        size="md"
+      >
+        <div className="space-y-4">
+          {formError && <ErrorMessage>{formError}</ErrorMessage>}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <FormLabel>CPT Code <RequiredAsterisk /></FormLabel>
+              <input
+                type="text"
+                value={formData.code}
+                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="90834"
+              />
             </div>
 
-            <div className="modal-body space-y-4">
-              {formError && (
-                <ErrorMessage>
-                  {formError}
-                </ErrorMessage>
-              )}
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <FormLabel>
-                    CPT Code <RequiredAsterisk />
-                  </FormLabel>
-                  <input
-                    type="text"
-                    value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="90834"
-                  />
-                </div>
-
-                <div>
-                  <FormLabel>Category</FormLabel>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    {categoryOptions.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <FormLabel>
-                  Description <RequiredAsterisk />
-                </FormLabel>
-                <input
-                  type="text"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Psychotherapy 45-50 minutes"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <FormLabel>Standard Duration (minutes)</FormLabel>
-                  <input
-                    type="number"
-                    value={formData.standard_duration_minutes}
-                    onChange={(e) => setFormData({ ...formData, standard_duration_minutes: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <FormLabel>Standard Fee ($)</FormLabel>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.standard_fee}
-                    onChange={(e) => setFormData({ ...formData, standard_fee: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="150.00"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-6">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_addon === 1}
-                    onChange={(e) => setFormData({ ...formData, is_addon: e.target.checked ? 1 : 0 })}
-                    className="mr-2 checkbox"
-                  />
-                  <span className="checkbox-label">Add-on Code</span>
-                </label>
-
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_active === 1}
-                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked ? 1 : 0 })}
-                    className="mr-2 checkbox"
-                  />
-                  <span className="checkbox-label">Active</span>
-                </label>
-              </div>
-
-              {formData.is_addon === 1 && (
-                <div>
-                  <FormLabel>Requires Primary Code</FormLabel>
-                  <input
-                    type="text"
-                    value={formData.requires_primary_code}
-                    onChange={(e) => setFormData({ ...formData, requires_primary_code: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="90834"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Which primary CPT code is required for this add-on?</p>
-                </div>
-              )}
-
-              <div className="modal-footer">
-                <SecondaryButton
-                  onClick={() => {
-                    setShowAddModal(false);
-                    setShowEditModal(false);
-                  }}
-                  disabled={saving}
-                >
-                  Cancel
-                </SecondaryButton>
-
-                <PrimaryButton
-                  onClick={handleSave}
-                  disabled={saving}
-                >
-                  {saving ? 'Saving...' : 'Save CPT Code'}
-                </PrimaryButton>
-              </div>
+            <div>
+              <FormLabel>Category</FormLabel>
+              <select
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {categoryOptions.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
             </div>
           </div>
-        </div>,
-        document.body
-      )}
+
+          <div>
+            <FormLabel>Description <RequiredAsterisk /></FormLabel>
+            <input
+              type="text"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Psychotherapy 45-50 minutes"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <FormLabel>Standard Duration (minutes)</FormLabel>
+              <input
+                type="number"
+                value={formData.standard_duration_minutes}
+                onChange={(e) => setFormData({ ...formData, standard_duration_minutes: parseInt(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <FormLabel>Standard Fee ($)</FormLabel>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.standard_fee}
+                onChange={(e) => setFormData({ ...formData, standard_fee: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="150.00"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.is_addon === 1}
+                onChange={(e) => setFormData({ ...formData, is_addon: e.target.checked ? 1 : 0 })}
+                className="mr-2 checkbox"
+              />
+              <span className="checkbox-label">Add-on Code</span>
+            </label>
+
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.is_active === 1}
+                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked ? 1 : 0 })}
+                className="mr-2 checkbox"
+              />
+              <span className="checkbox-label">Active</span>
+            </label>
+          </div>
+
+          {formData.is_addon === 1 && (
+            <div>
+              <FormLabel>Requires Primary Code</FormLabel>
+              <input
+                type="text"
+                value={formData.requires_primary_code}
+                onChange={(e) => setFormData({ ...formData, requires_primary_code: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="90834"
+              />
+              <p className="text-xs text-gray-500 mt-1">Which primary CPT code is required for this add-on?</p>
+            </div>
+          )}
+
+          <Modal.Footer>
+            <SecondaryButton
+              onClick={() => { setShowAddModal(false); setShowEditModal(false); }}
+              disabled={saving}
+            >
+              Cancel
+            </SecondaryButton>
+            <PrimaryButton onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving...' : 'Save CPT Code'}
+            </PrimaryButton>
+          </Modal.Footer>
+        </div>
+      </Modal>
     </div>
   );
 }

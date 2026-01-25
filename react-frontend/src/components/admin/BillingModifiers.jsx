@@ -11,7 +11,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { Modal } from '../Modal';
 import { PrimaryButton } from '../PrimaryButton';
 import { SecondaryButton } from '../SecondaryButton';
 import { FormLabel } from '../FormLabel';
@@ -319,110 +319,80 @@ function BillingModifiers() {
       </div>
 
       {/* Add/Edit Modal */}
-      {(showAddModal || showEditModal) && createPortal(
-        <div className="modal-backdrop">
-          <div className="modal-container max-w-lg">
-            <div className="modal-header">
-              <h2 className="text-2xl font-bold text-gray-800">
-                {formData.id ? 'Edit Modifier' : 'Add Modifier'}
-              </h2>
-              <button
-                onClick={() => {
-                  setShowAddModal(false);
-                  setShowEditModal(false);
-                }}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+      <Modal
+        isOpen={showAddModal || showEditModal}
+        onClose={() => { setShowAddModal(false); setShowEditModal(false); }}
+        title={formData.id ? 'Edit Modifier' : 'Add Modifier'}
+        size="sm"
+      >
+        <div className="space-y-4">
+          {formError && (
+            <ErrorMessage>{formError}</ErrorMessage>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <FormLabel>Modifier Code <RequiredAsterisk /></FormLabel>
+              <input
+                type="text"
+                value={formData.code}
+                onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="HO"
+                maxLength="10"
+              />
             </div>
 
-            <div className="modal-body space-y-4">
-              {formError && (
-                <ErrorMessage>
-                  {formError}
-                </ErrorMessage>
-              )}
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <FormLabel>
-                    Modifier Code <RequiredAsterisk />
-                  </FormLabel>
-                  <input
-                    type="text"
-                    value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="HO"
-                    maxLength="10"
-                  />
-                </div>
-
-                <div>
-                  <FormLabel>Type</FormLabel>
-                  <select
-                    value={formData.modifier_type}
-                    onChange={(e) => setFormData({ ...formData, modifier_type: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    {modifierTypes.map(type => (
-                      <option key={type.value} value={type.value}>{type.label}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <FormLabel>
-                  Description <span className="text-red-500">*</span>
-                </FormLabel>
-                <input
-                  type="text"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Master's Level Therapist"
-                />
-              </div>
-
-              <div>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_active === 1}
-                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked ? 1 : 0 })}
-                    className="mr-2 checkbox"
-                  />
-                  <span className="checkbox-label">Active</span>
-                </label>
-              </div>
-
-              <div className="modal-footer">
-                <SecondaryButton
-                  onClick={() => {
-                    setShowAddModal(false);
-                    setShowEditModal(false);
-                  }}
-                  disabled={saving}
-                >
-                  Cancel
-                </SecondaryButton>
-
-                <PrimaryButton
-                  onClick={handleSave}
-                  disabled={saving}
-                >
-                  {saving ? 'Saving...' : 'Save Modifier'}
-                </PrimaryButton>
-              </div>
+            <div>
+              <FormLabel>Type</FormLabel>
+              <select
+                value={formData.modifier_type}
+                onChange={(e) => setFormData({ ...formData, modifier_type: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {modifierTypes.map(type => (
+                  <option key={type.value} value={type.value}>{type.label}</option>
+                ))}
+              </select>
             </div>
           </div>
-        </div>,
-        document.body
-      )}
+
+          <div>
+            <FormLabel>Description <RequiredAsterisk /></FormLabel>
+            <input
+              type="text"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Master's Level Therapist"
+            />
+          </div>
+
+          <div>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.is_active === 1}
+                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked ? 1 : 0 })}
+                className="mr-2 checkbox"
+              />
+              <span className="checkbox-label">Active</span>
+            </label>
+          </div>
+
+          <Modal.Footer>
+            <SecondaryButton
+              onClick={() => { setShowAddModal(false); setShowEditModal(false); }}
+              disabled={saving}
+            >
+              Cancel
+            </SecondaryButton>
+            <PrimaryButton onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving...' : 'Save Modifier'}
+            </PrimaryButton>
+          </Modal.Footer>
+        </div>
+      </Modal>
     </div>
   );
 }

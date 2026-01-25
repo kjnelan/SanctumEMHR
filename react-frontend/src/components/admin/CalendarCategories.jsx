@@ -11,10 +11,11 @@
  */
 
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { Modal } from '../Modal';
 import { PrimaryButton } from '../PrimaryButton';
 import { SecondaryButton } from '../SecondaryButton';
 import { FormLabel } from '../FormLabel';
+import { RequiredAsterisk } from '../RequiredAsterisk';
 import { ErrorMessage } from '../ErrorMessage';
 import { DangerButton } from '../DangerButton';
 
@@ -396,210 +397,180 @@ function CalendarCategories() {
       </div>
 
       {/* Add/Edit Modal */}
-      {(showAddModal || showEditModal) && createPortal(
-        <div className="modal-backdrop">
-          <div className="modal-container modal-lg">
-            <div className="modal-header">
-              <h2 className="text-2xl font-bold text-gray-800">
-                {formData.id ? 'Edit Category' : 'Add Category'}
-              </h2>
-              <button
-                onClick={() => {
-                  setShowAddModal(false);
-                  setShowEditModal(false);
-                }}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+      <Modal
+        isOpen={showAddModal || showEditModal}
+        onClose={() => { setShowAddModal(false); setShowEditModal(false); }}
+        title={formData.id ? 'Edit Category' : 'Add Category'}
+        size="lg"
+      >
+        <div className="space-y-6">
+          {formError && <ErrorMessage>{formError}</ErrorMessage>}
 
-            <div className="modal-body space-y-6">
-              {formError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-                  {formError}
-                </div>
-              )}
-
-              {/* Basic Info */}
-              <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">Basic Information</h4>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <FormLabel>
-                        Category Name <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Office Visit"
-                      />
-                    </div>
-
-                    <div>
-                      <FormLabel>Category Type</FormLabel>
-                      <select
-                        value={formData.category_type}
-                        onChange={(e) => setFormData({ ...formData, category_type: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="client">Client Appointment</option>
-                        <option value="clinic">Clinic/Internal</option>
-                        <option value="holiday">Holiday/Closure</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <FormLabel>Description</FormLabel>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      rows="2"
-                      placeholder="Brief description of this category"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <FormLabel>Color</FormLabel>
-                      <input
-                        type="color"
-                        value={formData.color}
-                        onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                        className="w-full h-10 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-
-                    <div>
-                      <FormLabel>Default Duration (min)</FormLabel>
-                      <input
-                        type="number"
-                        value={formData.default_duration}
-                        onChange={(e) => setFormData({ ...formData, default_duration: parseInt(e.target.value) || 0 })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-
-                    <div>
-                      <FormLabel>Sort Order</FormLabel>
-                      <input
-                        type="number"
-                        value={formData.sort_order}
-                        onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Settings */}
-              <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">Settings</h4>
-                <div className="space-y-2">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.is_billable === 1}
-                      onChange={(e) => setFormData({ ...formData, is_billable: e.target.checked ? 1 : 0 })}
-                      className="mr-2 checkbox"
-                    />
-                    <span className="checkbox-label">Billable</span>
-                  </label>
-
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.requires_cpt_selection === 1}
-                      onChange={(e) => setFormData({ ...formData, requires_cpt_selection: e.target.checked ? 1 : 0 })}
-                      className="mr-2 checkbox"
-                    />
-                    <span className="checkbox-label">Requires CPT Code Selection</span>
-                  </label>
-
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.blocks_availability === 1}
-                      onChange={(e) => setFormData({ ...formData, blocks_availability: e.target.checked ? 1 : 0 })}
-                      className="mr-2 checkbox"
-                    />
-                    <span className="checkbox-label">Blocks Provider Availability</span>
-                  </label>
-
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.is_active === 1}
-                      onChange={(e) => setFormData({ ...formData, is_active: e.target.checked ? 1 : 0 })}
-                      className="mr-2 checkbox"
-                    />
-                    <span className="checkbox-label">Active</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* CPT Code Linking */}
-              {formData.requires_cpt_selection === 1 && (
+          {/* Basic Info */}
+          <div>
+            <h4 className="text-sm font-semibold text-gray-700 mb-3">Basic Information</h4>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-700 mb-3">Linked CPT Codes</h4>
-                  <div className="border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto">
-                    {cptCodes.length === 0 ? (
-                      <p className="text-sm text-gray-500">No active CPT codes available</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {cptCodes.map((code) => (
-                          <label key={code.id} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={formData.linked_cpt_codes.includes(code.id)}
-                              onChange={() => toggleCPTCode(code.id)}
-                              className="mr-2 checkbox"
-                            />
-                            <span className="checkbox-label">
-                              <span className="font-mono font-semibold">{code.code}</span> - {code.description}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Selected CPT codes will be available when scheduling appointments with this category
-                  </p>
+                  <FormLabel>Category Name <RequiredAsterisk /></FormLabel>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Office Visit"
+                  />
                 </div>
-              )}
 
-              <div className="modal-footer">
-                <SecondaryButton
-                  onClick={() => {
-                    setShowAddModal(false);
-                    setShowEditModal(false);
-                  }}
-                  disabled={saving}
-                >
-                  Cancel
-                </SecondaryButton>
+                <div>
+                  <FormLabel>Category Type</FormLabel>
+                  <select
+                    value={formData.category_type}
+                    onChange={(e) => setFormData({ ...formData, category_type: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="client">Client Appointment</option>
+                    <option value="clinic">Clinic/Internal</option>
+                    <option value="holiday">Holiday/Closure</option>
+                  </select>
+                </div>
+              </div>
 
-                <PrimaryButton
-                  onClick={handleSave}
-                  disabled={saving}
-                >
-                  {saving ? 'Saving...' : 'Save Category'}
-                </PrimaryButton>
+              <div>
+                <FormLabel>Description</FormLabel>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows="2"
+                  placeholder="Brief description of this category"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <FormLabel>Color</FormLabel>
+                  <input
+                    type="color"
+                    value={formData.color}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    className="w-full h-10 border border-gray-300 rounded-lg"
+                  />
+                </div>
+
+                <div>
+                  <FormLabel>Default Duration (min)</FormLabel>
+                  <input
+                    type="number"
+                    value={formData.default_duration}
+                    onChange={(e) => setFormData({ ...formData, default_duration: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <FormLabel>Sort Order</FormLabel>
+                  <input
+                    type="number"
+                    value={formData.sort_order}
+                    onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>,
-        document.body
-      )}
+
+          {/* Settings */}
+          <div>
+            <h4 className="text-sm font-semibold text-gray-700 mb-3">Settings</h4>
+            <div className="space-y-2">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.is_billable === 1}
+                  onChange={(e) => setFormData({ ...formData, is_billable: e.target.checked ? 1 : 0 })}
+                  className="mr-2 checkbox"
+                />
+                <span className="checkbox-label">Billable</span>
+              </label>
+
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.requires_cpt_selection === 1}
+                  onChange={(e) => setFormData({ ...formData, requires_cpt_selection: e.target.checked ? 1 : 0 })}
+                  className="mr-2 checkbox"
+                />
+                <span className="checkbox-label">Requires CPT Code Selection</span>
+              </label>
+
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.blocks_availability === 1}
+                  onChange={(e) => setFormData({ ...formData, blocks_availability: e.target.checked ? 1 : 0 })}
+                  className="mr-2 checkbox"
+                />
+                <span className="checkbox-label">Blocks Provider Availability</span>
+              </label>
+
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.is_active === 1}
+                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked ? 1 : 0 })}
+                  className="mr-2 checkbox"
+                />
+                <span className="checkbox-label">Active</span>
+              </label>
+            </div>
+          </div>
+
+          {/* CPT Code Linking */}
+          {formData.requires_cpt_selection === 1 && (
+            <div>
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Linked CPT Codes</h4>
+              <div className="border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto">
+                {cptCodes.length === 0 ? (
+                  <p className="text-sm text-gray-500">No active CPT codes available</p>
+                ) : (
+                  <div className="space-y-2">
+                    {cptCodes.map((code) => (
+                      <label key={code.id} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={formData.linked_cpt_codes.includes(code.id)}
+                          onChange={() => toggleCPTCode(code.id)}
+                          className="mr-2 checkbox"
+                        />
+                        <span className="checkbox-label">
+                          <span className="font-mono font-semibold">{code.code}</span> - {code.description}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Selected CPT codes will be available when scheduling appointments with this category
+              </p>
+            </div>
+          )}
+
+          <Modal.Footer>
+            <SecondaryButton
+              onClick={() => { setShowAddModal(false); setShowEditModal(false); }}
+              disabled={saving}
+            >
+              Cancel
+            </SecondaryButton>
+            <PrimaryButton onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving...' : 'Save Category'}
+            </PrimaryButton>
+          </Modal.Footer>
+        </div>
+      </Modal>
     </div>
   );
 }

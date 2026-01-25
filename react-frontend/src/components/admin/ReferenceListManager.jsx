@@ -12,8 +12,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { Modal } from '../Modal';
 import { PrimaryButton } from '../PrimaryButton';
+import { SecondaryButton } from '../SecondaryButton';
 import { FormLabel } from '../FormLabel';
 import { RequiredAsterisk } from '../RequiredAsterisk';
 import { ErrorMessage } from '../ErrorMessage';
@@ -293,235 +294,151 @@ function ReferenceListManager({ listType, title, description, apiEndpoint }) {
       )}
 
       {/* Add Modal */}
-      {showAddModal && createPortal(
-        <div className="modal-backdrop">
-          <div className="modal-container max-w-lg">
-            <div className="modal-header">
-              <h2 className="text-2xl font-bold text-gray-800">Add {title.replace(/s$/, '')}</h2>
-              <button
-                onClick={handleCloseModals}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+      <Modal
+        isOpen={showAddModal}
+        onClose={handleCloseModals}
+        title={`Add ${title.replace(/s$/, '')}`}
+        size="sm"
+      >
+        <form onSubmit={(e) => { e.preventDefault(); handleSaveNew(); }}>
+          {formError && <ErrorMessage>{formError}</ErrorMessage>}
 
-            <form onSubmit={(e) => { e.preventDefault(); handleSaveNew(); }} className="modal-body">
-              {formError && (
-                <div className="error-message">
-                  {formError}
-                </div>
-              )}
-
-              <div className="mb-4">
-                <FormLabel>
-                  Name <RequiredAsterisk />
-                </FormLabel>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g., Heterosexual, Male, Single"
-                  className="input-field"
-                  autoFocus
-                />
-              </div>
-
-              <div className="mb-4">
-                <FormLabel>
-                  Description (Optional)
-                </FormLabel>
-                <input
-                  type="text"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Additional details or clarification"
-                  className="input-field"
-                />
-              </div>
-
-              <div className="mb-6">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.active}
-                    onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                    className="rounded"
-                  />
-                  <span className="text-sm font-semibold text-gray-700">Active</span>
-                </label>
-                <p className="text-xs text-gray-500 mt-1 ml-6">
-                  Inactive items won't appear in selection lists
-                </p>
-              </div>
-
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  onClick={handleCloseModals}
-                  disabled={saving}
-                  className="btn-action btn-cancel btn-compact disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="btn-action btn-primary btn-compact disabled:opacity-50"
-                >
-                  {saving ? 'Creating...' : `Create ${title.replace(/s$/, '')}`}
-                </button>
-              </div>
-            </form>
+          <div className="mb-4">
+            <FormLabel>Name <RequiredAsterisk /></FormLabel>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="e.g., Heterosexual, Male, Single"
+              className="input-field"
+              autoFocus
+            />
           </div>
-        </div>,
-        document.body
-      )}
+
+          <div className="mb-4">
+            <FormLabel>Description (Optional)</FormLabel>
+            <input
+              type="text"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Additional details or clarification"
+              className="input-field"
+            />
+          </div>
+
+          <div className="mb-6">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.active}
+                onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                className="checkbox"
+              />
+              <span className="checkbox-label">Active</span>
+            </label>
+            <p className="text-xs text-gray-500 mt-1 ml-6">
+              Inactive items won't appear in selection lists
+            </p>
+          </div>
+
+          <Modal.Footer>
+            <SecondaryButton type="button" onClick={handleCloseModals} disabled={saving}>
+              Cancel
+            </SecondaryButton>
+            <PrimaryButton type="submit" disabled={saving}>
+              {saving ? 'Creating...' : `Create ${title.replace(/s$/, '')}`}
+            </PrimaryButton>
+          </Modal.Footer>
+        </form>
+      </Modal>
 
       {/* Edit Modal */}
-      {showEditModal && createPortal(
-        <div className="modal-backdrop">
-          <div className="modal-container max-w-lg">
-            <div className="modal-header">
-              <h2 className="text-2xl font-bold text-gray-800">Edit {title.replace(/s$/, '')}</h2>
-              <button
-                onClick={handleCloseModals}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+      <Modal
+        isOpen={showEditModal}
+        onClose={handleCloseModals}
+        title={`Edit ${title.replace(/s$/, '')}`}
+        size="sm"
+      >
+        <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(); }}>
+          {formError && <ErrorMessage>{formError}</ErrorMessage>}
 
-            <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(); }} className="modal-body">
-              {formError && (
-                <div className="error-message">
-                  {formError}
-                </div>
-              )}
-
-              <div className="mb-4">
-                <FormLabel>
-                  Name <RequiredAsterisk />
-                </FormLabel>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="input-field"
-                  autoFocus
-                />
-              </div>
-
-              <div className="mb-4">
-                <FormLabel>
-                  Description (Optional)
-                </FormLabel>
-                <input
-                  type="text"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Additional details or clarification"
-                  className="input-field"
-                />
-              </div>
-
-              <div className="mb-6">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.active}
-                    onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                    className="rounded"
-                  />
-                  <span className="text-sm font-semibold text-gray-700">Active</span>
-                </label>
-                <p className="text-xs text-gray-500 mt-1 ml-6">
-                  Inactive items won't appear in selection lists
-                </p>
-              </div>
-
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  onClick={handleCloseModals}
-                  disabled={saving}
-                  className="btn-action btn-cancel btn-compact disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="btn-action btn-primary btn-compact disabled:opacity-50"
-                >
-                  {saving ? 'Saving...' : 'Save Changes'}
-                </button>
-              </div>
-            </form>
+          <div className="mb-4">
+            <FormLabel>Name <RequiredAsterisk /></FormLabel>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="input-field"
+              autoFocus
+            />
           </div>
-        </div>,
-        document.body
-      )}
+
+          <div className="mb-4">
+            <FormLabel>Description (Optional)</FormLabel>
+            <input
+              type="text"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Additional details or clarification"
+              className="input-field"
+            />
+          </div>
+
+          <div className="mb-6">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.active}
+                onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                className="checkbox"
+              />
+              <span className="checkbox-label">Active</span>
+            </label>
+            <p className="text-xs text-gray-500 mt-1 ml-6">
+              Inactive items won't appear in selection lists
+            </p>
+          </div>
+
+          <Modal.Footer>
+            <SecondaryButton type="button" onClick={handleCloseModals} disabled={saving}>
+              Cancel
+            </SecondaryButton>
+            <PrimaryButton type="submit" disabled={saving}>
+              {saving ? 'Saving...' : 'Save Changes'}
+            </PrimaryButton>
+          </Modal.Footer>
+        </form>
+      </Modal>
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && createPortal(
-        <div className="modal-backdrop">
-          <div className="modal-container max-w-lg">
-            <div className="modal-header">
-              <h2 className="text-2xl font-bold text-gray-800">Delete {title.replace(/s$/, '')}</h2>
-              <button
-                onClick={handleCloseModals}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={handleCloseModals}
+        title={`Delete ${title.replace(/s$/, '')}`}
+        size="sm"
+      >
+        <form onSubmit={(e) => { e.preventDefault(); handleDelete(); }}>
+          {formError && <ErrorMessage>{formError}</ErrorMessage>}
 
-            <form onSubmit={(e) => { e.preventDefault(); handleDelete(); }} className="modal-body">
-              {formError && (
-                <div className="error-message">
-                  {formError}
-                </div>
-              )}
-
-              <div className="mb-6">
-                <p className="text-gray-700 mb-4">
-                  Are you sure you want to delete <strong>"{selectedItem?.name}"</strong>?
-                </p>
-
-                <p className="text-sm text-gray-600">
-                  Note: You cannot delete items that are currently in use by client records.
-                </p>
-              </div>
-
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  onClick={handleCloseModals}
-                  disabled={saving}
-                  className="btn-action btn-cancel btn-compact disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="btn-action btn-danger btn-compact disabled:opacity-50"
-                >
-                  {saving ? 'Deleting...' : `Delete ${title.replace(/s$/, '')}`}
-                </button>
-              </div>
-            </form>
+          <div className="mb-6">
+            <p className="text-gray-700 mb-4">
+              Are you sure you want to delete <strong>"{selectedItem?.name}"</strong>?
+            </p>
+            <p className="text-sm text-gray-600">
+              Note: You cannot delete items that are currently in use by client records.
+            </p>
           </div>
-        </div>,
-        document.body
-      )}
+
+          <Modal.Footer>
+            <SecondaryButton type="button" onClick={handleCloseModals} disabled={saving}>
+              Cancel
+            </SecondaryButton>
+            <DangerButton type="submit" disabled={saving}>
+              {saving ? 'Deleting...' : `Delete ${title.replace(/s$/, '')}`}
+            </DangerButton>
+          </Modal.Footer>
+        </form>
+      </Modal>
     </div>
   );
 }

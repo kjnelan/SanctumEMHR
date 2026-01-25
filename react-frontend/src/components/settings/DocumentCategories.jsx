@@ -12,11 +12,13 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { Modal } from '../Modal';
 import { PrimaryButton } from '../PrimaryButton';
+import { SecondaryButton } from '../SecondaryButton';
 import { FormLabel } from '../FormLabel';
 import { RequiredAsterisk } from '../RequiredAsterisk';
 import { ErrorInline } from '../ErrorInline';
+import { ErrorMessage } from '../ErrorMessage';
 import { DangerButton } from '../DangerButton';
 
 function DocumentCategories() {
@@ -341,241 +343,145 @@ function DocumentCategories() {
       )}
 
       {/* Add Modal */}
-      {showAddModal && createPortal(
-        <div className="modal-backdrop">
-          <div className="modal-container max-w-lg">
-            {/* Header */}
-            <div className="modal-header">
-              <h2 className="text-2xl font-bold text-gray-800">Add Category</h2>
-              <button
-                onClick={handleCloseModals}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+      <Modal
+        isOpen={showAddModal}
+        onClose={handleCloseModals}
+        title="Add Category"
+        size="sm"
+      >
+        <form onSubmit={(e) => { e.preventDefault(); handleSaveNew(); }}>
+          {formError && <ErrorMessage>{formError}</ErrorMessage>}
 
-            {/* Form */}
-            <form onSubmit={(e) => { e.preventDefault(); handleSaveNew(); }} className="modal-body">
-              {/* Error message */}
-              {formError && (
-                <div className="error-message">
-                  {formError}
-                </div>
-              )}
-
-              <div className="mb-4">
-                <FormLabel>
-                  Category Name <RequiredAsterisk />
-                </FormLabel>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g., Consent Forms, Insurance Documents"
-                  className="input-field"
-                  autoFocus
-                />
-              </div>
-
-              <div className="mb-6">
-                <FormLabel>
-                  Parent Category (Optional)
-                </FormLabel>
-                <select
-                  value={formData.parent_id || ''}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setFormData({
-                      ...formData,
-                      parent_id: value ? parseInt(value, 10) : null
-                    });
-                  }}
-                  className="input-field"
-                >
-                  <option value="">None (Top Level)</option>
-                  {categories.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  Select a parent to create a subcategory
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  onClick={handleCloseModals}
-                  disabled={saving}
-                  className="btn-action btn-cancel btn-compact disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="btn-action btn-primary btn-compact disabled:opacity-50"
-                >
-                  {saving ? 'Creating...' : 'Create Category'}
-                </button>
-              </div>
-            </form>
+          <div className="mb-4">
+            <FormLabel>Category Name <RequiredAsterisk /></FormLabel>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="e.g., Consent Forms, Insurance Documents"
+              className="input-field"
+              autoFocus
+            />
           </div>
-        </div>,
-        document.body
-      )}
+
+          <div className="mb-6">
+            <FormLabel>Parent Category (Optional)</FormLabel>
+            <select
+              value={formData.parent_id || ''}
+              onChange={(e) => {
+                const value = e.target.value;
+                setFormData({
+                  ...formData,
+                  parent_id: value ? parseInt(value, 10) : null
+                });
+              }}
+              className="input-field"
+            >
+              <option value="">None (Top Level)</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Select a parent to create a subcategory
+            </p>
+          </div>
+
+          <Modal.Footer>
+            <SecondaryButton type="button" onClick={handleCloseModals} disabled={saving}>
+              Cancel
+            </SecondaryButton>
+            <PrimaryButton type="submit" disabled={saving}>
+              {saving ? 'Creating...' : 'Create Category'}
+            </PrimaryButton>
+          </Modal.Footer>
+        </form>
+      </Modal>
 
       {/* Edit Modal */}
-      {showEditModal && createPortal(
-        <div className="modal-backdrop">
-          <div className="modal-container max-w-lg">
-            {/* Header */}
-            <div className="modal-header">
-              <h2 className="text-2xl font-bold text-gray-800">Edit Category</h2>
-              <button
-                onClick={handleCloseModals}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+      <Modal
+        isOpen={showEditModal}
+        onClose={handleCloseModals}
+        title="Edit Category"
+        size="sm"
+      >
+        <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(); }}>
+          {formError && <ErrorMessage>{formError}</ErrorMessage>}
 
-            {/* Form */}
-            <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(); }} className="modal-body">
-              {/* Error message */}
-              {formError && (
-                <div className="error-message">
-                  {formError}
-                </div>
-              )}
-
-              <div className="mb-4">
-                <FormLabel>
-                  Category Name <RequiredAsterisk />
-                </FormLabel>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="input-field"
-                  autoFocus
-                />
-              </div>
-
-              <div className="mb-6">
-                <FormLabel>
-                  Parent Category (Optional)
-                </FormLabel>
-                <select
-                  value={formData.parent_id || ''}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setFormData({
-                      ...formData,
-                      parent_id: value ? parseInt(value, 10) : null
-                    });
-                  }}
-                  className="input-field"
-                >
-                  <option value="">None (Top Level)</option>
-                  {getAvailableParents().map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  Select a parent to make this a subcategory
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  onClick={handleCloseModals}
-                  disabled={saving}
-                  className="btn-action btn-cancel btn-compact disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="btn-action btn-primary btn-compact disabled:opacity-50"
-                >
-                  {saving ? 'Saving...' : 'Save Changes'}
-                </button>
-              </div>
-            </form>
+          <div className="mb-4">
+            <FormLabel>Category Name <RequiredAsterisk /></FormLabel>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="input-field"
+              autoFocus
+            />
           </div>
-        </div>,
-        document.body
-      )}
+
+          <div className="mb-6">
+            <FormLabel>Parent Category (Optional)</FormLabel>
+            <select
+              value={formData.parent_id || ''}
+              onChange={(e) => {
+                const value = e.target.value;
+                setFormData({
+                  ...formData,
+                  parent_id: value ? parseInt(value, 10) : null
+                });
+              }}
+              className="input-field"
+            >
+              <option value="">None (Top Level)</option>
+              {getAvailableParents().map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Select a parent to make this a subcategory
+            </p>
+          </div>
+
+          <Modal.Footer>
+            <SecondaryButton type="button" onClick={handleCloseModals} disabled={saving}>
+              Cancel
+            </SecondaryButton>
+            <PrimaryButton type="submit" disabled={saving}>
+              {saving ? 'Saving...' : 'Save Changes'}
+            </PrimaryButton>
+          </Modal.Footer>
+        </form>
+      </Modal>
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && createPortal(
-        <div className="modal-backdrop">
-          <div className="modal-container max-w-lg">
-            {/* Header */}
-            <div className="modal-header">
-              <h2 className="text-2xl font-bold text-gray-800">Delete Category</h2>
-              <button
-                onClick={handleCloseModals}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={handleCloseModals}
+        title="Delete Category"
+        size="sm"
+      >
+        <form onSubmit={(e) => { e.preventDefault(); handleDelete(); }}>
+          {formError && <ErrorMessage>{formError}</ErrorMessage>}
 
-            {/* Form */}
-            <form onSubmit={(e) => { e.preventDefault(); handleDelete(); }} className="modal-body">
-              {/* Error message */}
-              {formError && (
-                <div className="error-message">
-                  {formError}
-                </div>
-              )}
-
-              <div className="mb-6">
-                <p className="text-gray-700 mb-4">
-                  Are you sure you want to delete the category <strong>"{selectedCategory?.name}"</strong>?
-                </p>
-
-                <p className="text-sm text-gray-600">
-                  Note: You cannot delete a category that has documents or subcategories.
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  onClick={handleCloseModals}
-                  disabled={saving}
-                  className="btn-action btn-cancel btn-compact disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="btn-action btn-danger btn-compact disabled:opacity-50"
-                >
-                  {saving ? 'Deleting...' : 'Delete Category'}
-                </button>
-              </div>
-            </form>
+          <div className="mb-6">
+            <p className="text-gray-700 mb-4">
+              Are you sure you want to delete the category <strong>"{selectedCategory?.name}"</strong>?
+            </p>
+            <p className="text-sm text-gray-600">
+              Note: You cannot delete a category that has documents or subcategories.
+            </p>
           </div>
-        </div>,
-        document.body
-      )}
+
+          <Modal.Footer>
+            <SecondaryButton type="button" onClick={handleCloseModals} disabled={saving}>
+              Cancel
+            </SecondaryButton>
+            <DangerButton type="submit" disabled={saving}>
+              {saving ? 'Deleting...' : 'Delete Category'}
+            </DangerButton>
+          </Modal.Footer>
+        </form>
+      </Modal>
     </div>
   );
 }
