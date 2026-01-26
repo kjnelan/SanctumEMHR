@@ -73,6 +73,9 @@ try {
         a.status,
         a.title,
         a.notes,
+        a.room,
+        a.cancellation_reason,
+        a.cpt_code_id,
         a.client_id,
         a.provider_id,
         a.facility_id,
@@ -133,10 +136,12 @@ try {
             'providerId' => $row['provider_id'],
             'providerName' => $row['provider_name'],
             'facilityName' => $row['facility_name'],
-            'room' => null, // Room field removed from SanctumEMHR schema
-            'roomId' => null,
-            'isRecurring' => !empty($row['recurrence_id']), // If recurrence record exists
-            'recurrenceId' => $row['recurrence_id'] // Recurrence series ID
+            'room' => $row['room'],
+            'roomId' => $row['room'],
+            'cancellationReason' => $row['cancellation_reason'],
+            'cptCodeId' => $row['cpt_code_id'],
+            'isRecurring' => !empty($row['recurrence_id']),
+            'recurrenceId' => $row['recurrence_id']
         ];
     }
 

@@ -85,6 +85,7 @@ try {
     $comments = $input['comments'] ?? '';
     $apptstatus = $input['apptstatus'] ?? '-'; // Default status
     $room = $input['room'] ?? '';
+    $cancellationReason = $input['cancellationReason'] ?? null;
 
     // CPT/Billing fields
     $cptCodeId = isset($input['cptCodeId']) && $input['cptCodeId'] ? intval($input['cptCodeId']) : null;
@@ -168,6 +169,9 @@ try {
     }
 
     // Build UPDATE query
+    // Include cancellation fields if status is cancelled or no_show
+    $isCancellation = in_array($sanctumEMHRStatus, ['cancelled', 'no_show']);
+
     $sql = "UPDATE appointments SET
         category_id = ?,
         provider_id = ?,
@@ -175,13 +179,14 @@ try {
         title = ?,
         start_datetime = ?,
         end_datetime = ?,
-        duration_minutes = ?,
-        comments = ?,
+        duration = ?,
+        notes = ?,
         status = ?,
         room = ?,
         cpt_code_id = ?,
-        billing_fee = ?,
-        fee_type = ?,
+        cancellation_reason = ?,
+        cancelled_at = " . ($isCancellation ? "NOW()" : "NULL") . ",
+        cancelled_by = " . ($isCancellation ? "?" : "NULL") . ",
         updated_at = NOW()
         WHERE $whereClause";
 
@@ -197,9 +202,13 @@ try {
         $sanctumEMHRStatus,
         $room,
         $cptCodeId,
-        $billingFee,
-        $feeType
+        $cancellationReason
     ];
+
+    // Add cancelled_by user ID if this is a cancellation
+    if ($isCancellation) {
+        $params[] = $session->getUserId();
+    }
 
     // Add where params
     $params = array_merge($params, $whereParams);

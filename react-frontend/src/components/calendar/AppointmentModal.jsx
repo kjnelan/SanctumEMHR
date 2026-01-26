@@ -47,8 +47,10 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
   const [title, setTitle] = useState('');
   const [comments, setComments] = useState('');
   const [room, setRoom] = useState('');
-  const [apptstatus, setApptstatus] = useState('-'); // Default to scheduled
+  const [apptstatus, setApptstatus] = useState('scheduled'); // Default to scheduled
   const [statuses, setStatuses] = useState([]);
+  const [cancellationReasons, setCancellationReasons] = useState([]);
+  const [cancellationReason, setCancellationReason] = useState('');
 
   // Billing/CPT fields
   const [cptCodeId, setCptCodeId] = useState('');
@@ -77,12 +79,13 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
   const [supervisees, setSupervisees] = useState([]);
   const [selectedSupervisees, setSelectedSupervisees] = useState([]);
 
-  // Load appointment categories, rooms, and statuses on mount
+  // Load appointment categories, rooms, statuses, and cancellation reasons on mount
   useEffect(() => {
     if (isOpen) {
       loadCategories();
       loadRooms();
       loadStatuses();
+      loadCancellationReasons();
     }
   }, [isOpen]);
 
@@ -122,7 +125,8 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
       setTitle(appointment.title || '');
       setComments(appointment.comments || '');
       setRoom(appointment.roomId || appointment.room || ''); // Use roomId for editing, fallback to room
-      setApptstatus(appointment.apptstatus || appointment.status || '-'); // Set status when editing
+      setApptstatus(appointment.apptstatus || appointment.status || 'scheduled'); // Set status when editing
+      setCancellationReason(appointment.cancellationReason || ''); // Set cancellation reason if exists
       setCptCodeId(appointment.cptCodeId || '');
 
       // Fetch patient payment type if we have a patient
@@ -201,6 +205,20 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
       }
     } catch (err) {
       console.error('Failed to load statuses:', err);
+    }
+  };
+
+  const loadCancellationReasons = async () => {
+    try {
+      const response = await fetch('/custom/api/settings_lists.php?list_id=cancellation_reasons', {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCancellationReasons(data.items || []);
+      }
+    } catch (err) {
+      console.error('Failed to load cancellation reasons:', err);
     }
   };
 
@@ -407,6 +425,7 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
         comments: comments,
         room: room,
         apptstatus: apptstatus, // Use state value for status
+        cancellationReason: (apptstatus === 'cancelled' || apptstatus === 'no_show') ? cancellationReason : null,
         overrideAvailability: overrideAvailability, // Pass override flag
         // Conditional fields based on appointment type
         ...(patientId && { patientId: parseInt(patientId) }),
@@ -552,7 +571,8 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
     setTitle('');
     setComments('');
     setRoom('');
-    setApptstatus('-');
+    setApptstatus('scheduled');
+    setCancellationReason('');
     setError(null);
     setSuccess(null);
     setAvailabilityConflict(null);
@@ -1071,32 +1091,68 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
 
           {/* Status - Only show when editing */}
           {appointment && (
-            <div>
-              <FormLabel>
-                Status
-              </FormLabel>
-              <select
-                value={apptstatus}
-                onChange={(e) => setApptstatus(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-              >
-                {statuses.length > 0 ? (
-                  statuses.filter(s => s.is_active).map((status) => (
-                    <option key={status.option_id} value={status.option_id}>
-                      {status.title}
-                    </option>
-                  ))
-                ) : (
-                  <>
-                    <option value="-">Scheduled</option>
-                    <option value="~">Confirmed</option>
-                    <option value="@">Arrived</option>
-                    <option value="^">Completed</option>
-                    <option value="?">Cancelled</option>
-                    <option value="*">No Show</option>
-                  </>
-                )}
-              </select>
+            <div className="space-y-4">
+              <div>
+                <FormLabel>
+                  Status
+                </FormLabel>
+                <select
+                  value={apptstatus}
+                  onChange={(e) => setApptstatus(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                >
+                  {statuses.length > 0 ? (
+                    statuses.filter(s => s.is_active).map((status) => (
+                      <option key={status.option_id} value={status.option_id}>
+                        {status.title}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="scheduled">Scheduled</option>
+                      <option value="confirmed">Confirmed</option>
+                      <option value="arrived">Arrived</option>
+                      <option value="in_session">In Session</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                      <option value="no_show">No Show</option>
+                    </>
+                  )}
+                </select>
+              </div>
+
+              {/* Cancellation Reason - Show when status is cancelled or no_show */}
+              {(apptstatus === 'cancelled' || apptstatus === 'no_show') && (
+                <div>
+                  <FormLabel>
+                    Cancellation Reason <RequiredAsterisk />
+                  </FormLabel>
+                  <select
+                    value={cancellationReason}
+                    onChange={(e) => setCancellationReason(e.target.value)}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                    required
+                  >
+                    <option value="">Select a reason...</option>
+                    {cancellationReasons.length > 0 ? (
+                      cancellationReasons.filter(r => r.is_active).map((reason) => (
+                        <option key={reason.option_id} value={reason.option_id}>
+                          {reason.title}
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="no_show">No Show</option>
+                        <option value="client_cancelled">Client Cancelled</option>
+                        <option value="provider_cancelled">Provider Cancelled</option>
+                        <option value="emergency">Emergency</option>
+                        <option value="rescheduled">Rescheduled</option>
+                        <option value="other">Other</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+              )}
             </div>
           )}
 
