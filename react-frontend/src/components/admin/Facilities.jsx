@@ -686,86 +686,71 @@ function CounselingRoomsTab() {
       {/* Header Section */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-800">Counseling Rooms</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Counseling Rooms</h2>
           <p className="text-gray-600 mt-1">Manage rooms/offices for appointment scheduling</p>
         </div>
-        <button
-          onClick={handleAdd}
-          className="btn-solid btn-solid-green btn-icon"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Add Room
-        </button>
+        <PrimaryButton onClick={handleAdd}>
+          + Add Room
+        </PrimaryButton>
       </div>
 
-      {/* Room Count */}
-      {rooms.length > 0 && (
-        <div className="mb-4">
-          <p className="text-label">
-            {rooms.length} room{rooms.length !== 1 ? 's' : ''} configured
-          </p>
-        </div>
+      {error && (
+        <ErrorMessage>{error}</ErrorMessage>
       )}
 
       {/* Room List */}
       {rooms.length === 0 ? (
         <div className="text-center py-12">
-          <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-          </svg>
           <p className="text-gray-600 text-lg">No rooms configured</p>
-          <p className="text-gray-500 text-sm mt-1">Click "Add Room" to create your first counseling room</p>
+          <p className="text-gray-500 text-sm mt-1">Click "+ Add Room" to create your first counseling room</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sort Order</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Default</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Room ID</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Room Name</th>
+                <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">Sort Order</th>
+                <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">Default</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Notes</th>
+                <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200">
               {rooms.map((room, index) => (
                 <tr key={room.value || room.option_id || index} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                  <td className="px-4 py-3 text-sm font-mono font-semibold text-gray-900">
                     {room.value || room.option_id}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-4 py-3 text-sm text-gray-700">
                     {room.label || room.title}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-4 py-3 text-sm text-gray-700 text-center">
                     {room.sort_order || 0}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <td className="px-4 py-3 text-center">
                     {room.is_default === 1 || room.is_default === '1' ? (
-                      <span className="badge-solid-success">Yes</span>
+                      <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-700">Yes</span>
                     ) : (
                       <span className="text-gray-400">No</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                    {room.notes || '-'}
+                  <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">
+                    {room.notes || '—'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-4 py-3 text-center">
                     <button
                       onClick={() => handleEdit(room)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
+                      className="text-blue-600 hover:text-blue-800 mr-3"
                     >
                       Edit
                     </button>
-                    <button
+                    <DangerButton
                       onClick={() => handleDelete(room.value || room.option_id)}
-                      className="text-red-600 hover:text-red-900"
                     >
                       Delete
-                    </button>
+                    </DangerButton>
                   </td>
                 </tr>
               ))}
