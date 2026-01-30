@@ -102,6 +102,9 @@ try {
     // CPT code for the appointment (billing details handled separately)
     $cptCodeId = isset($input['cptCodeId']) && $input['cptCodeId'] ? intval($input['cptCodeId']) : null;
 
+    // Attendees for clinic-type appointments (supervision, meetings, etc.)
+    $attendees = isset($input['attendees']) && is_array($input['attendees']) ? $input['attendees'] : [];
+
     // Map OpenEMR status symbols to SanctumEMHR status strings
     // Also accepts direct status strings (e.g., 'scheduled', 'confirmed', etc.)
     $statusMap = [
@@ -383,6 +386,21 @@ try {
 
         $appointmentIds[] = $result;
 
+        // Insert attendees for this appointment (if any)
+        if (!empty($attendees)) {
+            $attendeeSql = "INSERT INTO appointment_attendees (appointment_id, user_id, role) VALUES (?, ?, ?)";
+            foreach ($attendees as $attendee) {
+                $attendeeUserId = intval($attendee['userId']);
+                $attendeeRole = $attendee['role'] ?? 'attendee';
+                // Validate role
+                if (!in_array($attendeeRole, ['supervisor', 'supervisee', 'attendee'])) {
+                    $attendeeRole = 'attendee';
+                }
+                $db->insert($attendeeSql, [$result, $attendeeUserId, $attendeeRole]);
+            }
+            error_log("Create appointment: Added " . count($attendees) . " attendees to appointment ID $result");
+        }
+
         error_log("Create appointment: Successfully created appointment ID $result for date $occurrenceDate");
     }
 
@@ -413,6 +431,38 @@ try {
 
     $createdApptsResult = $db->queryAll($createdApptsQuery, $appointmentIds);
 
+    // Fetch attendees for all created appointments
+    $attendeesByAppointment = [];
+    if (!empty($appointmentIds)) {
+        $attendeeSql = "SELECT
+            aa.appointment_id,
+            aa.user_id,
+            aa.role,
+            u.first_name,
+            u.last_name,
+            u.color
+        FROM appointment_attendees aa
+        JOIN users u ON aa.user_id = u.id
+        WHERE aa.appointment_id IN ($placeholders)
+        ORDER BY aa.role, u.last_name, u.first_name";
+
+        $attendeeRows = $db->queryAll($attendeeSql, $appointmentIds);
+
+        foreach ($attendeeRows as $attendee) {
+            $aptId = $attendee['appointment_id'];
+            if (!isset($attendeesByAppointment[$aptId])) {
+                $attendeesByAppointment[$aptId] = [];
+            }
+            $attendeesByAppointment[$aptId][] = [
+                'userId' => $attendee['user_id'],
+                'firstName' => $attendee['first_name'],
+                'lastName' => $attendee['last_name'],
+                'role' => $attendee['role'],
+                'color' => $attendee['color']
+            ];
+        }
+    }
+
     // Map SanctumEMHR status back to OpenEMR symbols for frontend compatibility
     $reverseStatusMap = array_flip($statusMap);
 
@@ -438,7 +488,8 @@ try {
             'providerId' => $row['provider_id'],
             'providerName' => $row['provider_name'],
             'isRecurring' => $isRecurring,
-            'recurrenceId' => $recurrenceGroupId
+            'recurrenceId' => $recurrenceGroupId,
+            'attendees' => $attendeesByAppointment[$row['id']] ?? []
         ];
     }
 

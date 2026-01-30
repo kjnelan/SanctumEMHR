@@ -155,6 +155,15 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
         setIsEditingRecurringSeries(false);
         setCurrentRecurrenceId(null);
       }
+
+      // Load attendees (e.g., supervisees for supervision appointments)
+      if (appointment.attendees && appointment.attendees.length > 0) {
+        // Extract supervisee IDs from attendees with role 'supervisee'
+        const superviseeIds = appointment.attendees
+          .filter(a => a.role === 'supervisee')
+          .map(a => a.userId);
+        setSelectedSupervisees(superviseeIds);
+      }
     }
   }, [appointment, isOpen]);
 
@@ -418,6 +427,15 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
       // Format time for API (HH:MM:SS)
       const formattedTime = startTime.includes(':') ? `${startTime}:00` : `${startTime}:00:00`;
 
+      // Build attendees array for clinic-type appointments
+      const attendees = [];
+      if (selectedSupervisees.length > 0) {
+        // For supervision appointments, supervisees are attendees with role 'supervisee'
+        selectedSupervisees.forEach(superviseeId => {
+          attendees.push({ userId: superviseeId, role: 'supervisee' });
+        });
+      }
+
       const appointmentData = {
         categoryId: parseInt(categoryId),
         eventDate: eventDate,
@@ -432,7 +450,7 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
         // Conditional fields based on appointment type
         ...(patientId && { patientId: parseInt(patientId) }),
         ...(selectedProvider && { providerId: parseInt(selectedProvider) }),
-        ...(selectedSupervisees.length > 0 && { superviseeIds: selectedSupervisees }),
+        ...(attendees.length > 0 && { attendees: attendees }),
         ...(cptCodeId && { cptCodeId: parseInt(cptCodeId) }),
         ...(selectedCptCode?.standardFee && { billingFee: selectedCptCode.standardFee }),
         ...(patientPaymentType && { patientPaymentType: patientPaymentType })
@@ -592,6 +610,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
     setIsEditingRecurringSeries(false);
     setSeriesScope('single');
     setCurrentRecurrenceId(null);
+    // Reset supervisee fields
+    setSupervisees([]);
+    setSelectedSupervisees([]);
     onClose();
   };
 

@@ -104,6 +104,10 @@ try {
     $billingFee = isset($input['billingFee']) && $input['billingFee'] ? floatval($input['billingFee']) : null;
     $patientPaymentType = $input['patientPaymentType'] ?? null;
 
+    // Attendees for clinic-type appointments (supervision, meetings, etc.)
+    $attendees = isset($input['attendees']) && is_array($input['attendees']) ? $input['attendees'] : [];
+    $hasAttendeesUpdate = isset($input['attendees']); // Track if attendees were explicitly provided
+
     // Map OpenEMR status symbols to SanctumEMHR status strings
     // Also accepts direct status strings (e.g., 'scheduled', 'confirmed', etc.)
     $statusMap = [
@@ -233,6 +237,29 @@ try {
 
     error_log("Update appointment: Successfully updated $updatedCount appointment(s)");
 
+    // Update attendees if provided
+    if ($hasAttendeesUpdate) {
+        // Delete existing attendees for this appointment
+        $db->execute("DELETE FROM appointment_attendees WHERE appointment_id = ?", [$appointmentId]);
+
+        // Insert new attendees
+        if (!empty($attendees)) {
+            $attendeeSql = "INSERT INTO appointment_attendees (appointment_id, user_id, role) VALUES (?, ?, ?)";
+            foreach ($attendees as $attendee) {
+                $attendeeUserId = intval($attendee['userId']);
+                $attendeeRole = $attendee['role'] ?? 'attendee';
+                // Validate role
+                if (!in_array($attendeeRole, ['supervisor', 'supervisee', 'attendee'])) {
+                    $attendeeRole = 'attendee';
+                }
+                $db->insert($attendeeSql, [$appointmentId, $attendeeUserId, $attendeeRole]);
+            }
+            error_log("Update appointment: Updated attendees (" . count($attendees) . " total) for appointment ID $appointmentId");
+        } else {
+            error_log("Update appointment: Removed all attendees from appointment ID $appointmentId");
+        }
+    }
+
     // Fetch the updated appointment to return full details
     $updatedAppt = $db->query(
         "SELECT
@@ -263,6 +290,31 @@ try {
     $startDT = new DateTime($updatedAppt['start_datetime']);
     $endDT = new DateTime($updatedAppt['end_datetime']);
 
+    // Fetch attendees for this appointment
+    $appointmentAttendees = [];
+    $attendeeRows = $db->queryAll(
+        "SELECT
+            aa.user_id,
+            aa.role,
+            u.first_name,
+            u.last_name,
+            u.color
+        FROM appointment_attendees aa
+        JOIN users u ON aa.user_id = u.id
+        WHERE aa.appointment_id = ?
+        ORDER BY aa.role, u.last_name, u.first_name",
+        [$appointmentId]
+    );
+    foreach ($attendeeRows as $attendee) {
+        $appointmentAttendees[] = [
+            'userId' => $attendee['user_id'],
+            'firstName' => $attendee['first_name'],
+            'lastName' => $attendee['last_name'],
+            'role' => $attendee['role'],
+            'color' => $attendee['color']
+        ];
+    }
+
     // Map SanctumEMHR status back to OpenEMR symbols for frontend compatibility
     $reverseStatusMap = array_flip($statusMap);
 
@@ -285,7 +337,8 @@ try {
             'patientName' => trim(($updatedAppt['patient_fname'] ?? '') . ' ' . ($updatedAppt['patient_lname'] ?? '')),
             'providerId' => $updatedAppt['provider_id'],
             'providerName' => $updatedAppt['provider_name'],
-            'room' => $updatedAppt['room']
+            'room' => $updatedAppt['room'],
+            'attendees' => $appointmentAttendees
         ]
     ]);
 

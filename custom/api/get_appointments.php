@@ -64,7 +64,8 @@ try {
     $db = Database::getInstance();
 
     // Build SQL query for SanctumEMHR schema
-    $sql = "SELECT
+    // Include appointments where user is either the primary provider OR an attendee
+    $sql = "SELECT DISTINCT
         a.id,
         a.start_datetime,
         a.end_datetime,
@@ -80,6 +81,7 @@ try {
         a.provider_id,
         a.facility_id,
         c.name AS category_name,
+        c.category_type,
         c.is_billable,
         CONCAT(cl.first_name, ' ', cl.last_name) AS client_name,
         cl.date_of_birth AS client_dob,
@@ -94,13 +96,16 @@ try {
     LEFT JOIN clients cl ON a.client_id = cl.id
     LEFT JOIN users u ON a.provider_id = u.id
     LEFT JOIN facilities f ON a.facility_id = f.id
+    LEFT JOIN appointment_attendees aa ON a.id = aa.appointment_id
     WHERE DATE(a.start_datetime) >= ? AND DATE(a.start_datetime) <= ?";
 
     $params = [$start_date, $end_date];
 
     // Add provider filter if specified
+    // When filtering by provider, include appointments where they're primary provider OR an attendee
     if ($provider_id && $provider_id !== 'all') {
-        $sql .= " AND a.provider_id = ?";
+        $sql .= " AND (a.provider_id = ? OR aa.user_id = ?)";
+        $params[] = $provider_id;
         $params[] = $provider_id;
     }
 
@@ -110,6 +115,42 @@ try {
 
     // Execute query using Database class
     $rows = $db->queryAll($sql, $params);
+
+    // Collect all appointment IDs to batch-fetch attendees
+    $appointmentIds = array_column($rows, 'id');
+
+    // Fetch all attendees for these appointments in one query
+    $attendeesByAppointment = [];
+    if (!empty($appointmentIds)) {
+        $placeholders = implode(',', array_fill(0, count($appointmentIds), '?'));
+        $attendeeSql = "SELECT
+            aa.appointment_id,
+            aa.user_id,
+            aa.role,
+            u.first_name,
+            u.last_name,
+            u.color
+        FROM appointment_attendees aa
+        JOIN users u ON aa.user_id = u.id
+        WHERE aa.appointment_id IN ($placeholders)
+        ORDER BY aa.role, u.last_name, u.first_name";
+
+        $attendeeRows = $db->queryAll($attendeeSql, $appointmentIds);
+
+        foreach ($attendeeRows as $attendee) {
+            $aptId = $attendee['appointment_id'];
+            if (!isset($attendeesByAppointment[$aptId])) {
+                $attendeesByAppointment[$aptId] = [];
+            }
+            $attendeesByAppointment[$aptId][] = [
+                'userId' => $attendee['user_id'],
+                'firstName' => $attendee['first_name'],
+                'lastName' => $attendee['last_name'],
+                'role' => $attendee['role'],
+                'color' => $attendee['color']
+            ];
+        }
+    }
 
     // Format appointments for frontend
     $appointments = [];
@@ -126,7 +167,8 @@ try {
             'duration' => intval($row['duration']),
             'categoryId' => $row['category_id'],
             'categoryName' => $row['category_name'],
-            'categoryType' => $row['is_billable'] ? 0 : 1, // Map billable to type (0=appointment, 1=availability)
+            'categoryType' => $row['category_type'], // Now using actual category_type from DB
+            'isBillable' => (bool)$row['is_billable'],
             'apptstatus' => $row['status'],
             'status' => $row['status'],
             'title' => $row['title'],
@@ -145,7 +187,8 @@ try {
             'cancellationReason' => $row['cancellation_reason'],
             'cptCodeId' => $row['cpt_code_id'],
             'isRecurring' => !empty($row['recurrence_id']),
-            'recurrenceId' => $row['recurrence_id']
+            'recurrenceId' => $row['recurrence_id'],
+            'attendees' => $attendeesByAppointment[$row['id']] ?? []
         ];
     }
 
