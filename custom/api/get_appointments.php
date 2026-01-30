@@ -63,8 +63,16 @@ try {
     // Initialize database
     $db = Database::getInstance();
 
+    // Check if appointment_attendees table exists (may not be created yet)
+    $attendeesTableExists = false;
+    try {
+        $tableCheck = $db->query("SHOW TABLES LIKE 'appointment_attendees'");
+        $attendeesTableExists = !empty($tableCheck);
+    } catch (Exception $e) {
+        error_log("Could not check for appointment_attendees table: " . $e->getMessage());
+    }
+
     // Build SQL query for SanctumEMHR schema
-    // Include appointments where user is either the primary provider OR an attendee
     $sql = "SELECT DISTINCT
         a.id,
         a.start_datetime,
@@ -95,18 +103,28 @@ try {
     LEFT JOIN appointment_categories c ON a.category_id = c.id
     LEFT JOIN clients cl ON a.client_id = cl.id
     LEFT JOIN users u ON a.provider_id = u.id
-    LEFT JOIN facilities f ON a.facility_id = f.id
-    LEFT JOIN appointment_attendees aa ON a.id = aa.appointment_id
-    WHERE DATE(a.start_datetime) >= ? AND DATE(a.start_datetime) <= ?";
+    LEFT JOIN facilities f ON a.facility_id = f.id";
+
+    // Only join attendees table if it exists
+    if ($attendeesTableExists) {
+        $sql .= " LEFT JOIN appointment_attendees aa ON a.id = aa.appointment_id";
+    }
+
+    $sql .= " WHERE DATE(a.start_datetime) >= ? AND DATE(a.start_datetime) <= ?";
 
     $params = [$start_date, $end_date];
 
     // Add provider filter if specified
-    // When filtering by provider, include appointments where they're primary provider OR an attendee
     if ($provider_id && $provider_id !== 'all') {
-        $sql .= " AND (a.provider_id = ? OR aa.user_id = ?)";
-        $params[] = $provider_id;
-        $params[] = $provider_id;
+        if ($attendeesTableExists) {
+            // Include appointments where they're primary provider OR an attendee
+            $sql .= " AND (a.provider_id = ? OR aa.user_id = ?)";
+            $params[] = $provider_id;
+            $params[] = $provider_id;
+        } else {
+            $sql .= " AND a.provider_id = ?";
+            $params[] = $provider_id;
+        }
     }
 
     $sql .= " ORDER BY a.start_datetime";
@@ -119,36 +137,41 @@ try {
     // Collect all appointment IDs to batch-fetch attendees
     $appointmentIds = array_column($rows, 'id');
 
-    // Fetch all attendees for these appointments in one query
+    // Fetch all attendees for these appointments in one query (only if table exists)
     $attendeesByAppointment = [];
-    if (!empty($appointmentIds)) {
-        $placeholders = implode(',', array_fill(0, count($appointmentIds), '?'));
-        $attendeeSql = "SELECT
-            aa.appointment_id,
-            aa.user_id,
-            aa.role,
-            u.first_name,
-            u.last_name,
-            u.color
-        FROM appointment_attendees aa
-        JOIN users u ON aa.user_id = u.id
-        WHERE aa.appointment_id IN ($placeholders)
-        ORDER BY aa.role, u.last_name, u.first_name";
+    if ($attendeesTableExists && !empty($appointmentIds)) {
+        try {
+            $placeholders = implode(',', array_fill(0, count($appointmentIds), '?'));
+            $attendeeSql = "SELECT
+                aa.appointment_id,
+                aa.user_id,
+                aa.role,
+                u.first_name,
+                u.last_name,
+                u.color
+            FROM appointment_attendees aa
+            JOIN users u ON aa.user_id = u.id
+            WHERE aa.appointment_id IN ($placeholders)
+            ORDER BY aa.role, u.last_name, u.first_name";
 
-        $attendeeRows = $db->queryAll($attendeeSql, $appointmentIds);
+            $attendeeRows = $db->queryAll($attendeeSql, $appointmentIds);
 
-        foreach ($attendeeRows as $attendee) {
-            $aptId = $attendee['appointment_id'];
-            if (!isset($attendeesByAppointment[$aptId])) {
-                $attendeesByAppointment[$aptId] = [];
+            foreach ($attendeeRows as $attendee) {
+                $aptId = $attendee['appointment_id'];
+                if (!isset($attendeesByAppointment[$aptId])) {
+                    $attendeesByAppointment[$aptId] = [];
+                }
+                $attendeesByAppointment[$aptId][] = [
+                    'userId' => $attendee['user_id'],
+                    'firstName' => $attendee['first_name'],
+                    'lastName' => $attendee['last_name'],
+                    'role' => $attendee['role'],
+                    'color' => $attendee['color']
+                ];
             }
-            $attendeesByAppointment[$aptId][] = [
-                'userId' => $attendee['user_id'],
-                'firstName' => $attendee['first_name'],
-                'lastName' => $attendee['last_name'],
-                'role' => $attendee['role'],
-                'color' => $attendee['color']
-            ];
+        } catch (Exception $e) {
+            error_log("Failed to fetch attendees: " . $e->getMessage());
+            // Continue without attendee data
         }
     }
 
