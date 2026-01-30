@@ -63,8 +63,8 @@ try {
 
     error_log("Create appointment input: " . print_r($input, true));
 
-    // Validate required fields
-    $required = ['patientId', 'providerId', 'categoryId', 'eventDate', 'startTime', 'duration'];
+    // Validate required fields (patientId is conditionally required based on category type)
+    $required = ['providerId', 'categoryId', 'eventDate', 'startTime', 'duration'];
     foreach ($required as $field) {
         if (!isset($input[$field]) || $input[$field] === '') {
             throw new Exception("Missing required field: $field");
@@ -72,12 +72,24 @@ try {
     }
 
     // Extract and validate inputs
-    $patientId = intval($input['patientId']);
+    $patientId = isset($input['patientId']) && $input['patientId'] !== '' ? intval($input['patientId']) : null;
     $providerId = intval($input['providerId']);
     $categoryId = intval($input['categoryId']);
     $eventDate = $input['eventDate']; // YYYY-MM-DD format
     $startTime = $input['startTime']; // HH:MM:SS format
     $duration = intval($input['duration']); // Duration in minutes
+
+    // Look up category type to determine if patientId is required
+    $categoryResult = $db->query("SELECT category_type FROM appointment_categories WHERE id = ?", [$categoryId]);
+    if (!$categoryResult) {
+        throw new Exception("Invalid category ID");
+    }
+    $categoryType = $categoryResult['category_type'];
+
+    // Client-type appointments require a patient
+    if ($categoryType === 'client' && !$patientId) {
+        throw new Exception("Client appointments require a patient to be selected");
+    }
 
     // Optional fields
     $title = $input['title'] ?? '';
