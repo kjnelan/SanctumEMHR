@@ -56,102 +56,128 @@ try {
     // Initialize database
     $db = Database::getInstance();
 
-    // Fetch all billing charges for this patient
-    $chargesSql = "SELECT
-        bc.id,
-        bc.encounter_id,
-        bc.code_type,
-        bc.code,
-        bc.description AS code_text,
-        bc.modifier,
-        bc.units,
-        bc.unit_price AS fee,
-        bc.justification AS justify,
-        bc.is_authorized AS authorized,
-        bc.is_billed AS billed,
-        bc.is_active AS activity,
-        bc.payer_id,
-        bc.billed_date AS bill_date,
-        bc.created_at AS process_date,
-        CONCAT(u.first_name, ' ', u.last_name) AS provider_name,
-        bc.provider_id
-    FROM billing_charges bc
-    LEFT JOIN users u ON u.id = bc.provider_id
-    WHERE bc.client_id = ? AND bc.is_active = 1
-    ORDER BY bc.created_at DESC, bc.code_type, bc.code";
+    // Check if billing tables exist (billing feature may not be fully set up yet)
+    $chargesTableExists = false;
+    $paymentsTableExists = false;
 
-    error_log("Charges SQL: " . $chargesSql);
-    $rows = $db->queryAll($chargesSql, [$patientId]);
+    try {
+        $tableCheck = $db->query("SHOW TABLES LIKE 'billing_charges'");
+        $chargesTableExists = !empty($tableCheck);
+    } catch (Exception $e) {
+        error_log("Could not check for billing_charges table: " . $e->getMessage());
+    }
+
+    try {
+        $tableCheck = $db->query("SHOW TABLES LIKE 'payments'");
+        $paymentsTableExists = !empty($tableCheck);
+    } catch (Exception $e) {
+        error_log("Could not check for payments table: " . $e->getMessage());
+    }
 
     $charges = [];
     $totalCharges = 0;
-    foreach ($rows as $row) {
-        // Map SanctumEMHR fields to old OpenEMR field names for compatibility
-        $charges[] = [
-            'id' => $row['id'],
-            'encounter' => $row['encounter_id'],
-            'code_type' => $row['code_type'],
-            'code' => $row['code'],
-            'code_text' => $row['code_text'],
-            'modifier' => $row['modifier'],
-            'units' => $row['units'],
-            'fee' => $row['fee'],
-            'justify' => $row['justify'],
-            'authorized' => $row['authorized'],
-            'billed' => $row['billed'],
-            'activity' => $row['activity'],
-            'payer_id' => $row['payer_id'],
-            'bill_date' => $row['bill_date'],
-            'bill_process' => null, // Not in SanctumEMHR schema
-            'process_date' => $row['process_date'],
-            'provider_name' => $row['provider_name'],
-            'provider_id' => $row['provider_id'],
-            'encounter_date' => null, // Would need join to encounters table
-            'encounter_reason' => null,
-            'facility_name' => null
-        ];
-        $totalCharges += floatval($row['fee']) * floatval($row['units']);
-    }
-    error_log("Found " . count($charges) . " billing charges for patient");
-
-    // Fetch all payments for this patient
     $payments = [];
     $totalPayments = 0;
 
-    try {
-        $paymentsSql = "SELECT
-            p.id,
-            p.payment_date AS dtime,
-            p.encounter_id AS encounter,
-            p.amount,
-            0 AS amount1,
-            0 AS amount2,
-            p.payment_method AS method,
-            p.payment_source AS source,
-            p.created_by AS user,
-            CONCAT(u.first_name, ' ', u.last_name) AS user_name
-        FROM payments p
-        LEFT JOIN users u ON u.id = p.created_by
-        WHERE p.client_id = ?
-        ORDER BY p.payment_date DESC";
+    // Fetch billing charges if table exists
+    if ($chargesTableExists) {
+        $chargesSql = "SELECT
+            bc.id,
+            bc.encounter_id,
+            bc.code_type,
+            bc.code,
+            bc.description AS code_text,
+            bc.modifier,
+            bc.units,
+            bc.unit_price AS fee,
+            bc.justification AS justify,
+            bc.is_authorized AS authorized,
+            bc.is_billed AS billed,
+            bc.is_active AS activity,
+            bc.payer_id,
+            bc.billed_date AS bill_date,
+            bc.created_at AS process_date,
+            CONCAT(u.first_name, ' ', u.last_name) AS provider_name,
+            bc.provider_id
+        FROM billing_charges bc
+        LEFT JOIN users u ON u.id = bc.provider_id
+        WHERE bc.client_id = ? AND bc.is_active = 1
+        ORDER BY bc.created_at DESC, bc.code_type, bc.code";
 
-        error_log("Payments SQL: " . $paymentsSql);
-        $paymentRows = $db->queryAll($paymentsSql, [$patientId]);
+        error_log("Charges SQL: " . $chargesSql);
+        $rows = $db->queryAll($chargesSql, [$patientId]);
 
-        foreach ($paymentRows as $row) {
-            // Map to old format
-            $row['pay_amount'] = floatval($row['amount']);
-            $row['amount1'] = $row['amount']; // For backward compatibility
-            $row['amount2'] = 0;
-            $row['encounter_date'] = null; // Would need join
-            $row['encounter_reason'] = null;
-            $payments[] = $row;
-            $totalPayments += $row['pay_amount'];
+        foreach ($rows as $row) {
+            // Map SanctumEMHR fields to old OpenEMR field names for compatibility
+            $charges[] = [
+                'id' => $row['id'],
+                'encounter' => $row['encounter_id'],
+                'code_type' => $row['code_type'],
+                'code' => $row['code'],
+                'code_text' => $row['code_text'],
+                'modifier' => $row['modifier'],
+                'units' => $row['units'],
+                'fee' => $row['fee'],
+                'justify' => $row['justify'],
+                'authorized' => $row['authorized'],
+                'billed' => $row['billed'],
+                'activity' => $row['activity'],
+                'payer_id' => $row['payer_id'],
+                'bill_date' => $row['bill_date'],
+                'bill_process' => null, // Not in SanctumEMHR schema
+                'process_date' => $row['process_date'],
+                'provider_name' => $row['provider_name'],
+                'provider_id' => $row['provider_id'],
+                'encounter_date' => null, // Would need join to encounters table
+                'encounter_reason' => null,
+                'facility_name' => null
+            ];
+            $totalCharges += floatval($row['fee']) * floatval($row['units']);
         }
-        error_log("Found " . count($payments) . " payments for patient");
-    } catch (Exception $e) {
-        error_log("Payments query failed: " . $e->getMessage());
-        // Continue without payment data
+        error_log("Found " . count($charges) . " billing charges for patient");
+    } else {
+        error_log("Billing charges table does not exist - billing feature not configured");
+    }
+
+    // Fetch payments if table exists
+    if ($paymentsTableExists) {
+        try {
+            $paymentsSql = "SELECT
+                p.id,
+                p.payment_date AS dtime,
+                p.encounter_id AS encounter,
+                p.amount,
+                0 AS amount1,
+                0 AS amount2,
+                p.payment_method AS method,
+                p.payment_source AS source,
+                p.created_by AS user,
+                CONCAT(u.first_name, ' ', u.last_name) AS user_name
+            FROM payments p
+            LEFT JOIN users u ON u.id = p.created_by
+            WHERE p.client_id = ?
+            ORDER BY p.payment_date DESC";
+
+            error_log("Payments SQL: " . $paymentsSql);
+            $paymentRows = $db->queryAll($paymentsSql, [$patientId]);
+
+            foreach ($paymentRows as $row) {
+                // Map to old format
+                $row['pay_amount'] = floatval($row['amount']);
+                $row['amount1'] = $row['amount']; // For backward compatibility
+                $row['amount2'] = 0;
+                $row['encounter_date'] = null; // Would need join
+                $row['encounter_reason'] = null;
+                $payments[] = $row;
+                $totalPayments += $row['pay_amount'];
+            }
+            error_log("Found " . count($payments) . " payments for patient");
+        } catch (Exception $e) {
+            error_log("Payments query failed: " . $e->getMessage());
+            // Continue without payment data
+        }
+    } else {
+        error_log("Payments table does not exist - billing feature not configured");
     }
 
     // Calculate balance
@@ -179,8 +205,18 @@ try {
     error_log("Error fetching billing: " . $e->getMessage());
     error_log("Stack trace: " . $e->getTraceAsString());
     http_response_code(500);
+    // Don't expose raw SQL errors to the frontend
     echo json_encode([
-        'error' => 'Failed to fetch billing',
-        'message' => $e->getMessage()
+        'error' => 'Failed to fetch billing data',
+        'patient_id' => $patientId ?? null,
+        'charges' => [],
+        'payments' => [],
+        'summary' => [
+            'total_charges' => 0,
+            'total_payments' => 0,
+            'balance' => 0,
+            'charge_count' => 0,
+            'payment_count' => 0
+        ]
     ]);
 }
