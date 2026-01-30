@@ -226,7 +226,6 @@ try {
         a.duration AS duration_minutes,
         a.category_id AS pc_catid,
         ac.name AS pc_catname,
-        ac.color AS pc_catcolor,
         a.status AS pc_apptstatus_raw,
         CASE a.status
             WHEN 'scheduled' THEN '-'
@@ -261,7 +260,6 @@ try {
         a.duration AS duration_minutes,
         a.category_id AS pc_catid,
         ac.name AS pc_catname,
-        ac.color AS pc_catcolor,
         a.status AS pc_apptstatus_raw,
         CASE a.status
             WHEN 'scheduled' THEN '-'

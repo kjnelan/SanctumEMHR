@@ -73,7 +73,6 @@ try {
     $sql = "SELECT
         id,
         name,
-        color,
         description,
         default_duration,
         is_billable,
@@ -139,7 +138,6 @@ try {
         $categories[] = [
             'id' => $row['id'],
             'name' => $row['name'],
-            'color' => $row['color'],
             'description' => $row['description'],
             'defaultDuration' => $row['default_duration'],
             'isBillable' => (bool)$row['is_billable'],

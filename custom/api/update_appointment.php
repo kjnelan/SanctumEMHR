@@ -236,7 +236,6 @@ try {
             a.provider_id,
             a.room,
             c.name AS category_name,
-            c.color AS category_color,
             cl.first_name AS patient_fname,
             cl.last_name AS patient_lname,
             CONCAT(u.first_name, ' ', u.last_name) AS provider_name
@@ -267,7 +266,6 @@ try {
             'duration' => intval($updatedAppt['duration']),
             'categoryId' => $updatedAppt['category_id'],
             'categoryName' => $updatedAppt['category_name'],
-            'categoryColor' => $updatedAppt['category_color'],
             'apptstatus' => $reverseStatusMap[$updatedAppt['status']] ?? '-',
             'title' => $updatedAppt['title'],
             'comments' => $updatedAppt['notes'],

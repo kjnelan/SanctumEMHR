@@ -389,7 +389,6 @@ try {
             a.provider_id,
             a.room,
             c.name AS category_name,
-            c.color AS category_color,
             cl.first_name AS patient_fname,
             cl.last_name AS patient_lname,
             CONCAT(u.first_name, ' ', u.last_name) AS provider_name
@@ -418,7 +417,6 @@ try {
             'duration' => $row['duration'] * 60, // Convert minutes to seconds for frontend
             'categoryId' => $row['category_id'],
             'categoryName' => $row['category_name'],
-            'categoryColor' => $row['category_color'],
             'status' => $reverseStatusMap[$row['status']] ?? '-', // Map back to symbol
             'title' => $row['title'],
             'notes' => $row['notes'],

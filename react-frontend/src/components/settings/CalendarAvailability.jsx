@@ -348,8 +348,8 @@ function CalendarAvailability() {
                         {/* Blocks with absolute positioning */}
                         {dayBlocks.map(block => {
                           const { top, height } = calculateBlockPosition(block);
-                          const bgColor = block.categoryColor || '#E5E7EB';
-                          const borderColor = block.categoryColor ? `${block.categoryColor}80` : '#9CA3AF80';
+                          const bgColor = '#E5E7EB';
+                          const borderColor = '#9CA3AF80';
 
                           return (
                             <div
