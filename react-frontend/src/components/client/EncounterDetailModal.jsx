@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getEncounterDetail } from '../../utils/api';
+import { GlassyTabs, GlassyTab } from '../shared/GlassyTabs';
 
 function EncounterDetailModal({ encounterId, onClose }) {
   const [loading, setLoading] = useState(true);
@@ -110,48 +111,32 @@ function EncounterDetailModal({ encounterId, onClose }) {
               </div>
 
               {/* Tab Navigation */}
-              <div className="flex gap-2 mb-6 border-b border-gray-200">
-                <button
+              <GlassyTabs className="mb-6">
+                <GlassyTab
+                  active={activeSection === 'notes'}
                   onClick={() => setActiveSection('notes')}
-                  className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-                    activeSection === 'notes'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-600 hover:text-gray-800'
-                  }`}
                 >
                   Clinical Notes ({data.forms.length})
-                </button>
-                <button
+                </GlassyTab>
+                <GlassyTab
+                  active={activeSection === 'billing'}
                   onClick={() => setActiveSection('billing')}
-                  className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-                    activeSection === 'billing'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-600 hover:text-gray-800'
-                  }`}
                 >
                   Billing ({data.billing.length})
-                </button>
-                <button
+                </GlassyTab>
+                <GlassyTab
+                  active={activeSection === 'vitals'}
                   onClick={() => setActiveSection('vitals')}
-                  className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-                    activeSection === 'vitals'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-600 hover:text-gray-800'
-                  }`}
                 >
                   Vitals ({data.vitals.length})
-                </button>
-                <button
+                </GlassyTab>
+                <GlassyTab
+                  active={activeSection === 'diagnoses'}
                   onClick={() => setActiveSection('diagnoses')}
-                  className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-                    activeSection === 'diagnoses'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-600 hover:text-gray-800'
-                  }`}
                 >
                   Diagnoses ({data.diagnoses.length})
-                </button>
-              </div>
+                </GlassyTab>
+              </GlassyTabs>
 
               {/* Tab Content */}
               {activeSection === 'notes' && (

@@ -12,6 +12,7 @@
 
 import { useState } from 'react';
 import ReferenceListManager from './ReferenceListManager';
+import { GlassyTabs, GlassyTab } from '../shared/GlassyTabs';
 
 function ReferenceLists() {
   const [activeList, setActiveList] = useState('sexual-orientation');
@@ -90,23 +91,17 @@ function ReferenceLists() {
       </div>
 
       {/* Tab Navigation */}
-      <div className="glass-card p-2 mb-6">
-        <div className="flex flex-wrap gap-2">
-          {listTypes.map(list => (
-            <button
-              key={list.id}
-              onClick={() => setActiveList(list.id)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                activeList === list.id
-                  ? 'bg-blue-600 text-white'
-                  : 'hover:bg-gray-100 text-gray-700'
-              }`}
-            >
-              {list.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <GlassyTabs className="mb-6">
+        {listTypes.map(list => (
+          <GlassyTab
+            key={list.id}
+            active={activeList === list.id}
+            onClick={() => setActiveList(list.id)}
+          >
+            {list.label}
+          </GlassyTab>
+        ))}
+      </GlassyTabs>
 
       {/* Active List Manager */}
       {activeListConfig && (

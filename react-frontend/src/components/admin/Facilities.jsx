@@ -13,7 +13,7 @@
 import { useState, useEffect } from 'react';
 import { Modal } from '../Modal';
 import { FormLabel } from '../FormLabel';
-import { TabButton } from '../TabButton';
+import { GlassyTabs, GlassyTab } from '../shared/GlassyTabs';
 import { PrimaryButton } from '../PrimaryButton';
 import { SecondaryButton } from '../SecondaryButton';
 import { RequiredAsterisk } from '../RequiredAsterisk';
@@ -27,20 +27,20 @@ function Facilities() {
   return (
     <div className="glass-card p-6">
       {/* Main Tab Navigation */}
-      <div className="flex border-b border-gray-300 mb-6">
-        <TabButton
+      <GlassyTabs className="mb-6">
+        <GlassyTab
           active={mainTab === 'facilities'}
           onClick={() => setMainTab('facilities')}
         >
           Facilities
-        </TabButton>
-        <TabButton
+        </GlassyTab>
+        <GlassyTab
           active={mainTab === 'rooms'}
           onClick={() => setMainTab('rooms')}
         >
           Counseling Rooms
-        </TabButton>
-      </div>
+        </GlassyTab>
+      </GlassyTabs>
 
       {/* Tab Content */}
       {mainTab === 'facilities' ? (
@@ -889,28 +889,28 @@ function FacilityFormModal({
 
           {/* Address Tabs */}
           <div className="mb-4">
-            <div className="flex border-b border-gray-300 mb-4">
-                  <TabButton
+            <GlassyTabs className="mb-4">
+                  <GlassyTab
                     active={addressTab === 'physical'}
                     onClick={() => setAddressTab('physical')}
                   >
                     Physical Address
-                  </TabButton>
+                  </GlassyTab>
 
-                  <TabButton
+                  <GlassyTab
                     active={addressTab === 'mailing'}
                     onClick={() => setAddressTab('mailing')}
                   >
                     Mailing Address
-                  </TabButton>
+                  </GlassyTab>
 
-                  <TabButton
+                  <GlassyTab
                     active={addressTab === 'billing'}
                     onClick={() => setAddressTab('billing')}
                   >
                     Billing Address
-                  </TabButton>
-            </div>
+                  </GlassyTab>
+            </GlassyTabs>
             {/* Address Fields */}
             {addressTab === 'physical' ? (
               <div className="grid grid-cols-1 gap-4">
