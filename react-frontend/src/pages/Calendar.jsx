@@ -257,34 +257,27 @@ function Calendar() {
     return `rgb(${borderR}, ${borderG}, ${borderB})`;
   };
 
-  // Get appointment styling based on provider color and status (glassy pastel style)
+  // Get appointment styling - returns only dynamic values (colors based on provider)
+  // Base glassy styling comes from CSS class .glass-appointment
   const getAppointmentStyle = (apt) => {
     const isCancelled = isCancelledOrNoShow(apt.status);
 
-    // Base glassy style properties
-    const glassyBase = {
-      backdropFilter: 'blur(12px) saturate(180%)',
-      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.6)'
-    };
-
-    // Cancelled/no-show: neutral gray with strikethrough
+    // Cancelled/no-show: uses CSS class .glass-appointment-cancelled
     if (isCancelled) {
       return {
-        ...glassyBase,
-        borderColor: 'rgba(156, 163, 175, 0.5)',
+        isCancelled: true,
         textClass: 'line-through text-gray-500',
-        secondaryTextClass: 'text-gray-400',
-        gradient: 'linear-gradient(135deg, rgba(229, 231, 235, 0.9) 0%, rgba(229, 231, 235, 0.7) 100%)'
+        secondaryTextClass: 'text-gray-400'
       };
     }
 
-    // Active appointments: use pastel version of provider color with dark text
+    // Active appointments: compute pastel colors from provider color
     const color = apt.providerColor || '#3B82F6';
     const pastel = toPastel(color);
     const borderColor = getPastelBorder(color);
 
     return {
-      ...glassyBase,
+      isCancelled: false,
       borderColor: borderColor,
       textClass: 'text-gray-800',
       secondaryTextClass: 'text-gray-600',
@@ -644,7 +637,6 @@ function Calendar() {
                                 <div className="space-y-1">
                                   {dayAppointments.slice(0, 4).map(apt => {
                                     const style = getAppointmentStyle(apt);
-                                    const isCancelled = isCancelledOrNoShow(apt.status);
 
                                     return (
                                       <div
@@ -653,14 +645,14 @@ function Calendar() {
                                           e.stopPropagation();
                                           handleAppointmentClick(apt, e);
                                         }}
-                                        className={`px-2 py-1.5 rounded-lg text-sm border hover:scale-[1.02] hover:shadow-lg transition-all cursor-pointer ${
-                                          isCancelled ? 'border-dashed' : ''
+                                        className={`px-2 py-1.5 rounded-lg text-sm border cursor-pointer ${
+                                          style.isCancelled
+                                            ? 'glass-appointment-cancelled border-dashed'
+                                            : 'glass-appointment'
                                         }`}
-                                        style={{
+                                        style={style.isCancelled ? undefined : {
                                           background: style.gradient,
-                                          borderColor: style.borderColor,
-                                          backdropFilter: style.backdropFilter,
-                                          boxShadow: style.boxShadow
+                                          borderColor: style.borderColor
                                         }}
                                         title={`${apt.patientName} - ${apt.categoryName}`}
                                       >
@@ -781,20 +773,24 @@ function Calendar() {
 
                             // Regular appointments are clickable cards with glassy pastel style
                             const style = getAppointmentStyle(apt);
-                            const isCancelled = isCancelledOrNoShow(apt.status);
 
                             return (
                               <div
                                 key={apt.id}
                                 onClick={(e) => handleAppointmentClick(apt, e)}
-                                className={`absolute left-1 right-1 px-3 py-2 rounded-xl text-sm border hover:scale-[1.02] hover:shadow-xl transition-all cursor-pointer z-10 overflow-hidden ${isCancelled ? 'border-dashed' : ''}`}
-                                style={{
+                                className={`absolute left-1 right-1 px-3 py-2 rounded-xl text-sm border cursor-pointer z-10 overflow-hidden ${
+                                  style.isCancelled
+                                    ? 'glass-appointment-cancelled border-dashed'
+                                    : 'glass-appointment'
+                                }`}
+                                style={style.isCancelled ? {
+                                  top: `${top}px`,
+                                  height: `${height}px`
+                                } : {
                                   top: `${top}px`,
                                   height: `${height}px`,
                                   background: style.gradient,
-                                  borderColor: style.borderColor,
-                                  backdropFilter: style.backdropFilter,
-                                  boxShadow: style.boxShadow
+                                  borderColor: style.borderColor
                                 }}
                               >
                                 <div className={`font-semibold ${style.textClass}`}>
@@ -806,7 +802,7 @@ function Calendar() {
                                   </div>
                                 )}
                                 {height > 60 && apt.room && (
-                                  <div className={`truncate text-xs mt-1 ${style.secondaryTextClass} ${isCancelled ? 'line-through' : ''}`}>
+                                  <div className={`truncate text-xs mt-1 ${style.secondaryTextClass} ${style.isCancelled ? 'line-through' : ''}`}>
                                     Room: {apt.room}
                                   </div>
                                 )}
@@ -911,15 +907,17 @@ function Calendar() {
                             <div
                               key={apt.id}
                               onClick={(e) => handleAppointmentClick(apt, e)}
-                              className={`mb-1 px-3 py-2 rounded-xl text-sm border hover:scale-[1.02] hover:shadow-xl transition-all cursor-pointer ${
-                                isCancelled ? 'border-dashed' : ''
+                              className={`mb-1 px-3 py-2 rounded-xl text-sm border cursor-pointer ${
+                                style.isCancelled
+                                  ? 'glass-appointment-cancelled border-dashed'
+                                  : 'glass-appointment'
                               }`}
-                              style={{
+                              style={style.isCancelled ? {
+                                height: `${heightPx}px`
+                              } : {
                                 height: `${heightPx}px`,
                                 background: style.gradient,
-                                borderColor: style.borderColor,
-                                backdropFilter: style.backdropFilter,
-                                boxShadow: style.boxShadow
+                                borderColor: style.borderColor
                               }}
                             >
                               <div className={`font-semibold ${style.textClass}`}>
@@ -929,7 +927,7 @@ function Calendar() {
                                 {apt.categoryName}
                               </div>
                               {apt.room && (
-                                <div className={`truncate text-xs ${style.secondaryTextClass} ${isCancelled ? 'line-through' : ''}`}>
+                                <div className={`truncate text-xs ${style.secondaryTextClass} ${style.isCancelled ? 'line-through' : ''}`}>
                                   Room: {apt.room}
                                 </div>
                               )}
@@ -1029,20 +1027,20 @@ function Calendar() {
                             <div
                               key={apt.id}
                               onClick={(e) => handleAppointmentClick(apt, e)}
-                              className={`px-2 py-1.5 rounded-lg text-xs border hover:scale-[1.02] hover:shadow-lg transition-all cursor-pointer ${
-                                isCancelled ? 'border-dashed' : ''
+                              className={`px-2 py-1.5 rounded-lg text-xs border cursor-pointer ${
+                                style.isCancelled
+                                  ? 'glass-appointment-cancelled border-dashed'
+                                  : 'glass-appointment'
                               }`}
-                              style={{
+                              style={style.isCancelled ? undefined : {
                                 background: style.gradient,
-                                borderColor: style.borderColor,
-                                backdropFilter: style.backdropFilter,
-                                boxShadow: style.boxShadow
+                                borderColor: style.borderColor
                               }}
                             >
                               <div className={`font-semibold truncate ${style.textClass}`}>
                                 {formatClientName(apt.patientName)} / {formatClinicianName(apt)}
                               </div>
-                              <div className={`truncate text-[11px] ${style.secondaryTextClass} ${isCancelled ? 'line-through' : ''}`}>
+                              <div className={`truncate text-[11px] ${style.secondaryTextClass} ${style.isCancelled ? 'line-through' : ''}`}>
                                 {apt.categoryName}
                               </div>
                             </div>
