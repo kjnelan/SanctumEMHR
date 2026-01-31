@@ -227,40 +227,68 @@ function Calendar() {
     return status === 'cancelled' || status === 'no_show';
   };
 
-  // Get appointment styling based on provider color and status (glassy style)
+  // Convert hex color to pastel by mixing with white
+  const toPastel = (hex) => {
+    const color = hex.replace('#', '');
+    const r = parseInt(color.substr(0, 2), 16);
+    const g = parseInt(color.substr(2, 2), 16);
+    const b = parseInt(color.substr(4, 2), 16);
+
+    // Mix with white (65% white, 35% original) for soft pastel
+    const pastelR = Math.round(r * 0.35 + 255 * 0.65);
+    const pastelG = Math.round(g * 0.35 + 255 * 0.65);
+    const pastelB = Math.round(b * 0.35 + 255 * 0.65);
+
+    return `rgb(${pastelR}, ${pastelG}, ${pastelB})`;
+  };
+
+  // Get a slightly darker shade for the border
+  const getPastelBorder = (hex) => {
+    const color = hex.replace('#', '');
+    const r = parseInt(color.substr(0, 2), 16);
+    const g = parseInt(color.substr(2, 2), 16);
+    const b = parseInt(color.substr(4, 2), 16);
+
+    // Mix with white (50% white, 50% original) for border
+    const borderR = Math.round(r * 0.5 + 255 * 0.5);
+    const borderG = Math.round(g * 0.5 + 255 * 0.5);
+    const borderB = Math.round(b * 0.5 + 255 * 0.5);
+
+    return `rgb(${borderR}, ${borderG}, ${borderB})`;
+  };
+
+  // Get appointment styling based on provider color and status (glassy pastel style)
   const getAppointmentStyle = (apt) => {
     const isCancelled = isCancelledOrNoShow(apt.status);
 
     // Base glassy style properties
     const glassyBase = {
       backdropFilter: 'blur(12px) saturate(180%)',
-      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
-      textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
+      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.6)'
     };
 
     // Cancelled/no-show: neutral gray with strikethrough
     if (isCancelled) {
       return {
         ...glassyBase,
-        bgColor: '#9CA3AF',
-        borderColor: 'rgba(107, 114, 128, 0.4)',
-        textClass: 'line-through',
-        textColor: '#4B5563', // gray-600
-        opacity: '99', // 60% opacity
-        gradient: 'linear-gradient(135deg, rgba(156, 163, 175, 0.7) 0%, rgba(156, 163, 175, 0.5) 100%)'
+        borderColor: 'rgba(156, 163, 175, 0.5)',
+        textClass: 'line-through text-gray-500',
+        secondaryTextClass: 'text-gray-400',
+        gradient: 'linear-gradient(135deg, rgba(229, 231, 235, 0.9) 0%, rgba(229, 231, 235, 0.7) 100%)'
       };
     }
 
-    // Active appointments: use provider color with glassy treatment
+    // Active appointments: use pastel version of provider color with dark text
     const color = apt.providerColor || '#3B82F6';
+    const pastel = toPastel(color);
+    const borderColor = getPastelBorder(color);
+
     return {
       ...glassyBase,
-      bgColor: color,
-      borderColor: 'rgba(255, 255, 255, 0.3)',
-      textClass: '',
-      textColor: '#FFFFFF', // White text for contrast
-      opacity: 'CC', // 80% opacity
-      gradient: `linear-gradient(135deg, ${color}E6 0%, ${color}B3 100%)`
+      borderColor: borderColor,
+      textClass: 'text-gray-800',
+      secondaryTextClass: 'text-gray-600',
+      gradient: `linear-gradient(135deg, ${pastel} 0%, ${pastel.replace('rgb', 'rgba').replace(')', ', 0.85)')} 100%)`
     };
   };
 
@@ -636,10 +664,7 @@ function Calendar() {
                                         }}
                                         title={`${apt.patientName} - ${apt.categoryName}`}
                                       >
-                                        <div
-                                          className={`font-semibold truncate ${style.textClass}`}
-                                          style={{ color: style.textColor, textShadow: style.textShadow }}
-                                        >
+                                        <div className={`font-semibold truncate ${style.textClass}`}>
                                           {formatTime12Hour(apt.startTime).replace(' ', '')} {formatClientName(apt.patientName)}
                                         </div>
                                       </div>
@@ -754,7 +779,7 @@ function Calendar() {
                               );
                             }
 
-                            // Regular appointments are clickable cards with glassy style
+                            // Regular appointments are clickable cards with glassy pastel style
                             const style = getAppointmentStyle(apt);
                             const isCancelled = isCancelledOrNoShow(apt.status);
 
@@ -772,25 +797,16 @@ function Calendar() {
                                   boxShadow: style.boxShadow
                                 }}
                               >
-                                <div
-                                  className={`font-semibold ${style.textClass}`}
-                                  style={{ color: style.textColor, textShadow: style.textShadow }}
-                                >
+                                <div className={`font-semibold ${style.textClass}`}>
                                   {formatClientName(apt.patientName)} / {formatClinicianName(apt)}
                                 </div>
                                 {height > 40 && (
-                                  <div
-                                    className={`truncate ${style.textClass}`}
-                                    style={{ color: style.textColor, textShadow: style.textShadow, opacity: 0.9 }}
-                                  >
+                                  <div className={`truncate ${style.secondaryTextClass}`}>
                                     {apt.categoryName}
                                   </div>
                                 )}
                                 {height > 60 && apt.room && (
-                                  <div
-                                    className={`truncate text-xs mt-1 ${isCancelled ? 'line-through' : ''}`}
-                                    style={{ color: isCancelled ? '#6B7280' : 'rgba(255,255,255,0.85)', textShadow: style.textShadow }}
-                                  >
+                                  <div className={`truncate text-xs mt-1 ${style.secondaryTextClass} ${isCancelled ? 'line-through' : ''}`}>
                                     Room: {apt.room}
                                   </div>
                                 )}
@@ -888,7 +904,7 @@ function Calendar() {
                             );
                           }
 
-                          // Regular appointments get glassy styling
+                          // Regular appointments get glassy pastel styling
                           const style = getAppointmentStyle(apt);
 
                           return (
@@ -906,23 +922,14 @@ function Calendar() {
                                 boxShadow: style.boxShadow
                               }}
                             >
-                              <div
-                                className={`font-semibold ${style.textClass}`}
-                                style={{ color: style.textColor, textShadow: style.textShadow }}
-                              >
+                              <div className={`font-semibold ${style.textClass}`}>
                                 {formatClientName(apt.patientName)} / {formatClinicianName(apt)}
                               </div>
-                              <div
-                                className={`truncate ${style.textClass}`}
-                                style={{ color: style.textColor, textShadow: style.textShadow, opacity: 0.9 }}
-                              >
+                              <div className={`truncate ${style.secondaryTextClass}`}>
                                 {apt.categoryName}
                               </div>
                               {apt.room && (
-                                <div
-                                  className={`truncate text-xs ${isCancelled ? 'line-through' : ''}`}
-                                  style={{ color: isCancelled ? '#6B7280' : 'rgba(255,255,255,0.85)', textShadow: style.textShadow }}
-                                >
+                                <div className={`truncate text-xs ${style.secondaryTextClass} ${isCancelled ? 'line-through' : ''}`}>
                                   Room: {apt.room}
                                 </div>
                               )}
@@ -1015,7 +1022,7 @@ function Calendar() {
                             );
                           }
 
-                          // Regular appointments get glassy styling
+                          // Regular appointments get glassy pastel styling
                           const style = getAppointmentStyle(apt);
 
                           return (
@@ -1032,16 +1039,10 @@ function Calendar() {
                                 boxShadow: style.boxShadow
                               }}
                             >
-                              <div
-                                className={`font-semibold truncate ${style.textClass}`}
-                                style={{ color: style.textColor, textShadow: style.textShadow }}
-                              >
+                              <div className={`font-semibold truncate ${style.textClass}`}>
                                 {formatClientName(apt.patientName)} / {formatClinicianName(apt)}
                               </div>
-                              <div
-                                className={`truncate text-[11px] ${isCancelled ? 'line-through' : ''}`}
-                                style={{ color: isCancelled ? '#6B7280' : 'rgba(255,255,255,0.85)', textShadow: style.textShadow }}
-                              >
+                              <div className={`truncate text-[11px] ${style.secondaryTextClass} ${isCancelled ? 'line-through' : ''}`}>
                                 {apt.categoryName}
                               </div>
                             </div>
