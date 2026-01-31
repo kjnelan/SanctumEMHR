@@ -227,27 +227,40 @@ function Calendar() {
     return status === 'cancelled' || status === 'no_show';
   };
 
-  // Get appointment styling based on provider color and status
+  // Get appointment styling based on provider color and status (glassy style)
   const getAppointmentStyle = (apt) => {
     const isCancelled = isCancelledOrNoShow(apt.status);
+
+    // Base glassy style properties
+    const glassyBase = {
+      backdropFilter: 'blur(12px) saturate(180%)',
+      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+      textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
+    };
 
     // Cancelled/no-show: neutral gray with strikethrough
     if (isCancelled) {
       return {
-        bgColor: '#9CA3AF', // Tailwind gray-400
-        borderColor: '#6B728066', // gray-500 with opacity
-        textClass: 'line-through text-gray-600',
-        opacity: '80' // 50% opacity in hex
+        ...glassyBase,
+        bgColor: '#9CA3AF',
+        borderColor: 'rgba(107, 114, 128, 0.4)',
+        textClass: 'line-through',
+        textColor: '#4B5563', // gray-600
+        opacity: '99', // 60% opacity
+        gradient: 'linear-gradient(135deg, rgba(156, 163, 175, 0.7) 0%, rgba(156, 163, 175, 0.5) 100%)'
       };
     }
 
-    // Active appointments: use provider color, fallback to blue
+    // Active appointments: use provider color with glassy treatment
     const color = apt.providerColor || '#3B82F6';
     return {
+      ...glassyBase,
       bgColor: color,
-      borderColor: `${color}80`,
-      textClass: 'text-gray-900',
-      opacity: 'B3' // 70% opacity in hex
+      borderColor: 'rgba(255, 255, 255, 0.3)',
+      textClass: '',
+      textColor: '#FFFFFF', // White text for contrast
+      opacity: 'CC', // 80% opacity
+      gradient: `linear-gradient(135deg, ${color}E6 0%, ${color}B3 100%)`
     };
   };
 
@@ -612,16 +625,21 @@ function Calendar() {
                                           e.stopPropagation();
                                           handleAppointmentClick(apt, e);
                                         }}
-                                        className={`px-2 py-1 rounded text-xs border truncate hover:opacity-80 hover:shadow-md transition-all cursor-pointer ${
+                                        className={`px-2 py-1.5 rounded-lg text-sm border hover:scale-[1.02] hover:shadow-lg transition-all cursor-pointer ${
                                           isCancelled ? 'border-dashed' : ''
                                         }`}
                                         style={{
-                                          backgroundColor: `${style.bgColor}${style.opacity}`,
-                                          borderColor: style.borderColor
+                                          background: style.gradient,
+                                          borderColor: style.borderColor,
+                                          backdropFilter: style.backdropFilter,
+                                          boxShadow: style.boxShadow
                                         }}
                                         title={`${apt.patientName} - ${apt.categoryName}`}
                                       >
-                                        <div className={`font-semibold truncate ${style.textClass}`}>
+                                        <div
+                                          className={`font-semibold truncate ${style.textClass}`}
+                                          style={{ color: style.textColor, textShadow: style.textShadow }}
+                                        >
                                           {formatTime12Hour(apt.startTime).replace(' ', '')} {formatClientName(apt.patientName)}
                                         </div>
                                       </div>
@@ -736,7 +754,7 @@ function Calendar() {
                               );
                             }
 
-                            // Regular appointments are clickable cards
+                            // Regular appointments are clickable cards with glassy style
                             const style = getAppointmentStyle(apt);
                             const isCancelled = isCancelledOrNoShow(apt.status);
 
@@ -744,19 +762,38 @@ function Calendar() {
                               <div
                                 key={apt.id}
                                 onClick={(e) => handleAppointmentClick(apt, e)}
-                                className={`absolute left-1 right-1 px-2 py-1 rounded-lg text-xs border hover:opacity-80 hover:shadow-md transition-all cursor-pointer z-10 overflow-hidden ${isCancelled ? 'border-dashed' : ''}`}
+                                className={`absolute left-1 right-1 px-3 py-2 rounded-xl text-sm border hover:scale-[1.02] hover:shadow-xl transition-all cursor-pointer z-10 overflow-hidden ${isCancelled ? 'border-dashed' : ''}`}
                                 style={{
                                   top: `${top}px`,
                                   height: `${height}px`,
-                                  backgroundColor: `${style.bgColor}${style.opacity}`,
-                                  borderColor: style.borderColor
+                                  background: style.gradient,
+                                  borderColor: style.borderColor,
+                                  backdropFilter: style.backdropFilter,
+                                  boxShadow: style.boxShadow
                                 }}
                               >
-                                <div className={`font-semibold ${style.textClass}`}>
+                                <div
+                                  className={`font-semibold ${style.textClass}`}
+                                  style={{ color: style.textColor, textShadow: style.textShadow }}
+                                >
                                   {formatClientName(apt.patientName)} / {formatClinicianName(apt)}
                                 </div>
-                                {height > 30 && <div className={`truncate ${style.textClass}`}>{apt.categoryName}</div>}
-                                {height > 50 && apt.room && <div className={`truncate text-[10px] ${isCancelled ? 'text-gray-500 line-through' : 'text-gray-700'}`}>Room: {apt.room}</div>}
+                                {height > 40 && (
+                                  <div
+                                    className={`truncate ${style.textClass}`}
+                                    style={{ color: style.textColor, textShadow: style.textShadow, opacity: 0.9 }}
+                                  >
+                                    {apt.categoryName}
+                                  </div>
+                                )}
+                                {height > 60 && apt.room && (
+                                  <div
+                                    className={`truncate text-xs mt-1 ${isCancelled ? 'line-through' : ''}`}
+                                    style={{ color: isCancelled ? '#6B7280' : 'rgba(255,255,255,0.85)', textShadow: style.textShadow }}
+                                  >
+                                    Room: {apt.room}
+                                  </div>
+                                )}
                               </div>
                             );
                           })}
@@ -824,59 +861,70 @@ function Calendar() {
                           const slotsSpan = calculateSlotSpan(apt);
                           const heightPx = slotsSpan * 60 - 8; // 60px per slot, minus padding
 
-                          // Get styling based on provider color and status
-                          let bgColor, borderColor, bgImage;
+                          // Availability blocks use simple styling
                           if (isAvailabilityBlock) {
-                            bgColor = '#E5E7EB'; // Gray for availability blocks
-                            borderColor = '#9CA3AF80';
-                            bgImage = 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,.3) 4px, rgba(255,255,255,.3) 8px)';
-                          } else {
-                            const style = getAppointmentStyle(apt);
-                            bgColor = style.bgColor;
-                            borderColor = style.borderColor;
-                            bgImage = 'none';
+                            return (
+                              <div
+                                key={apt.id}
+                                onClick={(e) => handleAppointmentClick(apt, e)}
+                                className="mb-1 px-3 py-2 rounded-xl text-sm border border-dashed hover:opacity-80 hover:shadow-md transition-all cursor-pointer"
+                                style={{
+                                  height: `${heightPx}px`,
+                                  backgroundColor: 'rgba(229, 231, 235, 0.6)',
+                                  borderColor: 'rgba(156, 163, 175, 0.5)',
+                                  backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,.3) 4px, rgba(255,255,255,.3) 8px)'
+                                }}
+                              >
+                                <div className="font-semibold text-gray-900 flex items-center gap-1">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                  </svg>
+                                  {apt.categoryName}
+                                </div>
+                                {apt.comments && (
+                                  <div className="text-gray-700 truncate text-xs italic">{apt.comments}</div>
+                                )}
+                              </div>
+                            );
                           }
+
+                          // Regular appointments get glassy styling
+                          const style = getAppointmentStyle(apt);
 
                           return (
                             <div
                               key={apt.id}
                               onClick={(e) => handleAppointmentClick(apt, e)}
-                              className={`mb-1 px-2 py-1 rounded-lg text-xs border hover:opacity-80 hover:shadow-md transition-all cursor-pointer ${
-                                isAvailabilityBlock || isCancelled ? 'border-dashed' : ''
+                              className={`mb-1 px-3 py-2 rounded-xl text-sm border hover:scale-[1.02] hover:shadow-xl transition-all cursor-pointer ${
+                                isCancelled ? 'border-dashed' : ''
                               }`}
                               style={{
                                 height: `${heightPx}px`,
-                                backgroundColor: isAvailabilityBlock ? `${bgColor}99` : (isCancelled ? `${bgColor}80` : `${bgColor}B3`),
-                                borderColor: borderColor,
-                                backgroundImage: bgImage
+                                background: style.gradient,
+                                borderColor: style.borderColor,
+                                backdropFilter: style.backdropFilter,
+                                boxShadow: style.boxShadow
                               }}
                             >
-                              {isAvailabilityBlock ? (
-                                <>
-                                  <div className="font-semibold text-gray-900 flex items-center gap-1">
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                    </svg>
-                                    {apt.categoryName}
-                                  </div>
-                                  {apt.comments && (
-                                    <div className="text-gray-700 truncate text-[10px] italic">{apt.comments}</div>
-                                  )}
-                                </>
-                              ) : (
-                                (() => {
-                                  const style = getAppointmentStyle(apt);
-                                  const isCancelled = isCancelledOrNoShow(apt.status);
-                                  return (
-                                    <>
-                                      <div className={`font-semibold ${style.textClass}`}>
-                                        {formatClientName(apt.patientName)} / {formatClinicianName(apt)}
-                                      </div>
-                                      <div className={`truncate ${style.textClass}`}>{apt.categoryName}</div>
-                                      {apt.room && <div className={`truncate text-[10px] ${isCancelled ? 'text-gray-500 line-through' : 'text-gray-600'}`}>Room: {apt.room}</div>}
-                                    </>
-                                  );
-                                })()
+                              <div
+                                className={`font-semibold ${style.textClass}`}
+                                style={{ color: style.textColor, textShadow: style.textShadow }}
+                              >
+                                {formatClientName(apt.patientName)} / {formatClinicianName(apt)}
+                              </div>
+                              <div
+                                className={`truncate ${style.textClass}`}
+                                style={{ color: style.textColor, textShadow: style.textShadow, opacity: 0.9 }}
+                              >
+                                {apt.categoryName}
+                              </div>
+                              {apt.room && (
+                                <div
+                                  className={`truncate text-xs ${isCancelled ? 'line-through' : ''}`}
+                                  style={{ color: isCancelled ? '#6B7280' : 'rgba(255,255,255,0.85)', textShadow: style.textShadow }}
+                                >
+                                  Room: {apt.room}
+                                </div>
                               )}
                             </div>
                           );
@@ -938,58 +986,64 @@ function Calendar() {
                       </div>
 
                       {/* Appointments list */}
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         {dayAppointments.slice(0, 3).map(apt => {
                           // Check if this is an availability block (Type 1) or regular appointment (Type 0)
                           const isAvailabilityBlock = apt.categoryType === 1;
                           const isCancelled = isCancelledOrNoShow(apt.status);
 
-                          // Get styling based on provider color and status
-                          let bgColor, borderColor, bgImage;
+                          // Availability blocks use simple styling
                           if (isAvailabilityBlock) {
-                            bgColor = '#E5E7EB'; // Gray for availability blocks
-                            borderColor = '#9CA3AF80';
-                            bgImage = 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,.3) 4px, rgba(255,255,255,.3) 8px)';
-                          } else {
-                            const style = getAppointmentStyle(apt);
-                            bgColor = style.bgColor;
-                            borderColor = style.borderColor;
-                            bgImage = 'none';
-                          }
-
-                          return (
-                            <div
-                              key={apt.id}
-                              onClick={(e) => handleAppointmentClick(apt, e)}
-                              className={`px-2 py-1 rounded text-xs border truncate hover:opacity-80 hover:shadow-md transition-all cursor-pointer ${
-                                isAvailabilityBlock || isCancelled ? 'border-dashed' : ''
-                              }`}
-                              style={{
-                                backgroundColor: isAvailabilityBlock ? `${bgColor}99` : (isCancelled ? `${bgColor}80` : `${bgColor}B3`),
-                                borderColor: borderColor,
-                                backgroundImage: bgImage
-                              }}
-                            >
-                              {isAvailabilityBlock ? (
+                            return (
+                              <div
+                                key={apt.id}
+                                onClick={(e) => handleAppointmentClick(apt, e)}
+                                className="px-2 py-1.5 rounded-lg text-xs border border-dashed truncate hover:opacity-80 hover:shadow-md transition-all cursor-pointer"
+                                style={{
+                                  backgroundColor: 'rgba(229, 231, 235, 0.6)',
+                                  borderColor: 'rgba(156, 163, 175, 0.5)',
+                                  backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,.3) 4px, rgba(255,255,255,.3) 8px)'
+                                }}
+                              >
                                 <div className="font-semibold text-gray-900 flex items-center gap-1">
                                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 715.636 5.636m12.728 12.728L5.636 5.636" />
                                   </svg>
                                   <span className="truncate">{apt.categoryName}</span>
                                 </div>
-                              ) : (
-                                (() => {
-                                  const style = getAppointmentStyle(apt);
-                                  return (
-                                    <>
-                                      <div className={`font-semibold truncate ${style.textClass}`}>
-                                        {formatClientName(apt.patientName)} / {formatClinicianName(apt)}
-                                      </div>
-                                      <div className={`truncate text-[10px] ${isCancelled ? 'text-gray-500 line-through' : 'text-gray-700'}`}>{apt.categoryName}</div>
-                                    </>
-                                  );
-                                })()
-                              )}
+                              </div>
+                            );
+                          }
+
+                          // Regular appointments get glassy styling
+                          const style = getAppointmentStyle(apt);
+
+                          return (
+                            <div
+                              key={apt.id}
+                              onClick={(e) => handleAppointmentClick(apt, e)}
+                              className={`px-2 py-1.5 rounded-lg text-xs border hover:scale-[1.02] hover:shadow-lg transition-all cursor-pointer ${
+                                isCancelled ? 'border-dashed' : ''
+                              }`}
+                              style={{
+                                background: style.gradient,
+                                borderColor: style.borderColor,
+                                backdropFilter: style.backdropFilter,
+                                boxShadow: style.boxShadow
+                              }}
+                            >
+                              <div
+                                className={`font-semibold truncate ${style.textClass}`}
+                                style={{ color: style.textColor, textShadow: style.textShadow }}
+                              >
+                                {formatClientName(apt.patientName)} / {formatClinicianName(apt)}
+                              </div>
+                              <div
+                                className={`truncate text-[11px] ${isCancelled ? 'line-through' : ''}`}
+                                style={{ color: isCancelled ? '#6B7280' : 'rgba(255,255,255,0.85)', textShadow: style.textShadow }}
+                              >
+                                {apt.categoryName}
+                              </div>
                             </div>
                           );
                         })}
