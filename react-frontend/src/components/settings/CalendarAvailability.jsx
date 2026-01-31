@@ -37,8 +37,9 @@ function CalendarAvailability() {
 
   const loadCategories = async () => {
     try {
-      // Fetch Type 1 categories (provider availability/blocking)
-      const response = await getAppointmentCategories(1);
+      // Fetch non-client categories (clinic, holiday) for availability/blocking
+      // Pass null for type to get all, and 'client' to exclude client appointment types
+      const response = await getAppointmentCategories(null, 'client');
       setCategories(response.categories || []);
     } catch (err) {
       console.error('Failed to load availability categories:', err);
