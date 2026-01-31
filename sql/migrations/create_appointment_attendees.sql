@@ -3,9 +3,9 @@
 -- Date: 2026-01-30
 
 CREATE TABLE IF NOT EXISTS appointment_attendees (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    appointment_id INT UNSIGNED NOT NULL,
-    user_id INT UNSIGNED NOT NULL,
+    id BIGINT(20) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    appointment_id BIGINT(20) UNSIGNED NOT NULL,
+    user_id BIGINT(20) UNSIGNED NOT NULL,
     role ENUM('supervisor', 'supervisee', 'attendee') NOT NULL DEFAULT 'attendee',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
