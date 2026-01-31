@@ -67,18 +67,27 @@ function Dashboard() {
 
   const todaysAppointments = appointments
     .filter(appt => appt.categoryType !== 1) // Exclude availability blocks
-    .map(appt => ({
-      ...appt, // Include all original appointment data
-      time: new Date(appt.eventDate + ' ' + appt.startTime).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit'
-      }),
-      client: appt.patientName || 'Unknown',
-      type: appt.categoryName || 'Appointment',
-      duration: appt.duration ? `${appt.duration} min` : '',
-      room: appt.room || '',
-      isNext: false
-    }));
+    .map(appt => {
+      // For client appointments, show patient name; for clinic/supervision, show clinician
+      const displayName = appt.patientName
+        ? appt.patientName
+        : (appt.providerFirstName
+          ? `${appt.providerFirstName} ${appt.providerLastName || ''}`.trim()
+          : appt.categoryName || 'Appointment');
+
+      return {
+        ...appt, // Include all original appointment data
+        time: new Date(appt.eventDate + ' ' + appt.startTime).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit'
+        }),
+        client: displayName,
+        type: appt.categoryName || 'Appointment',
+        duration: appt.duration ? `${appt.duration} min` : '',
+        room: appt.room || '',
+        isNext: false
+      };
+    });
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
