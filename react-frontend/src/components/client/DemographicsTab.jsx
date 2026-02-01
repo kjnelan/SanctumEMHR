@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { updateDemographics, getListOptions, getCurrentUser, getProviders, getRelatedPersons, saveRelatedPerson, deleteRelatedPerson } from '../../utils/api';
 import useReferenceLists from '../../hooks/useReferenceLists';
+import AssignedProviders from './AssignedProviders';
 
 function DemographicsTab({ data, onDataUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -689,27 +690,20 @@ function DemographicsTab({ data, onDataUpdate }) {
             </div>
           </div>
 
-          {/* Clinician Information Section */}
+          {/* Care Team Section */}
           <div className="card-main">
-            <h2 className="card-header">Clinician Information</h2>
+            <h2 className="card-header">Care Team</h2>
             <div className="card-inner">
-              <div className="grid grid-cols-2 gap-3">
-                {isEditing ? (
-                  <>
-                    {currentUser && currentUser.admin ? (
-                      <div className="col-span-2">
-                        {renderField('Assigned Clinician', formData.provider_id, 'provider_id', 'text',
-                          providers && providers.length > 0
-                            ? [{ value: '', label: 'Select...' }, ...providers]
-                            : null
-                        )}
-                      </div>
-                    ) : (
-                      <div className="col-span-2 form-field">
-                        <div className="form-field-label">Assigned Clinician</div>
-                        <div className="form-field-value">{patient.provider}</div>
-                      </div>
-                    )}
+              <AssignedProviders
+                clientId={patient.pid}
+                isAdmin={currentUser?.admin}
+                providers={providers}
+              />
+
+              {/* Referring Provider - separate from care team */}
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="grid grid-cols-2 gap-3">
+                  {isEditing ? (
                     <div className="col-span-2">
                       {renderField('Referring Provider', formData.referring_provider_id, 'referring_provider_id', 'text',
                         providers && providers.length > 0
@@ -717,13 +711,10 @@ function DemographicsTab({ data, onDataUpdate }) {
                           : null
                       )}
                     </div>
-                  </>
-                ) : (
-                  <>
-                    {renderField('Assigned Clinician', patient.provider)}
-                    {renderField('Referring Provider', patient.referring_provider)}
-                  </>
-                )}
+                  ) : (
+                    renderField('Referring Provider', patient.referring_provider)
+                  )}
+                </div>
               </div>
             </div>
           </div>
