@@ -58,12 +58,22 @@ try {
                 http_response_code(200);
                 echo json_encode(['success' => true, 'category' => $category]);
             } else {
+                // Check if color column exists
+                $colorColumnExists = false;
+                try {
+                    $colCheck = $db->query("SHOW COLUMNS FROM appointment_categories LIKE 'color'");
+                    $colorColumnExists = !empty($colCheck);
+                } catch (Exception $e) {
+                    // Column doesn't exist, continue without it
+                }
+
                 // Get all categories
+                $colorSelect = $colorColumnExists ? "color," : "NULL AS color,";
                 $sql = "SELECT
                             id,
                             name,
                             description,
-                            color,
+                            $colorSelect
                             default_duration,
                             is_billable,
                             is_active,
@@ -95,32 +105,50 @@ try {
                         throw new Exception('Category name is required');
                     }
 
-                    // Insert category
-                    $sql = "INSERT INTO appointment_categories (
-                                name,
-                                description,
-                                color,
-                                default_duration,
-                                is_billable,
-                                is_active,
-                                category_type,
-                                requires_cpt_selection,
-                                blocks_availability,
-                                sort_order
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    // Check if color column exists
+                    $hasColorColumn = false;
+                    try {
+                        $colCheck = $db->query("SHOW COLUMNS FROM appointment_categories LIKE 'color'");
+                        $hasColorColumn = !empty($colCheck);
+                    } catch (Exception $e) {}
 
-                    $params = [
-                        $input['name'],
-                        $input['description'] ?? null,
-                        $input['color'] ?? '#3b82f6',
-                        $input['default_duration'] ?? 50,
-                        $input['is_billable'] ?? 1,
-                        $input['is_active'] ?? 1,
-                        $input['category_type'] ?? 'client',
-                        $input['requires_cpt_selection'] ?? 0,
-                        $input['blocks_availability'] ?? 0,
-                        $input['sort_order'] ?? 0
-                    ];
+                    // Insert category (with or without color)
+                    if ($hasColorColumn) {
+                        $sql = "INSERT INTO appointment_categories (
+                                    name, description, color, default_duration, is_billable,
+                                    is_active, category_type, requires_cpt_selection,
+                                    blocks_availability, sort_order
+                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                        $params = [
+                            $input['name'],
+                            $input['description'] ?? null,
+                            $input['color'] ?? '#3B82F6',
+                            $input['default_duration'] ?? 50,
+                            $input['is_billable'] ?? 1,
+                            $input['is_active'] ?? 1,
+                            $input['category_type'] ?? 'client',
+                            $input['requires_cpt_selection'] ?? 0,
+                            $input['blocks_availability'] ?? 0,
+                            $input['sort_order'] ?? 0
+                        ];
+                    } else {
+                        $sql = "INSERT INTO appointment_categories (
+                                    name, description, default_duration, is_billable,
+                                    is_active, category_type, requires_cpt_selection,
+                                    blocks_availability, sort_order
+                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                        $params = [
+                            $input['name'],
+                            $input['description'] ?? null,
+                            $input['default_duration'] ?? 50,
+                            $input['is_billable'] ?? 1,
+                            $input['is_active'] ?? 1,
+                            $input['category_type'] ?? 'client',
+                            $input['requires_cpt_selection'] ?? 0,
+                            $input['blocks_availability'] ?? 0,
+                            $input['sort_order'] ?? 0
+                        ];
+                    }
 
                     $db->execute($sql, $params);
                     $categoryId = $db->getConnection()->lastInsertId();
@@ -142,6 +170,13 @@ try {
                         throw new Exception('ID is required');
                     }
 
+                    // Check if color column exists
+                    $hasColorColumn = false;
+                    try {
+                        $colCheck = $db->query("SHOW COLUMNS FROM appointment_categories LIKE 'color'");
+                        $hasColorColumn = !empty($colCheck);
+                    } catch (Exception $e) {}
+
                     // Build update SQL dynamically based on provided fields
                     $updateFields = [];
                     $params = [];
@@ -154,7 +189,7 @@ try {
                         $updateFields[] = "description = ?";
                         $params[] = $input['description'];
                     }
-                    if (isset($input['color'])) {
+                    if ($hasColorColumn && isset($input['color'])) {
                         $updateFields[] = "color = ?";
                         $params[] = $input['color'];
                     }

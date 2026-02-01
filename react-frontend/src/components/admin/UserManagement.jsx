@@ -58,6 +58,7 @@ function UserManagement() {
     active: true,
     calendar: false, // Is admin
     portal_user: false,
+    color: '', // Calendar color for providers
     notes: ''
   });
 
@@ -146,6 +147,7 @@ function UserManagement() {
       active: true,
       calendar: false,
       portal_user: false,
+      color: '',
       notes: ''
     });
     setShowPassword(false);
@@ -234,6 +236,7 @@ function UserManagement() {
         active: userData.active === '1' || userData.active === 1,
         calendar: userData.calendar === '1' || userData.calendar === 1,
         portal_user: userData.portal_user === '1' || userData.portal_user === 1,
+        color: userData.color || '',
         notes: userData.notes || ''
       });
 
@@ -957,6 +960,48 @@ function UserFormModal({
                 </label>
               </div>
             </div>
+
+            {/* Calendar Settings - Only show for providers */}
+            {formData.authorized && (
+              <div className="mb-6">
+                <h3 className="section-header-gray">Calendar Settings</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <FormLabel>
+                      Calendar Color
+                    </FormLabel>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={formData.color || '#3B82F6'}
+                        onChange={(e) => onFormChange('color', e.target.value)}
+                        className="w-12 h-10 rounded border border-gray-300 cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={formData.color || ''}
+                        onChange={(e) => onFormChange('color', e.target.value)}
+                        placeholder="#3B82F6"
+                        className="input-field flex-1"
+                        maxLength={7}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      This color will be used for all appointments on the calendar
+                    </p>
+                  </div>
+                  <div>
+                    <FormLabel>Color Preview</FormLabel>
+                    <div
+                      className="h-10 rounded-lg border border-gray-200 flex items-center px-3 text-sm font-medium text-gray-800"
+                      style={{ backgroundColor: `${formData.color || '#3B82F6'}B3` }}
+                    >
+                      {formData.fname || 'Provider'} {formData.lname?.charAt(0) || 'N'}.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Organization */}
             <div className="mb-6">

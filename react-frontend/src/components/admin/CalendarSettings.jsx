@@ -13,7 +13,7 @@
 import { useState, useEffect } from 'react';
 import { getCalendarSettings, updateCalendarSettings } from '../../utils/api';
 import { Modal } from '../Modal';
-import { TabButton } from '../TabButton';
+import { GlassyTabs, GlassyTab } from '../shared/GlassyTabs';
 import { PrimaryButton } from '../PrimaryButton';
 import { SecondaryButton } from '../SecondaryButton';
 import { DangerButton } from '../DangerButton';
@@ -27,26 +27,26 @@ function CalendarSettings() {
   return (
     <div className="glass-card p-6">
       {/* Main Tab Navigation */}
-      <div className="flex border-b border-gray-300 mb-6">
-        <TabButton
+      <GlassyTabs className="mb-6">
+        <GlassyTab
           active={mainTab === 'general'}
           onClick={() => setMainTab('general')}
         >
           General Settings
-        </TabButton>
-        <TabButton
+        </GlassyTab>
+        <GlassyTab
           active={mainTab === 'statuses'}
           onClick={() => setMainTab('statuses')}
         >
           Appointment Statuses
-        </TabButton>
-        <TabButton
+        </GlassyTab>
+        <GlassyTab
           active={mainTab === 'reasons'}
           onClick={() => setMainTab('reasons')}
         >
           Cancellation Reasons
-        </TabButton>
-      </div>
+        </GlassyTab>
+      </GlassyTabs>
 
       {/* Tab Content */}
       {mainTab === 'general' && <GeneralSettingsTab />}

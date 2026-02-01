@@ -63,8 +63,8 @@ try {
 
     error_log("Update appointment input: " . print_r($input, true));
 
-    // Validate required fields
-    $required = ['appointmentId', 'patientId', 'providerId', 'categoryId', 'eventDate', 'startTime', 'duration'];
+    // Validate required fields (patientId is conditionally required based on category type)
+    $required = ['appointmentId', 'providerId', 'categoryId', 'eventDate', 'startTime', 'duration'];
     foreach ($required as $field) {
         if (!isset($input[$field]) || $input[$field] === '') {
             throw new Exception("Missing required field: $field");
@@ -73,12 +73,24 @@ try {
 
     // Extract and validate inputs
     $appointmentId = intval($input['appointmentId']);
-    $patientId = intval($input['patientId']);
+    $patientId = isset($input['patientId']) && $input['patientId'] !== '' ? intval($input['patientId']) : null;
     $providerId = intval($input['providerId']);
     $categoryId = intval($input['categoryId']);
     $eventDate = $input['eventDate']; // YYYY-MM-DD format
     $startTime = $input['startTime']; // HH:MM:SS format
     $duration = intval($input['duration']); // Duration in minutes
+
+    // Look up category type to determine if patientId is required
+    $categoryResult = $db->query("SELECT category_type FROM appointment_categories WHERE id = ?", [$categoryId]);
+    if (!$categoryResult) {
+        throw new Exception("Invalid category ID");
+    }
+    $categoryType = $categoryResult['category_type'];
+
+    // Client-type appointments require a patient
+    if ($categoryType === 'client' && !$patientId) {
+        throw new Exception("Client appointments require a patient to be selected");
+    }
 
     // Optional fields
     $title = $input['title'] ?? '';
@@ -91,6 +103,10 @@ try {
     $cptCodeId = isset($input['cptCodeId']) && $input['cptCodeId'] ? intval($input['cptCodeId']) : null;
     $billingFee = isset($input['billingFee']) && $input['billingFee'] ? floatval($input['billingFee']) : null;
     $patientPaymentType = $input['patientPaymentType'] ?? null;
+
+    // Attendees for clinic-type appointments (supervision, meetings, etc.)
+    $attendees = isset($input['attendees']) && is_array($input['attendees']) ? $input['attendees'] : [];
+    $hasAttendeesUpdate = isset($input['attendees']); // Track if attendees were explicitly provided
 
     // Map OpenEMR status symbols to SanctumEMHR status strings
     // Also accepts direct status strings (e.g., 'scheduled', 'confirmed', etc.)
@@ -221,6 +237,29 @@ try {
 
     error_log("Update appointment: Successfully updated $updatedCount appointment(s)");
 
+    // Update attendees if provided
+    if ($hasAttendeesUpdate) {
+        // Delete existing attendees for this appointment
+        $db->execute("DELETE FROM appointment_attendees WHERE appointment_id = ?", [$appointmentId]);
+
+        // Insert new attendees
+        if (!empty($attendees)) {
+            $attendeeSql = "INSERT INTO appointment_attendees (appointment_id, user_id, role) VALUES (?, ?, ?)";
+            foreach ($attendees as $attendee) {
+                $attendeeUserId = intval($attendee['userId']);
+                $attendeeRole = $attendee['role'] ?? 'attendee';
+                // Validate role
+                if (!in_array($attendeeRole, ['supervisor', 'supervisee', 'attendee'])) {
+                    $attendeeRole = 'attendee';
+                }
+                $db->insert($attendeeSql, [$appointmentId, $attendeeUserId, $attendeeRole]);
+            }
+            error_log("Update appointment: Updated attendees (" . count($attendees) . " total) for appointment ID $appointmentId");
+        } else {
+            error_log("Update appointment: Removed all attendees from appointment ID $appointmentId");
+        }
+    }
+
     // Fetch the updated appointment to return full details
     $updatedAppt = $db->query(
         "SELECT
@@ -236,7 +275,6 @@ try {
             a.provider_id,
             a.room,
             c.name AS category_name,
-            c.color AS category_color,
             cl.first_name AS patient_fname,
             cl.last_name AS patient_lname,
             CONCAT(u.first_name, ' ', u.last_name) AS provider_name
@@ -251,6 +289,31 @@ try {
     // Extract date and time components from TIMESTAMP fields
     $startDT = new DateTime($updatedAppt['start_datetime']);
     $endDT = new DateTime($updatedAppt['end_datetime']);
+
+    // Fetch attendees for this appointment
+    $appointmentAttendees = [];
+    $attendeeRows = $db->queryAll(
+        "SELECT
+            aa.user_id,
+            aa.role,
+            u.first_name,
+            u.last_name,
+            u.color
+        FROM appointment_attendees aa
+        JOIN users u ON aa.user_id = u.id
+        WHERE aa.appointment_id = ?
+        ORDER BY aa.role, u.last_name, u.first_name",
+        [$appointmentId]
+    );
+    foreach ($attendeeRows as $attendee) {
+        $appointmentAttendees[] = [
+            'userId' => $attendee['user_id'],
+            'firstName' => $attendee['first_name'],
+            'lastName' => $attendee['last_name'],
+            'role' => $attendee['role'],
+            'color' => $attendee['color']
+        ];
+    }
 
     // Map SanctumEMHR status back to OpenEMR symbols for frontend compatibility
     $reverseStatusMap = array_flip($statusMap);
@@ -267,7 +330,6 @@ try {
             'duration' => intval($updatedAppt['duration']),
             'categoryId' => $updatedAppt['category_id'],
             'categoryName' => $updatedAppt['category_name'],
-            'categoryColor' => $updatedAppt['category_color'],
             'apptstatus' => $reverseStatusMap[$updatedAppt['status']] ?? '-',
             'title' => $updatedAppt['title'],
             'comments' => $updatedAppt['notes'],
@@ -275,7 +337,8 @@ try {
             'patientName' => trim(($updatedAppt['patient_fname'] ?? '') . ' ' . ($updatedAppt['patient_lname'] ?? '')),
             'providerId' => $updatedAppt['provider_id'],
             'providerName' => $updatedAppt['provider_name'],
-            'room' => $updatedAppt['room']
+            'room' => $updatedAppt['room'],
+            'attendees' => $appointmentAttendees
         ]
     ]);
 

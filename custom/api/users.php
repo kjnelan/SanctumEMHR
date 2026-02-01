@@ -64,6 +64,7 @@ try {
                     u.phone,
                     u.mobile AS phonecell,
                     u.user_type,
+                    u.color,
                     u.failed_login_attempts,
                     u.locked_until,
                     CAST(CASE WHEN u.locked_until IS NOT NULL AND u.locked_until > NOW() THEN 1 ELSE 0 END AS CHAR) AS is_locked
@@ -127,6 +128,7 @@ try {
                     CAST(portal_user AS CHAR) AS portal_user,
                     CAST(CASE WHEN user_type = 'admin' THEN 1 ELSE 0 END AS CHAR) AS calendar,
                     user_type,
+                    color,
                     supervisor_id,
                     facility_id,
                     notes
@@ -366,6 +368,7 @@ try {
                 'license_state' => 'license_state',
                 'federaltaxid' => 'federal_tax_id',
                 'taxonomy' => 'taxonomy',
+                'color' => 'color',
                 'supervisor_id' => 'supervisor_id',
                 'facility_id' => 'facility_id',
                 'notes' => 'notes'

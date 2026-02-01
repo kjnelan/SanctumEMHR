@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { getBilling } from '../../utils/api';
 import EncounterDetailModal from './EncounterDetailModal';
-import { ErrorInline } from '../ErrorInline';
+import ComingSoon from '../../pages/ComingSoon';
 
 function BillingTab({ data }) {
   const [billingData, setBillingData] = useState(null);
@@ -70,11 +70,7 @@ function BillingTab({ data }) {
   }
 
   if (error) {
-    return (
-      <ErrorInline>
-        Error: {error}
-      </ErrorInline>
-    );
+    return <ComingSoon tabName="Billing" />;
   }
 
   return (

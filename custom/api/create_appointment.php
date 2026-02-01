@@ -63,8 +63,8 @@ try {
 
     error_log("Create appointment input: " . print_r($input, true));
 
-    // Validate required fields
-    $required = ['patientId', 'providerId', 'categoryId', 'eventDate', 'startTime', 'duration'];
+    // Validate required fields (patientId is conditionally required based on category type)
+    $required = ['providerId', 'categoryId', 'eventDate', 'startTime', 'duration'];
     foreach ($required as $field) {
         if (!isset($input[$field]) || $input[$field] === '') {
             throw new Exception("Missing required field: $field");
@@ -72,12 +72,27 @@ try {
     }
 
     // Extract and validate inputs
-    $patientId = intval($input['patientId']);
+    // patientId can be null/0/empty for non-client appointments (availability blocks, supervision, etc.)
+    $patientId = isset($input['patientId']) && $input['patientId'] !== '' && $input['patientId'] !== 0 && $input['patientId'] !== '0'
+        ? intval($input['patientId'])
+        : null;
     $providerId = intval($input['providerId']);
     $categoryId = intval($input['categoryId']);
     $eventDate = $input['eventDate']; // YYYY-MM-DD format
     $startTime = $input['startTime']; // HH:MM:SS format
     $duration = intval($input['duration']); // Duration in minutes
+
+    // Look up category type to determine if patientId is required
+    $categoryResult = $db->query("SELECT category_type FROM appointment_categories WHERE id = ?", [$categoryId]);
+    if (!$categoryResult) {
+        throw new Exception("Invalid category ID");
+    }
+    $categoryType = $categoryResult['category_type'];
+
+    // Client-type appointments require a patient
+    if ($categoryType === 'client' && !$patientId) {
+        throw new Exception("Client appointments require a patient to be selected");
+    }
 
     // Optional fields
     $title = $input['title'] ?? '';
@@ -89,6 +104,9 @@ try {
 
     // CPT code for the appointment (billing details handled separately)
     $cptCodeId = isset($input['cptCodeId']) && $input['cptCodeId'] ? intval($input['cptCodeId']) : null;
+
+    // Attendees for clinic-type appointments (supervision, meetings, etc.)
+    $attendees = isset($input['attendees']) && is_array($input['attendees']) ? $input['attendees'] : [];
 
     // Map OpenEMR status symbols to SanctumEMHR status strings
     // Also accepts direct status strings (e.g., 'scheduled', 'confirmed', etc.)
@@ -371,6 +389,21 @@ try {
 
         $appointmentIds[] = $result;
 
+        // Insert attendees for this appointment (if any)
+        if (!empty($attendees)) {
+            $attendeeSql = "INSERT INTO appointment_attendees (appointment_id, user_id, role) VALUES (?, ?, ?)";
+            foreach ($attendees as $attendee) {
+                $attendeeUserId = intval($attendee['userId']);
+                $attendeeRole = $attendee['role'] ?? 'attendee';
+                // Validate role
+                if (!in_array($attendeeRole, ['supervisor', 'supervisee', 'attendee'])) {
+                    $attendeeRole = 'attendee';
+                }
+                $db->insert($attendeeSql, [$result, $attendeeUserId, $attendeeRole]);
+            }
+            error_log("Create appointment: Added " . count($attendees) . " attendees to appointment ID $result");
+        }
+
         error_log("Create appointment: Successfully created appointment ID $result for date $occurrenceDate");
     }
 
@@ -389,7 +422,6 @@ try {
             a.provider_id,
             a.room,
             c.name AS category_name,
-            c.color AS category_color,
             cl.first_name AS patient_fname,
             cl.last_name AS patient_lname,
             CONCAT(u.first_name, ' ', u.last_name) AS provider_name
@@ -401,6 +433,38 @@ try {
         ORDER BY a.start_datetime";
 
     $createdApptsResult = $db->queryAll($createdApptsQuery, $appointmentIds);
+
+    // Fetch attendees for all created appointments
+    $attendeesByAppointment = [];
+    if (!empty($appointmentIds)) {
+        $attendeeSql = "SELECT
+            aa.appointment_id,
+            aa.user_id,
+            aa.role,
+            u.first_name,
+            u.last_name,
+            u.color
+        FROM appointment_attendees aa
+        JOIN users u ON aa.user_id = u.id
+        WHERE aa.appointment_id IN ($placeholders)
+        ORDER BY aa.role, u.last_name, u.first_name";
+
+        $attendeeRows = $db->queryAll($attendeeSql, $appointmentIds);
+
+        foreach ($attendeeRows as $attendee) {
+            $aptId = $attendee['appointment_id'];
+            if (!isset($attendeesByAppointment[$aptId])) {
+                $attendeesByAppointment[$aptId] = [];
+            }
+            $attendeesByAppointment[$aptId][] = [
+                'userId' => $attendee['user_id'],
+                'firstName' => $attendee['first_name'],
+                'lastName' => $attendee['last_name'],
+                'role' => $attendee['role'],
+                'color' => $attendee['color']
+            ];
+        }
+    }
 
     // Map SanctumEMHR status back to OpenEMR symbols for frontend compatibility
     $reverseStatusMap = array_flip($statusMap);
@@ -418,7 +482,6 @@ try {
             'duration' => $row['duration'] * 60, // Convert minutes to seconds for frontend
             'categoryId' => $row['category_id'],
             'categoryName' => $row['category_name'],
-            'categoryColor' => $row['category_color'],
             'status' => $reverseStatusMap[$row['status']] ?? '-', // Map back to symbol
             'title' => $row['title'],
             'notes' => $row['notes'],
@@ -428,7 +491,8 @@ try {
             'providerId' => $row['provider_id'],
             'providerName' => $row['provider_name'],
             'isRecurring' => $isRecurring,
-            'recurrenceId' => $recurrenceGroupId
+            'recurrenceId' => $recurrenceGroupId,
+            'attendees' => $attendeesByAppointment[$row['id']] ?? []
         ];
     }
 

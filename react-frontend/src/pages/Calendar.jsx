@@ -15,6 +15,7 @@ import React, { useState, useEffect } from 'react';
 import { getAppointments, getProviders, getCalendarSettings } from '../utils/api';
 import MiniCalendar from '../components/calendar/MiniCalendar';
 import AppointmentModal from '../components/calendar/AppointmentModal';
+import { PrimaryButton } from '../components/PrimaryButton';
 
 function Calendar() {
   const [view, setView] = useState('week'); // day, week, month
@@ -202,6 +203,129 @@ function Calendar() {
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
     return `${hour12}:${minutes} ${ampm}`;
+  };
+
+  // Format client name as "First L." (first name + last initial)
+  const formatClientName = (fullName) => {
+    if (!fullName) return '';
+    const parts = fullName.trim().split(' ');
+    if (parts.length === 1) return parts[0];
+    const firstName = parts[0];
+    const lastName = parts[parts.length - 1];
+    return `${firstName} ${lastName.charAt(0)}.`;
+  };
+
+  // Format clinician name as "First L." for compact display
+  const formatClinicianName = (apt) => {
+    if (!apt.providerFirstName) return apt.providerName || '';
+    const firstName = apt.providerFirstName;
+    const lastName = apt.providerLastName || '';
+    return lastName ? `${firstName} ${lastName.charAt(0)}.` : firstName;
+  };
+
+  // Format appointment display - shows "Patient / Clinician" for client appts,
+  // or just "Clinician" for non-client appts (supervision, clinic, etc.)
+  const formatAppointmentDisplay = (apt) => {
+    if (apt.patientName) {
+      // Client appointment: show "Patient / Clinician"
+      return `${formatClientName(apt.patientName)} / ${formatClinicianName(apt)}`;
+    }
+    // Non-client appointment: show just the clinician name
+    return formatClinicianName(apt);
+  };
+
+  // Format compact appointment display for grid view (time + name)
+  const formatCompactDisplay = (apt) => {
+    const time = formatTime12Hour(apt.startTime).replace(' ', '');
+    if (apt.patientName) {
+      return `${time} ${formatClientName(apt.patientName)}`;
+    }
+    // Non-client appointment: show time + category name
+    return `${time} ${apt.categoryName || formatClinicianName(apt)}`;
+  };
+
+  // Check if appointment is cancelled or no-show
+  const isCancelledOrNoShow = (status) => {
+    return status === 'cancelled' || status === 'no_show';
+  };
+
+  // Check if appointment is an availability block (Out of Office, Vacation, Holiday)
+  // Client appointments are NEVER availability blocks - they always show as appointments
+  // Uses blocksAvailability flag from API, falls back to checking holiday type
+  const isAvailabilityBlock = (apt) => {
+    // Client appointments always show as appointments, never as availability blocks
+    if (apt.categoryType === 'client') {
+      return false;
+    }
+    return apt.blocksAvailability || apt.categoryType === 'holiday';
+  };
+
+  // Check if appointment is a client appointment (therapy sessions, etc.)
+  const isClientAppointment = (apt) => {
+    return apt.categoryType === 'client';
+  };
+
+  // Get the category color for availability blocks (admin-defined)
+  const getBlockColor = (apt) => {
+    return apt.categoryColor || '#9CA3AF';
+  };
+
+  // Convert hex color to pastel by mixing with white
+  const toPastel = (hex) => {
+    const color = hex.replace('#', '');
+    const r = parseInt(color.substr(0, 2), 16);
+    const g = parseInt(color.substr(2, 2), 16);
+    const b = parseInt(color.substr(4, 2), 16);
+
+    // Mix with white (65% white, 35% original) for soft pastel
+    const pastelR = Math.round(r * 0.35 + 255 * 0.65);
+    const pastelG = Math.round(g * 0.35 + 255 * 0.65);
+    const pastelB = Math.round(b * 0.35 + 255 * 0.65);
+
+    return `rgb(${pastelR}, ${pastelG}, ${pastelB})`;
+  };
+
+  // Get a slightly darker shade for the border
+  const getPastelBorder = (hex) => {
+    const color = hex.replace('#', '');
+    const r = parseInt(color.substr(0, 2), 16);
+    const g = parseInt(color.substr(2, 2), 16);
+    const b = parseInt(color.substr(4, 2), 16);
+
+    // Mix with white (50% white, 50% original) for border
+    const borderR = Math.round(r * 0.5 + 255 * 0.5);
+    const borderG = Math.round(g * 0.5 + 255 * 0.5);
+    const borderB = Math.round(b * 0.5 + 255 * 0.5);
+
+    return `rgb(${borderR}, ${borderG}, ${borderB})`;
+  };
+
+  // Get appointment styling - returns only dynamic values (colors based on provider)
+  // Base glassy styling comes from CSS class .glass-appointment
+  const getAppointmentStyle = (apt) => {
+    const isCancelled = isCancelledOrNoShow(apt.status);
+
+    // Cancelled/no-show: uses CSS class .glass-appointment-cancelled
+    if (isCancelled) {
+      return {
+        isCancelled: true,
+        textClass: 'line-through text-gray-500',
+        secondaryTextClass: 'text-gray-400'
+      };
+    }
+
+    // Active appointments: compute pastel colors from provider color
+    const color = apt.providerColor || '#3B82F6';
+    const pastel = toPastel(color);
+    const borderColor = getPastelBorder(color);
+
+    return {
+      isCancelled: false,
+      borderColor: borderColor,
+      textClass: 'text-gray-800',
+      secondaryTextClass: 'text-gray-600',
+      gradient: `linear-gradient(135deg, ${pastel} 0%, ${pastel.replace('rgb', 'rgba').replace(')', ', 0.85)')} 100%)`
+    };
   };
 
   // Get appointments for a specific time slot
@@ -401,12 +525,9 @@ function Calendar() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
-            <button
-              onClick={goToToday}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors"
-            >
+            <PrimaryButton onClick={goToToday}>
               Today
-            </button>
+            </PrimaryButton>
             <h2 className="text-xl font-semibold text-gray-900">{getDateRangeDisplay()}</h2>
           </div>
         </div>
@@ -471,127 +592,300 @@ function Calendar() {
           ) : (
           /* Week View */
           view === 'week' && (
-            <div className="glass-card overflow-hidden">
-              {/* Header Row */}
-              <div className="flex border-b border-white/30">
-                {/* Time column header */}
-                <div className="w-20 flex-shrink-0 p-4 bg-white/20 border-r border-white/30 font-semibold text-gray-700">
-                  Time
+            selectedProvider === 'all' ? (
+              /* Schedule Grid View - All Providers */
+              <div className="glass-card overflow-hidden">
+                {/* Header Row - Provider column + Days */}
+                <div className="flex border-b border-white/30">
+                  {/* Provider column header */}
+                  <div className="w-40 flex-shrink-0 p-4 bg-white/20 border-r border-white/30 font-semibold text-gray-700">
+                    Provider
+                  </div>
+
+                  {/* Day headers */}
+                  <div className="flex-1 flex">
+                    {getWeekDays().map((day, index) => {
+                      const isToday = day.toDateString() === new Date().toDateString();
+                      return (
+                        <div
+                          key={index}
+                          className={`flex-1 p-4 border-r border-white/30 text-center ${
+                            isToday ? 'bg-blue-100/40' : 'bg-white/20'
+                          }`}
+                        >
+                          <div className="text-sm text-gray-600">
+                            {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                          </div>
+                          <div className={`text-lg font-semibold ${isToday ? 'text-blue-600' : 'text-gray-900'}`}>
+                            {day.getDate()}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                {/* Day headers */}
-                <div className="flex-1 flex">
-                  {getWeekDays().map((day, index) => {
-                    const isToday = day.toDateString() === new Date().toDateString();
+                {/* Provider Rows */}
+                <div className="max-h-[600px] overflow-y-auto">
+                  {providers.map(provider => {
+                    // Get all appointments for this provider
+                    const providerAppointments = appointments.filter(apt =>
+                      String(apt.providerId) === String(provider.value)
+                    );
+
                     return (
-                      <div
-                        key={index}
-                        className={`flex-1 p-4 border-r border-white/30 text-center ${
-                          isToday ? 'bg-blue-100/40' : 'bg-white/20'
-                        }`}
-                      >
-                        <div className="text-sm text-gray-600">
-                          {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                      <div key={provider.value} className="flex border-b border-white/30 min-h-[80px]">
+                        {/* Provider name cell */}
+                        <div
+                          className="w-40 flex-shrink-0 p-3 bg-white/10 border-r border-white/30 flex items-start"
+                          style={{
+                            borderLeft: `4px solid ${providerAppointments[0]?.providerColor || '#3B82F6'}`
+                          }}
+                        >
+                          <div>
+                            <div className="font-semibold text-gray-900 text-sm">{provider.label}</div>
+                            <div className="text-xs text-gray-500">
+                              {providerAppointments.filter(apt => !isAvailabilityBlock(apt)).length} appts
+                            </div>
+                          </div>
                         </div>
-                        <div className={`text-lg font-semibold ${isToday ? 'text-blue-600' : 'text-gray-900'}`}>
-                          {day.getDate()}
+
+                        {/* Day cells for this provider */}
+                        <div className="flex-1 flex">
+                          {getWeekDays().map((day, dayIndex) => {
+                            const dateStr = day.toISOString().split('T')[0];
+                            // Separate availability blocks from regular appointments
+                            const dayAvailabilityBlocks = providerAppointments
+                              .filter(apt => apt.eventDate === dateStr && isAvailabilityBlock(apt));
+                            const dayAppointments = providerAppointments
+                              .filter(apt => apt.eventDate === dateStr && !isAvailabilityBlock(apt))
+                              .sort((a, b) => a.startTime.localeCompare(b.startTime));
+                            const isToday = day.toDateString() === new Date().toDateString();
+
+                            return (
+                              <div
+                                key={dayIndex}
+                                onClick={() => {
+                                  // Click to add appointment for this provider on this day
+                                  setModalInitialDate(dateStr);
+                                  setModalInitialTime('09:00');
+                                  setModalProviderId(provider.value);
+                                  setEditingAppointment(null);
+                                  setShowAppointmentModal(true);
+                                }}
+                                className={`flex-1 p-2 border-r border-white/30 hover:bg-white/10 cursor-pointer transition-colors relative ${
+                                  isToday ? 'bg-blue-50/30' : ''
+                                }`}
+                              >
+                                {/* Availability blocks shown as background stripes */}
+                                {dayAvailabilityBlocks.length > 0 && (
+                                  <div
+                                    className="availability-block absolute inset-0 pointer-events-none z-0"
+                                    style={{ '--block-color': getBlockColor(dayAvailabilityBlocks[0]) }}
+                                    title={dayAvailabilityBlocks.map(b => b.categoryName).join(', ')}
+                                  />
+                                )}
+                                <div className="space-y-1 relative z-10">
+                                  {/* Show availability block labels */}
+                                  {dayAvailabilityBlocks.map(block => (
+                                    <div
+                                      key={block.id}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAppointmentClick(block, e);
+                                      }}
+                                      className="availability-block-label px-2 py-1 rounded text-xs text-gray-700"
+                                      style={{ '--block-color': getBlockColor(block) }}
+                                    >
+                                      <span className="font-medium">{formatTime12Hour(block.startTime).replace(' ', '')}</span>
+                                      {' '}{block.categoryName}
+                                    </div>
+                                  ))}
+                                  {dayAppointments.slice(0, 4).map(apt => {
+                                    const style = getAppointmentStyle(apt);
+
+                                    return (
+                                      <div
+                                        key={apt.id}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleAppointmentClick(apt, e);
+                                        }}
+                                        className={`px-2 py-1.5 rounded-lg text-sm border cursor-pointer ${
+                                          style.isCancelled
+                                            ? 'glass-appointment-cancelled border-dashed'
+                                            : 'glass-appointment'
+                                        }`}
+                                        style={style.isCancelled ? undefined : {
+                                          background: style.gradient,
+                                          borderColor: style.borderColor
+                                        }}
+                                        title={`${apt.patientName || apt.categoryName} - ${apt.categoryName}`}
+                                      >
+                                        <div className={`font-semibold truncate ${style.textClass}`}>
+                                          {formatCompactDisplay(apt)}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                  {dayAppointments.length > 4 && (
+                                    <div className="text-xs text-gray-500 pl-1">
+                                      +{dayAppointments.length - 4} more
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     );
                   })}
                 </div>
               </div>
+            ) : (
+              /* Time-slot View - Single Provider */
+              <div className="glass-card overflow-hidden">
+                {/* Header Row */}
+                <div className="flex border-b border-white/30">
+                  {/* Time column header */}
+                  <div className="w-20 flex-shrink-0 p-4 bg-white/20 border-r border-white/30 font-semibold text-gray-700">
+                    Time
+                  </div>
 
-              {/* Calendar Body */}
-              <div className="flex">
-                {/* Time labels column */}
-                <div className="w-20 flex-shrink-0 border-r border-white/30 bg-white/20">
-                  {timeSlots.map(slot => (
-                    <div
-                      key={`time-${slot.hour}-${slot.minutes}`}
-                      className="h-[60px] p-2 border-b border-white/30 text-xs text-gray-700 font-medium"
-                    >
-                      {slot.hour === 0 ? '12' : slot.hour < 12 ? slot.hour : slot.hour === 12 ? '12' : slot.hour - 12}:{slot.minutes.toString().padStart(2, '0')} {slot.hour < 12 ? 'AM' : 'PM'}
-                    </div>
-                  ))}
+                  {/* Day headers */}
+                  <div className="flex-1 flex">
+                    {getWeekDays().map((day, index) => {
+                      const isToday = day.toDateString() === new Date().toDateString();
+                      return (
+                        <div
+                          key={index}
+                          className={`flex-1 p-4 border-r border-white/30 text-center ${
+                            isToday ? 'bg-blue-100/40' : 'bg-white/20'
+                          }`}
+                        >
+                          <div className="text-sm text-gray-600">
+                            {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                          </div>
+                          <div className={`text-lg font-semibold ${isToday ? 'text-blue-600' : 'text-gray-900'}`}>
+                            {day.getDate()}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                {/* Day columns with absolute positioning */}
-                <div className="flex-1 flex">
-                  {getWeekDays().map((day, dayIndex) => {
-                    const dayAppointments = getAppointmentsForDate(day);
-                    const totalHeight = timeSlots.length * 60;
-
-                    return (
+                {/* Calendar Body */}
+                <div className="flex">
+                  {/* Time labels column */}
+                  <div className="w-20 flex-shrink-0 border-r border-white/30 bg-white/20">
+                    {timeSlots.map(slot => (
                       <div
-                        key={dayIndex}
-                        className="flex-1 border-r border-white/30 relative"
-                        style={{ height: `${totalHeight}px` }}
+                        key={`time-${slot.hour}-${slot.minutes}`}
+                        className="h-[60px] p-2 border-b border-white/30 text-xs text-gray-700 font-medium"
                       >
-                        {/* Time slot grid lines (for clicking) */}
-                        {timeSlots.map(slot => (
-                          <div
-                            key={`slot-${slot.hour}-${slot.minutes}`}
-                            onClick={() => handleTimeSlotClick(day, slot.hour, slot.minutes)}
-                            className="absolute w-full h-[60px] border-b border-white/30 hover:bg-white/10 cursor-pointer transition-colors"
-                            style={{
-                              top: `${timeSlots.findIndex(s => s.hour === slot.hour && s.minutes === slot.minutes) * 60}px`
-                            }}
-                          />
-                        ))}
+                        {slot.hour === 0 ? '12' : slot.hour < 12 ? slot.hour : slot.hour === 12 ? '12' : slot.hour - 12}:{slot.minutes.toString().padStart(2, '0')} {slot.hour < 12 ? 'AM' : 'PM'}
+                      </div>
+                    ))}
+                  </div>
 
-                        {/* Appointments with absolute positioning */}
-                        {dayAppointments.map(apt => {
-                          const { top, height } = calculateAppointmentPosition(apt);
-                          const isAvailabilityBlock = apt.categoryType === 1;
+                  {/* Day columns with absolute positioning */}
+                  <div className="flex-1 flex">
+                    {getWeekDays().map((day, dayIndex) => {
+                      const dayAppointments = getAppointmentsForDate(day);
+                      const totalHeight = timeSlots.length * 60;
 
-                          // Availability blocks render as background, not clickable appointments
-                          if (isAvailabilityBlock) {
-                            const bgColor = apt.categoryColor || '#F3F4F6';
+                      return (
+                        <div
+                          key={dayIndex}
+                          className="flex-1 border-r border-white/30 relative"
+                          style={{ height: `${totalHeight}px` }}
+                        >
+                          {/* Time slot grid lines (for clicking) */}
+                          {timeSlots.map(slot => (
+                            <div
+                              key={`slot-${slot.hour}-${slot.minutes}`}
+                              onClick={() => handleTimeSlotClick(day, slot.hour, slot.minutes)}
+                              className="absolute w-full h-[60px] border-b border-white/30 hover:bg-white/10 cursor-pointer transition-colors"
+                              style={{
+                                top: `${timeSlots.findIndex(s => s.hour === slot.hour && s.minutes === slot.minutes) * 60}px`
+                              }}
+                            />
+                          ))}
+
+                          {/* Appointments with absolute positioning */}
+                          {dayAppointments.map(apt => {
+                            const { top, height } = calculateAppointmentPosition(apt);
+                            const isAvailBlock = isAvailabilityBlock(apt);
+
+                            // Availability blocks render as background with category color (admin-defined)
+                            if (isAvailBlock) {
+                              return (
+                                <div
+                                  key={apt.id}
+                                  onClick={(e) => handleAppointmentClick(apt, e)}
+                                  className="availability-block absolute left-0 right-0 z-5"
+                                  style={{
+                                    '--block-color': getBlockColor(apt),
+                                    top: `${top}px`,
+                                    height: `${height}px`
+                                  }}
+                                  title={`${apt.categoryName}${apt.comments ? ': ' + apt.comments : ''}`}
+                                >
+                                  <div className="p-2">
+                                    <div className="font-semibold text-gray-800 text-sm">{formatClinicianName(apt)}</div>
+                                    <div className="text-gray-600 text-xs">{apt.categoryName}</div>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            // Regular appointments are clickable cards with glassy pastel style
+                            const style = getAppointmentStyle(apt);
+
                             return (
                               <div
                                 key={apt.id}
-                                className="absolute left-0 right-0 pointer-events-none z-0"
-                                style={{
+                                onClick={(e) => handleAppointmentClick(apt, e)}
+                                className={`absolute left-1 right-1 px-3 py-2 rounded-xl text-sm border cursor-pointer z-10 overflow-hidden ${
+                                  style.isCancelled
+                                    ? 'glass-appointment-cancelled border-dashed'
+                                    : 'glass-appointment'
+                                }`}
+                                style={style.isCancelled ? {
+                                  top: `${top}px`,
+                                  height: `${height}px`
+                                } : {
                                   top: `${top}px`,
                                   height: `${height}px`,
-                                  backgroundColor: `${bgColor}40`, // 25% opacity
-                                  backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,.02) 10px, rgba(0,0,0,.02) 20px)'
+                                  background: style.gradient,
+                                  borderColor: style.borderColor
                                 }}
-                                title={`${apt.categoryName}${apt.comments ? ': ' + apt.comments : ''}`}
-                              />
+                              >
+                                <div className={`font-semibold ${style.textClass}`}>
+                                  {formatAppointmentDisplay(apt)}
+                                </div>
+                                {height > 40 && (
+                                  <div className={`truncate ${style.secondaryTextClass}`}>
+                                    {apt.categoryName}
+                                  </div>
+                                )}
+                                {height > 60 && apt.room && (
+                                  <div className={`truncate text-xs mt-1 ${style.secondaryTextClass} ${style.isCancelled ? 'line-through' : ''}`}>
+                                    Room: {apt.room}
+                                  </div>
+                                )}
+                              </div>
                             );
-                          }
-
-                          // Regular appointments are clickable cards
-                          const bgColor = apt.categoryColor || '#DBEAFE';
-                          const borderColor = apt.categoryColor ? `${apt.categoryColor}80` : '#93C5FD80';
-
-                          return (
-                            <div
-                              key={apt.id}
-                              onClick={(e) => handleAppointmentClick(apt, e)}
-                              className="absolute left-1 right-1 px-2 py-1 rounded-lg text-xs border hover:opacity-80 hover:shadow-md transition-all cursor-pointer z-10 overflow-hidden"
-                              style={{
-                                top: `${top}px`,
-                                height: `${height}px`,
-                                backgroundColor: `${bgColor}B3`,
-                                borderColor: borderColor
-                              }}
-                            >
-                              <div className="font-semibold text-gray-900">{formatTime12Hour(apt.startTime)}</div>
-                              {height > 30 && <div className="text-gray-800 truncate">{apt.patientName}</div>}
-                              {height > 50 && <div className="text-gray-700 truncate text-[10px]">{apt.categoryName}</div>}
-                              {height > 70 && apt.room && <div className="text-gray-600 truncate text-[10px]">{apt.room}</div>}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })}
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
-            </div>
+            )
           )
         )}
 
@@ -641,50 +935,69 @@ function Calendar() {
                         className="p-2 border-r border-white/30 hover:bg-white/10 cursor-pointer transition-colors min-h-[60px]"
                       >
                         {slotAppointments.map(apt => {
-                          // Check if this is an availability block (Type 1) or regular appointment (Type 0)
-                          const isAvailabilityBlock = apt.categoryType === 1;
+                          // Check if this is an availability block ('holiday' type) or regular appointment
+                          const isAvailBlock = isAvailabilityBlock(apt);
+                          const isCancelled = isCancelledOrNoShow(apt.status);
 
                           // Calculate how many slots this appointment spans
                           const slotsSpan = calculateSlotSpan(apt);
                           const heightPx = slotsSpan * 60 - 8; // 60px per slot, minus padding
 
-                          // Use category color if available, otherwise default
-                          const bgColor = apt.categoryColor || (isAvailabilityBlock ? '#E5E7EB' : '#DBEAFE');
-                          const borderColor = apt.categoryColor ? `${apt.categoryColor}80` : (isAvailabilityBlock ? '#9CA3AF80' : '#93C5FD80');
+                          // Availability blocks use category color (admin-defined) with stripes
+                          if (isAvailBlock) {
+                            return (
+                              <div
+                                key={apt.id}
+                                onClick={(e) => handleAppointmentClick(apt, e)}
+                                className="availability-block-card mb-1 px-3 py-2 rounded-xl text-sm"
+                                style={{
+                                  '--block-color': getBlockColor(apt),
+                                  height: `${heightPx}px`
+                                }}
+                              >
+                                <div className="font-semibold text-gray-800 flex items-center gap-1">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                  </svg>
+                                  {apt.categoryName}
+                                </div>
+                                {apt.comments && (
+                                  <div className="text-gray-600 truncate text-xs italic">{apt.comments}</div>
+                                )}
+                              </div>
+                            );
+                          }
+
+                          // Regular appointments get glassy pastel styling
+                          const style = getAppointmentStyle(apt);
 
                           return (
                             <div
                               key={apt.id}
                               onClick={(e) => handleAppointmentClick(apt, e)}
-                              className={`mb-1 px-2 py-1 rounded-lg text-xs border hover:opacity-80 hover:shadow-md transition-all cursor-pointer ${
-                                isAvailabilityBlock ? 'border-dashed' : ''
+                              className={`mb-1 px-3 py-2 rounded-xl text-sm border cursor-pointer ${
+                                style.isCancelled
+                                  ? 'glass-appointment-cancelled border-dashed'
+                                  : 'glass-appointment'
                               }`}
-                              style={{
+                              style={style.isCancelled ? {
+                                height: `${heightPx}px`
+                              } : {
                                 height: `${heightPx}px`,
-                                backgroundColor: isAvailabilityBlock ? `${bgColor}99` : `${bgColor}B3`, // 60% vs 70% opacity
-                                borderColor: borderColor,
-                                backgroundImage: isAvailabilityBlock ? 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,.3) 4px, rgba(255,255,255,.3) 8px)' : 'none'
+                                background: style.gradient,
+                                borderColor: style.borderColor
                               }}
                             >
-                              {isAvailabilityBlock ? (
-                                <>
-                                  <div className="font-semibold text-gray-900 flex items-center gap-1">
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                    </svg>
-                                    {apt.categoryName}
-                                  </div>
-                                  {apt.comments && (
-                                    <div className="text-gray-700 truncate text-[10px] italic">{apt.comments}</div>
-                                  )}
-                                </>
-                              ) : (
-                                <>
-                                  <div className="font-semibold text-gray-900">{formatTime12Hour(apt.startTime)}</div>
-                                  <div className="text-gray-800 truncate">{apt.patientName}</div>
-                                  <div className="text-gray-700 truncate text-[10px]">{apt.categoryName}</div>
-                                  {apt.room && <div className="text-gray-600 truncate text-[10px]">{apt.room}</div>}
-                                </>
+                              <div className={`font-semibold ${style.textClass}`}>
+                                {formatAppointmentDisplay(apt)}
+                              </div>
+                              <div className={`truncate ${style.secondaryTextClass}`}>
+                                {apt.categoryName}
+                              </div>
+                              {apt.room && (
+                                <div className={`truncate text-xs ${style.secondaryTextClass} ${style.isCancelled ? 'line-through' : ''}`}>
+                                  Room: {apt.room}
+                                </div>
                               )}
                             </div>
                           );
@@ -746,43 +1059,54 @@ function Calendar() {
                       </div>
 
                       {/* Appointments list */}
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         {dayAppointments.slice(0, 3).map(apt => {
-                          // Check if this is an availability block (Type 1) or regular appointment (Type 0)
-                          const isAvailabilityBlock = apt.categoryType === 1;
+                          // Check if this is an availability block ('holiday' type) or regular appointment
+                          const isAvailBlock = isAvailabilityBlock(apt);
+                          const isCancelled = isCancelledOrNoShow(apt.status);
 
-                          const bgColor = apt.categoryColor || (isAvailabilityBlock ? '#E5E7EB' : '#DBEAFE');
-                          const borderColor = apt.categoryColor ? `${apt.categoryColor}80` : (isAvailabilityBlock ? '#9CA3AF80' : '#93C5FD80');
+                          // Availability blocks use category color (admin-defined) with stripes
+                          if (isAvailBlock) {
+                            return (
+                              <div
+                                key={apt.id}
+                                onClick={(e) => handleAppointmentClick(apt, e)}
+                                className="availability-block-card px-2 py-1.5 rounded-lg text-xs truncate"
+                                style={{ '--block-color': getBlockColor(apt) }}
+                              >
+                                <div className="font-semibold text-gray-800 flex items-center gap-1">
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                  </svg>
+                                  <span className="truncate">{apt.categoryName}</span>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          // Regular appointments get glassy pastel styling
+                          const style = getAppointmentStyle(apt);
 
                           return (
                             <div
                               key={apt.id}
                               onClick={(e) => handleAppointmentClick(apt, e)}
-                              className={`px-2 py-1 rounded text-xs border truncate hover:opacity-80 hover:shadow-md transition-all cursor-pointer ${
-                                isAvailabilityBlock ? 'border-dashed' : ''
+                              className={`px-2 py-1.5 rounded-lg text-xs border cursor-pointer ${
+                                style.isCancelled
+                                  ? 'glass-appointment-cancelled border-dashed'
+                                  : 'glass-appointment'
                               }`}
-                              style={{
-                                backgroundColor: isAvailabilityBlock ? `${bgColor}99` : `${bgColor}B3`,
-                                borderColor: borderColor,
-                                backgroundImage: isAvailabilityBlock ? 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,.3) 4px, rgba(255,255,255,.3) 8px)' : 'none'
+                              style={style.isCancelled ? undefined : {
+                                background: style.gradient,
+                                borderColor: style.borderColor
                               }}
                             >
-                              {isAvailabilityBlock ? (
-                                <div className="font-semibold text-gray-900 flex items-center gap-1">
-                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 715.636 5.636m12.728 12.728L5.636 5.636" />
-                                  </svg>
-                                  <span className="truncate">{apt.categoryName}</span>
-                                </div>
-                              ) : (
-                                <>
-                                  <div className="font-semibold text-gray-900">
-                                    {formatTime12Hour(apt.startTime)}
-                                  </div>
-                                  <div className="text-gray-800 truncate">{apt.patientName}</div>
-                                  {apt.room && <div className="text-gray-600 truncate text-[10px]">{apt.room}</div>}
-                                </>
-                              )}
+                              <div className={`font-semibold truncate ${style.textClass}`}>
+                                {formatAppointmentDisplay(apt)}
+                              </div>
+                              <div className={`truncate text-[11px] ${style.secondaryTextClass} ${style.isCancelled ? 'line-through' : ''}`}>
+                                {apt.categoryName}
+                              </div>
                             </div>
                           );
                         })}
