@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { updateDemographics, getListOptions, getCurrentUser, getProviders, getRelatedPersons, saveRelatedPerson, deleteRelatedPerson } from '../../utils/api';
 import useReferenceLists from '../../hooks/useReferenceLists';
 import AssignedProviders from './AssignedProviders';
+import { RequiredAsterisk } from '../shared/RequiredAsterisk';
 
 function DemographicsTab({ data, onDataUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -287,17 +288,20 @@ function DemographicsTab({ data, onDataUpdate }) {
     }
   };
 
-  const renderField = (label, value, fieldName, type = 'text', options = null) => {
+  const renderField = (label, value, fieldName, type = 'text', options = null, required = false) => {
+    const labelClass = required ? "form-field-label required-field-label" : "form-field-label";
+
     if (isEditing && fieldName) {
       if (options) {
         // Render select dropdown
         return (
           <div className="form-field">
-            <div className="form-field-label">{label}</div>
+            <div className={labelClass}>{label}{required && <RequiredAsterisk />}</div>
             <select
               value={formData[fieldName] || ''}
               onChange={(e) => handleChange(fieldName, e.target.value)}
               className="input-md"
+              required={required}
             >
               {options.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -309,12 +313,13 @@ function DemographicsTab({ data, onDataUpdate }) {
         // Render text input
         return (
           <div className="form-field">
-            <div className="form-field-label">{label}</div>
+            <div className={labelClass}>{label}{required && <RequiredAsterisk />}</div>
             <input
               type={type}
               value={formData[fieldName] || ''}
               onChange={(e) => handleChange(fieldName, e.target.value)}
               className="input-md"
+              required={required}
             />
           </div>
         );
@@ -395,9 +400,9 @@ function DemographicsTab({ data, onDataUpdate }) {
               <div className="grid grid-cols-2 gap-3">
                 {isEditing ? (
                   <>
-                    {renderField('First Name *', formData.fname, 'fname')}
+                    {renderField('First Name', formData.fname, 'fname', 'text', null, true)}
                     {renderField('Middle Name', formData.mname, 'mname')}
-                    {renderField('Last Name *', formData.lname, 'lname')}
+                    {renderField('Last Name', formData.lname, 'lname', 'text', null, true)}
                     {renderField('Preferred Name', formData.preferred_name, 'preferred_name')}
                     {renderField('Pronouns', formData.pronouns, 'pronouns', 'text',
                       dropdownOptions.pronouns && dropdownOptions.pronouns.length > 0
@@ -405,20 +410,23 @@ function DemographicsTab({ data, onDataUpdate }) {
                         : null
                     )}
                     {renderField('DOB', formData.DOB, 'DOB', 'date')}
-                    {renderField('Sex *', formData.sex, 'sex', 'text',
+                    {renderField('Sex', formData.sex, 'sex', 'text',
                       dropdownOptions.sex && dropdownOptions.sex.length > 0
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.sex]
-                        : [{ value: '', label: 'Select...' }, { value: 'Male', label: 'Male' }, { value: 'Female', label: 'Female' }]
+                        : [{ value: '', label: 'Select...' }, { value: 'Male', label: 'Male' }, { value: 'Female', label: 'Female' }],
+                      true
                     )}
                     {renderField('Gender Identity', formData.gender_identity, 'gender_identity', 'text',
                       dropdownOptions.gender_identity && dropdownOptions.gender_identity.length > 0
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.gender_identity]
-                        : null
+                        : null,
+                      true
                     )}
                     {renderField('Sexual Orientation', formData.sexual_orientation, 'sexual_orientation', 'text',
                       dropdownOptions.sexual_orientation && dropdownOptions.sexual_orientation.length > 0
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.sexual_orientation]
-                        : null
+                        : null,
+                      true
                     )}
                     {renderField('Marital Status', formData.marital_status, 'marital_status', 'text',
                       dropdownOptions.marital_status && dropdownOptions.marital_status.length > 0
@@ -440,13 +448,6 @@ function DemographicsTab({ data, onDataUpdate }) {
                         maxLength="11"
                         className="input-md"
                       />
-                    </div>
-                    <div className="col-span-2">
-                      {renderField('Client Categories', formData.patient_categories, 'patient_categories', 'text',
-                        dropdownOptions.patient_categories && dropdownOptions.patient_categories.length > 0
-                          ? [{ value: '', label: 'Select...' }, ...dropdownOptions.patient_categories]
-                          : null
-                      )}
                     </div>
                   </>
                 ) : (
@@ -488,13 +489,6 @@ function DemographicsTab({ data, onDataUpdate }) {
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.ethnicity]
                         : null
                     )}
-                    <div className="col-span-2">
-                      {renderField('Client Categories', patient.patient_categories, null, 'text',
-                        dropdownOptions.patient_categories && dropdownOptions.patient_categories.length > 0
-                          ? [{ value: '', label: 'Select...' }, ...dropdownOptions.patient_categories]
-                          : null
-                      )}
-                    </div>
                   </>
                 )}
               </div>

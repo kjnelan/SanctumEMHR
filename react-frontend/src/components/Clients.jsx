@@ -103,7 +103,10 @@ function Clients() {
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     try {
-      return new Date(dateString).toLocaleDateString('en-US', {
+      // Parse date parts manually to avoid timezone offset issues
+      const [year, month, day] = dateString.split(/[-T]/);
+      const date = new Date(year, month - 1, day);
+      return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric'
