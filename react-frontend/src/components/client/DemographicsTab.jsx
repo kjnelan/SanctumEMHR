@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { updateDemographics, getListOptions, getCurrentUser, getProviders, getRelatedPersons, saveRelatedPerson, deleteRelatedPerson } from '../../utils/api';
+import { updateDemographics, getListOptions, getProviders, getRelatedPersons, saveRelatedPerson, deleteRelatedPerson } from '../../utils/api';
 import useReferenceLists from '../../hooks/useReferenceLists';
-import AssignedProviders from './AssignedProviders';
 import { RequiredAsterisk } from '../shared/RequiredAsterisk';
 
 function DemographicsTab({ data, onDataUpdate }) {
@@ -11,7 +10,6 @@ function DemographicsTab({ data, onDataUpdate }) {
   const [error, setError] = useState(null);
   const [dropdownOptions, setDropdownOptions] = useState({});
   const [providers, setProviders] = useState([]);
-  const [currentUser, setCurrentUser] = useState(null);
   const [guardians, setGuardians] = useState([]);
   const [showGuardianModal, setShowGuardianModal] = useState(false);
   const [editingGuardian, setEditingGuardian] = useState(null);
@@ -71,15 +69,6 @@ function DemographicsTab({ data, onDataUpdate }) {
       }
     };
 
-    const loadUser = async () => {
-      try {
-        const user = getCurrentUser();
-        setCurrentUser(user);
-      } catch (err) {
-        console.error('Failed to load current user:', err);
-      }
-    };
-
     const loadProviders = async () => {
       try {
         const response = await getProviders();
@@ -90,7 +79,6 @@ function DemographicsTab({ data, onDataUpdate }) {
     };
 
     loadOtherOptions();
-    loadUser();
     loadProviders();
   }, []);
 
@@ -204,20 +192,24 @@ function DemographicsTab({ data, onDataUpdate }) {
         throw new Error('First name and last name are required');
       }
 
-      if (!formData.sex) {
-        throw new Error('Sex is required');
-      }
-
-      if (!formData.gender_identity) {
-        throw new Error('Gender Identity is required');
-      }
-
-      if (!formData.sexual_orientation) {
-        throw new Error('Sexual Orientation is required');
+      if (!formData.email) {
+        throw new Error('Trusted Email is required');
       }
 
       if (formData.email && !formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
         throw new Error('Invalid email format');
+      }
+
+      if (!formData.phone_cell) {
+        throw new Error('Mobile Phone is required');
+      }
+
+      if (!formData.status) {
+        throw new Error('Client Status is required');
+      }
+
+      if (!formData.payment_type) {
+        throw new Error('Payment Type is required');
       }
 
       if (formData.email_direct && !formData.email_direct.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
@@ -406,23 +398,20 @@ function DemographicsTab({ data, onDataUpdate }) {
                         : null
                     )}
                     {renderField('DOB', formData.DOB, 'DOB', 'date')}
-                    {renderField('Sex', formData.sex, 'sex', 'text',
+                    {renderField('Legal Sex (For billing purposes ONLY)', formData.sex, 'sex', 'text',
                       dropdownOptions.sex && dropdownOptions.sex.length > 0
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.sex]
-                        : [{ value: '', label: 'Select...' }, { value: 'Male', label: 'Male' }, { value: 'Female', label: 'Female' }],
-                      true
+                        : [{ value: '', label: 'Select...' }, { value: 'Male', label: 'Male' }, { value: 'Female', label: 'Female' }]
                     )}
                     {renderField('Gender Identity', formData.gender_identity, 'gender_identity', 'text',
                       dropdownOptions.gender_identity && dropdownOptions.gender_identity.length > 0
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.gender_identity]
-                        : null,
-                      true
+                        : null
                     )}
                     {renderField('Sexual Orientation', formData.sexual_orientation, 'sexual_orientation', 'text',
                       dropdownOptions.sexual_orientation && dropdownOptions.sexual_orientation.length > 0
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.sexual_orientation]
-                        : null,
-                      true
+                        : null
                     )}
                     {renderField('Marital Status', formData.marital_status, 'marital_status', 'text',
                       dropdownOptions.marital_status && dropdownOptions.marital_status.length > 0
@@ -465,7 +454,7 @@ function DemographicsTab({ data, onDataUpdate }) {
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.gender_identity]
                         : null
                     )}
-                    {renderField('Sex', patient.sex)}
+                    {renderField('Legal Sex (For billing)', patient.sex)}
                     {renderField('Sexual Orientation', patient.sexual_orientation, null, 'text',
                       dropdownOptions.sexual_orientation && dropdownOptions.sexual_orientation.length > 0
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.sexual_orientation]
@@ -582,9 +571,9 @@ function DemographicsTab({ data, onDataUpdate }) {
                 {renderField('Emergency Contact', patient.contact_relationship, 'contact_relationship')}
                 {renderField('Emergency Phone', patient.phone_contact, 'phone_contact', 'tel')}
                 {renderField('Home Phone', patient.phone_home, 'phone_home', 'tel')}
-                {renderField('Mobile Phone', patient.phone_cell, 'phone_cell', 'tel')}
+                {renderField('Mobile Phone', patient.phone_cell, 'phone_cell', 'tel', null, true)}
                 {renderField('Work Phone', patient.phone_biz, 'phone_biz', 'tel')}
-                {renderField('Trusted Email', patient.email, 'email', 'email')}
+                {renderField('Trusted Email', patient.email, 'email', 'email', null, true)}
                 {renderField('Contact Email', patient.email_direct, 'email_direct', 'email')}
                 {!isEditing && patient.additional_addresses && (
                   <div className="col-span-2 form-field">
@@ -609,14 +598,17 @@ function DemographicsTab({ data, onDataUpdate }) {
                   {renderField('Client Status', formData.status, 'status', 'text',
                     dropdownOptions.status && dropdownOptions.status.length > 0
                       ? [{ value: '', label: 'Select...' }, ...dropdownOptions.status]
-                      : null
+                      : null,
+                    true
                   )}
                   {renderField('Payment Type', formData.payment_type, 'payment_type', 'text',
                     [
+                      { value: '', label: 'Select...' },
                       { value: 'insurance', label: 'Insurance' },
                       { value: 'self-pay', label: 'Self-Pay' },
                       { value: 'pro-bono', label: 'Pro Bono' }
-                    ]
+                    ],
+                    true
                   )}
                   {(formData.payment_type === 'self-pay' || formData.payment_type === 'pro-bono') && (
                     renderField('Custom Session Fee ($)', formData.custom_session_fee, 'custom_session_fee', 'number', null, {
@@ -680,31 +672,22 @@ function DemographicsTab({ data, onDataUpdate }) {
             </div>
           </div>
 
-          {/* Care Team Section */}
+          {/* Referral Information Section */}
           <div className="card-main">
-            <h2 className="card-header">Care Team</h2>
+            <h2 className="card-header">Referral Information</h2>
             <div className="card-inner">
-              <AssignedProviders
-                clientId={patient.pid}
-                isAdmin={currentUser?.admin}
-                providers={providers}
-              />
-
-              {/* Referring Provider - separate from care team */}
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <div className="grid grid-cols-2 gap-3">
-                  {isEditing ? (
-                    <div className="col-span-2">
-                      {renderField('Referring Provider', formData.referring_provider_id, 'referring_provider_id', 'text',
-                        providers && providers.length > 0
-                          ? [{ value: '', label: 'Select...' }, ...providers]
-                          : null
-                      )}
-                    </div>
-                  ) : (
-                    renderField('Referring Provider', patient.referring_provider)
-                  )}
-                </div>
+              <div className="grid grid-cols-2 gap-3">
+                {isEditing ? (
+                  <div className="col-span-2">
+                    {renderField('Referring Provider', formData.referring_provider_id, 'referring_provider_id', 'text',
+                      providers && providers.length > 0
+                        ? [{ value: '', label: 'Select...' }, ...providers]
+                        : null
+                    )}
+                  </div>
+                ) : (
+                  renderField('Referring Provider', patient.referring_provider)
+                )}
               </div>
             </div>
           </div>
