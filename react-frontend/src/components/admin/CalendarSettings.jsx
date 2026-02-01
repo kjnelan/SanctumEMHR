@@ -20,6 +20,7 @@ import { DangerButton } from '../DangerButton';
 import { FormLabel } from '../FormLabel';
 import { RequiredAsterisk } from '../RequiredAsterisk';
 import { ErrorMessage } from '../ErrorMessage';
+import { CalendarCategoriesTab } from './CalendarCategories';
 
 function CalendarSettings() {
   const [mainTab, setMainTab] = useState('general');
@@ -33,6 +34,12 @@ function CalendarSettings() {
           onClick={() => setMainTab('general')}
         >
           General Settings
+        </GlassyTab>
+        <GlassyTab
+          active={mainTab === 'categories'}
+          onClick={() => setMainTab('categories')}
+        >
+          Categories
         </GlassyTab>
         <GlassyTab
           active={mainTab === 'statuses'}
@@ -50,6 +57,7 @@ function CalendarSettings() {
 
       {/* Tab Content */}
       {mainTab === 'general' && <GeneralSettingsTab />}
+      {mainTab === 'categories' && <CalendarCategoriesTab />}
       {mainTab === 'statuses' && <SettingsListTab listId="appointment_statuses" title="Appointment Statuses" description="Define the status options for appointments" itemLabel="Status" />}
       {mainTab === 'reasons' && <SettingsListTab listId="cancellation_reasons" title="Cancellation Reasons" description="Define reasons for appointment cancellations (including no-shows)" itemLabel="Reason" />}
     </div>

@@ -12,7 +12,6 @@
 
 import { useState } from 'react';
 import CalendarSettings from '../components/admin/CalendarSettings';
-import CalendarCategories from '../components/admin/CalendarCategories';
 import DocumentCategories from '../components/settings/DocumentCategories';
 import ReferenceLists from '../components/admin/ReferenceLists';
 import UserManagement from '../components/admin/UserManagement';
@@ -60,7 +59,6 @@ function Admin() {
       icon: '📅',
       sections: [
         { id: 'calendar-settings', label: 'Calendar Settings', available: true },
-        { id: 'calendar-categories', label: 'Calendar Categories', available: true },
       ]
     },
     {
@@ -187,7 +185,6 @@ function Admin() {
         <div className="flex-1">
           {activeSection === 'security' && <SecuritySettings />}
           {activeSection === 'calendar-settings' && <CalendarSettings />}
-          {activeSection === 'calendar-categories' && <CalendarCategories />}
           {activeSection === 'reference-lists' && <ReferenceLists />}
           {activeSection === 'document-categories' && <DocumentCategories />}
           {activeSection === 'cpt-codes' && <CPTCodes />}
@@ -197,7 +194,7 @@ function Admin() {
           {activeSection === 'about' && <About />}
 
           {/* Coming Soon for unavailable sections */}
-          {!['security', 'calendar-settings', 'calendar-categories', 'reference-lists', 'document-categories', 'cpt-codes', 'billing-modifiers', 'facilities', 'users', 'about'].includes(activeSection) && (
+          {!['security', 'calendar-settings', 'reference-lists', 'document-categories', 'cpt-codes', 'billing-modifiers', 'facilities', 'users', 'about'].includes(activeSection) && (
             <div className="glass-card p-12 text-center">
               <div className="text-gray-700 text-lg font-semibold">
                 {sectionGroups.flatMap(g => g.sections).find(s => s.id === activeSection)?.label}

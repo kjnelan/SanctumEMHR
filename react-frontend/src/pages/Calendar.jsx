@@ -300,8 +300,10 @@ function Calendar() {
     return `rgb(${borderR}, ${borderG}, ${borderB})`;
   };
 
-  // Get appointment styling - returns only dynamic values (colors based on provider)
+  // Get appointment styling - returns only dynamic values (colors based on type)
   // Base glassy styling comes from CSS class .glass-appointment
+  // Client appointments use provider/clinician color
+  // Non-client appointments (clinic/holiday) use category color from admin settings
   const getAppointmentStyle = (apt) => {
     const isCancelled = isCancelledOrNoShow(apt.status);
 
@@ -314,8 +316,11 @@ function Calendar() {
       };
     }
 
-    // Active appointments: compute pastel colors from provider color
-    const color = apt.providerColor || '#3B82F6';
+    // Active appointments: compute pastel colors
+    // Client appointments use provider color, non-client use category color
+    const color = apt.categoryType === 'client'
+      ? (apt.providerColor || '#3B82F6')
+      : (apt.categoryColor || '#9CA3AF');
     const pastel = toPastel(color);
     const borderColor = getPastelBorder(color);
 
