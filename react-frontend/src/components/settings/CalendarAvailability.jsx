@@ -69,9 +69,10 @@ function CalendarAvailability() {
       console.log('[CalendarAvailability] API response:', response);
       console.log('[CalendarAvailability] Total appointments:', response.appointments?.length);
 
-      // Filter to only show availability blocks (Type 1 categories) for THIS user
+      // Filter to only show availability blocks (clinic/holiday categories) for THIS user
       const blocks = response.appointments.filter(apt => {
-        const isAvailabilityBlock = apt.categoryType === 1;
+        // Availability blocks are 'clinic' or 'holiday' type categories (not 'client' appointments)
+        const isAvailabilityBlock = apt.categoryType === 'clinic' || apt.categoryType === 'holiday';
         const isCurrentProvider = apt.providerId == currentUser.id; // Use == for loose comparison
         console.log('[CalendarAvailability] Checking appointment:', {
           id: apt.id,

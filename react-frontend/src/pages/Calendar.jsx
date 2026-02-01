@@ -248,6 +248,17 @@ function Calendar() {
     return status === 'cancelled' || status === 'no_show';
   };
 
+  // Check if appointment is an availability block (Out of Office, Vacation, Holiday)
+  // These should display with gray stripes, not provider colors
+  const isAvailabilityBlock = (apt) => {
+    return apt.categoryType === 'holiday';
+  };
+
+  // Check if appointment is a client appointment (therapy sessions, etc.)
+  const isClientAppointment = (apt) => {
+    return apt.categoryType === 'client';
+  };
+
   // Convert hex color to pastel by mixing with white
   const toPastel = (hex) => {
     const color = hex.replace('#', '');
@@ -626,7 +637,7 @@ function Calendar() {
                           <div>
                             <div className="font-semibold text-gray-900 text-sm">{provider.label}</div>
                             <div className="text-xs text-gray-500">
-                              {providerAppointments.filter(apt => apt.categoryType !== 1).length} appts
+                              {providerAppointments.filter(apt => !isAvailabilityBlock(apt)).length} appts
                             </div>
                           </div>
                         </div>
@@ -636,7 +647,7 @@ function Calendar() {
                           {getWeekDays().map((day, dayIndex) => {
                             const dateStr = day.toISOString().split('T')[0];
                             const dayAppointments = providerAppointments
-                              .filter(apt => apt.eventDate === dateStr && apt.categoryType !== 1)
+                              .filter(apt => apt.eventDate === dateStr && !isAvailabilityBlock(apt))
                               .sort((a, b) => a.startTime.localeCompare(b.startTime));
                             const isToday = day.toDateString() === new Date().toDateString();
 
@@ -772,10 +783,10 @@ function Calendar() {
                           {/* Appointments with absolute positioning */}
                           {dayAppointments.map(apt => {
                             const { top, height } = calculateAppointmentPosition(apt);
-                            const isAvailabilityBlock = apt.categoryType === 1;
+                            const isAvailBlock = isAvailabilityBlock(apt);
 
                             // Availability blocks render as background, not clickable appointments
-                            if (isAvailabilityBlock) {
+                            if (isAvailBlock) {
                               const bgColor = '#F3F4F6'; // Gray for availability blocks
                               return (
                                 <div
@@ -886,16 +897,16 @@ function Calendar() {
                         className="p-2 border-r border-white/30 hover:bg-white/10 cursor-pointer transition-colors min-h-[60px]"
                       >
                         {slotAppointments.map(apt => {
-                          // Check if this is an availability block (Type 1) or regular appointment (Type 0)
-                          const isAvailabilityBlock = apt.categoryType === 1;
+                          // Check if this is an availability block ('holiday' type) or regular appointment
+                          const isAvailBlock = isAvailabilityBlock(apt);
                           const isCancelled = isCancelledOrNoShow(apt.status);
 
                           // Calculate how many slots this appointment spans
                           const slotsSpan = calculateSlotSpan(apt);
                           const heightPx = slotsSpan * 60 - 8; // 60px per slot, minus padding
 
-                          // Availability blocks use simple styling
-                          if (isAvailabilityBlock) {
+                          // Availability blocks use simple styling with gray stripes
+                          if (isAvailBlock) {
                             return (
                               <div
                                 key={apt.id}
@@ -1014,12 +1025,12 @@ function Calendar() {
                       {/* Appointments list */}
                       <div className="space-y-1.5">
                         {dayAppointments.slice(0, 3).map(apt => {
-                          // Check if this is an availability block (Type 1) or regular appointment (Type 0)
-                          const isAvailabilityBlock = apt.categoryType === 1;
+                          // Check if this is an availability block ('holiday' type) or regular appointment
+                          const isAvailBlock = isAvailabilityBlock(apt);
                           const isCancelled = isCancelledOrNoShow(apt.status);
 
-                          // Availability blocks use simple styling
-                          if (isAvailabilityBlock) {
+                          // Availability blocks use simple styling with gray stripes
+                          if (isAvailBlock) {
                             return (
                               <div
                                 key={apt.id}
