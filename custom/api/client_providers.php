@@ -12,11 +12,7 @@
  * Proprietary and Confidential
  */
 
-require_once(__DIR__ . '/../init.php');
-
-use Custom\Lib\Database\Database;
-use Custom\Lib\Session\SessionManager;
-
+// Set JSON headers early to catch any errors
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
@@ -26,6 +22,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
+
+// Wrap require in try-catch to handle init errors
+try {
+    require_once(__DIR__ . '/../init.php');
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Initialization error', 'message' => $e->getMessage()]);
+    exit;
+}
+
+use Custom\Lib\Database\Database;
+use Custom\Lib\Session\SessionManager;
 
 try {
     $session = SessionManager::getInstance();
@@ -49,6 +57,23 @@ try {
             http_response_code(400);
             echo json_encode(['error' => 'client_id is required']);
             exit;
+        }
+
+        // Check if client_providers table exists
+        try {
+            $tableCheck = $db->queryOne("SHOW TABLES LIKE 'client_providers'");
+            if (!$tableCheck) {
+                // Table doesn't exist - return empty providers list (migration not run)
+                echo json_encode([
+                    'success' => true,
+                    'providers' => [],
+                    'warning' => 'client_providers table not found - please run migrations'
+                ]);
+                exit;
+            }
+        } catch (Exception $e) {
+            // If we can't check, proceed and let the main query fail with a clear error
+            error_log("Table check failed: " . $e->getMessage());
         }
 
         // Get all active assignments for this client
