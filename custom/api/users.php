@@ -58,6 +58,7 @@ try {
                     u.license_state,
                     u.title,
                     u.is_supervisor,
+                    CAST(COALESCE(u.is_social_worker, 0) AS CHAR) AS is_social_worker,
                     CAST(u.is_provider AS CHAR) AS authorized,
                     CAST(u.is_active AS CHAR) AS active,
                     CAST(CASE WHEN u.user_type = 'admin' THEN 1 ELSE 0 END AS CHAR) AS calendar,
@@ -125,6 +126,7 @@ try {
                     CAST(is_provider AS CHAR) AS authorized,
                     CAST(is_active AS CHAR) AS active,
                     CAST(is_supervisor AS CHAR) AS is_supervisor,
+                    CAST(COALESCE(is_social_worker, 0) AS CHAR) AS is_social_worker,
                     CAST(portal_user AS CHAR) AS portal_user,
                     CAST(CASE WHEN user_type = 'admin' THEN 1 ELSE 0 END AS CHAR) AS calendar,
                     user_type,
@@ -279,6 +281,7 @@ try {
                 'is_provider' => ($input['authorized'] ?? 0) ? 1 : 0,
                 'is_active' => ($input['active'] ?? 1) ? 1 : 0,
                 'is_supervisor' => ($input['is_supervisor'] ?? 0) ? 1 : 0,
+                'is_social_worker' => ($input['is_social_worker'] ?? 0) ? 1 : 0,
                 'portal_user' => ($input['portal_user'] ?? 0) ? 1 : 0,
                 'npi' => $input['npi'] ?? null,
                 'license_number' => $input['state_license_number'] ?? null,
@@ -394,6 +397,11 @@ try {
             if (isset($input['is_supervisor'])) {
                 $updateFields[] = "is_supervisor = ?";
                 $params[] = $input['is_supervisor'] ? 1 : 0;
+            }
+
+            if (isset($input['is_social_worker'])) {
+                $updateFields[] = "is_social_worker = ?";
+                $params[] = $input['is_social_worker'] ? 1 : 0;
             }
 
             if (isset($input['portal_user'])) {

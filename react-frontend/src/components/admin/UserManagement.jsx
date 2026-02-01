@@ -55,6 +55,7 @@ function UserManagement() {
     facility_id: '',
     authorized: false, // Is provider
     is_supervisor: false, // Is supervisor
+    is_social_worker: false, // Is social worker
     active: true,
     calendar: false, // Is admin
     portal_user: false,
@@ -144,6 +145,7 @@ function UserManagement() {
       facility_id: '',
       authorized: false,
       is_supervisor: false,
+      is_social_worker: false,
       active: true,
       calendar: false,
       portal_user: false,
@@ -233,6 +235,7 @@ function UserManagement() {
         facility_id: userData.facility_id || '',
         authorized: userData.authorized === '1' || userData.authorized === 1,
         is_supervisor: userData.is_supervisor === '1' || userData.is_supervisor === 1,
+        is_social_worker: userData.is_social_worker === '1' || userData.is_social_worker === 1,
         active: userData.active === '1' || userData.active === 1,
         calendar: userData.calendar === '1' || userData.calendar === 1,
         portal_user: userData.portal_user === '1' || userData.portal_user === 1,
@@ -608,13 +611,16 @@ function UserManagement() {
                   </div>
                 )}
                 {/* Role Badges - Only show if at least one is enabled */}
-                {(user.is_supervisor === '1' || user.authorized === '1' || user.calendar === '1') && (
-                  <div className="flex gap-2 mt-1.5">
+                {(user.is_supervisor === '1' || user.authorized === '1' || user.calendar === '1' || user.is_social_worker === '1') && (
+                  <div className="flex gap-2 mt-1.5 flex-wrap">
                     {user.is_supervisor === '1' && (
                       <span className="badge-outline-warning text-xs">Supervisor</span>
                     )}
                     {user.authorized === '1' && (
                       <span className="badge-outline-success text-xs">Provider</span>
+                    )}
+                    {user.is_social_worker === '1' && (
+                      <span className="badge-outline-purple text-xs">Social Worker</span>
                     )}
                     {user.calendar === '1' && (
                       <span className="badge-outline-info text-xs">Admin</span>
@@ -923,6 +929,17 @@ function UserFormModal({
                   />
                   <span className="text-sm font-medium text-gray-700">
                     Supervisor (Can supervise other providers)
+                  </span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.is_social_worker}
+                    onChange={(e) => onFormChange('is_social_worker', e.target.checked)}
+                    className="checkbox"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Social Worker (Case management, limited clinical access)
                   </span>
                 </label>
                 <label className="flex items-center gap-2">

@@ -61,7 +61,7 @@ try {
 
         // Check if client_providers table exists
         try {
-            $tableCheck = $db->queryOne("SHOW TABLES LIKE 'client_providers'");
+            $tableCheck = $db->query("SHOW TABLES LIKE 'client_providers'");
             if (!$tableCheck) {
                 // Table doesn't exist - return empty providers list (migration not run)
                 echo json_encode([
@@ -87,7 +87,7 @@ try {
             u.first_name,
             u.last_name,
             u.user_type,
-            u.credentials,
+            u.title as credentials,
             CONCAT(u.first_name, ' ', u.last_name) as provider_name,
             CONCAT(ab.first_name, ' ', ab.last_name) as assigned_by_name
         FROM client_providers cp
@@ -142,7 +142,7 @@ try {
                 }
 
                 // Check if assignment already exists
-                $existing = $db->queryOne(
+                $existing = $db->query(
                     "SELECT id FROM client_providers WHERE client_id = ? AND provider_id = ? AND role = ? AND ended_at IS NULL",
                     [$clientId, $providerId, $role]
                 );
@@ -216,7 +216,7 @@ try {
                 }
 
                 // Get the current assignment info
-                $current = $db->queryOne(
+                $current = $db->query(
                     "SELECT client_id, provider_id FROM client_providers WHERE id = ?",
                     [$assignmentId]
                 );
