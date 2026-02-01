@@ -20,10 +20,7 @@ function DemographicsTab({ data, onDataUpdate }) {
     'gender-identity',
     'marital-status',
     'client-status',
-    'pronouns',
-    'ethnicity',
-    'insurance-type',
-    'referral-source'
+    'ethnicity'
   ]);
 
   // Load reference lists into dropdown options when they're available
@@ -34,11 +31,8 @@ function DemographicsTab({ data, onDataUpdate }) {
         sexual_orientation: referenceLists['sexual-orientation'] || [],
         gender_identity: referenceLists['gender-identity'] || [],
         marital_status: referenceLists['marital-status'] || [],
-        status: referenceLists['client-status'] || [], // Use 'status' to match DB column
-        pronouns: referenceLists['pronouns'] || [],
-        ethnicity: referenceLists['ethnicity'] || [],
-        insurance_type: referenceLists['insurance-type'] || [],
-        referral_source: referenceLists['referral-source'] || []
+        status: referenceLists['client-status'] || [],
+        ethnicity: referenceLists['ethnicity'] || []
       });
     }
   }, [referenceLists, listsLoading]);
@@ -48,20 +42,16 @@ function DemographicsTab({ data, onDataUpdate }) {
     const loadOtherOptions = async () => {
       try {
         // Fetch remaining options that aren't in reference lists yet
-        const [sexOptions, protectOptions, stateOptions, careTeamStatusOptions, paymentTypeOptions] = await Promise.all([
+        const [sexOptions, stateOptions, paymentTypeOptions] = await Promise.all([
           getListOptions('sex'),
-          getListOptions('yesno'),
           getListOptions('state'),
-          getListOptions('Care_Team_Status'),
           getListOptions('payment_type')
         ]);
 
         setDropdownOptions(prev => ({
           ...prev,
           sex: sexOptions.options || [],
-          protect_indicator: protectOptions.options || [],
           state: stateOptions.options || [],
-          care_team_status: careTeamStatusOptions.options || [],
           payment_type: paymentTypeOptions.options || []
         }));
       } catch (err) {
@@ -110,13 +100,13 @@ function DemographicsTab({ data, onDataUpdate }) {
 
   const handleEdit = () => {
     // Initialize form data with current patient data
+    // Only include fields that exist in the SanctumEMHR database schema
     setFormData({
       // Personal Information
       fname: patient.fname || '',
       mname: patient.mname || '',
       lname: patient.lname || '',
       preferred_name: patient.preferred_name || '',
-      pronouns: patient.pronouns || '',
       DOB: patient.DOB || '',
       sex: patient.sex || '',
       gender_identity: patient.gender_identity || '',
@@ -138,32 +128,20 @@ function DemographicsTab({ data, onDataUpdate }) {
       phone_cell: patient.phone_cell || '',
       phone_biz: patient.phone_biz || '',
       email: patient.email || '',
-      email_direct: patient.email_direct || '',
-
-      // Risk & Protection
-      protect_indicator: patient.protection_indicator_code || '',
 
       // Client Status
-      status: patient.status || 'active',
+      status: patient.status || patient.care_team_status || 'active',
 
       // Payment Type
       payment_type: patient.payment_type || 'insurance',
       custom_session_fee: patient.custom_session_fee || '',
 
       // Clinician Information
-      provider_id: patient.provider_id || '',
-      referring_provider_id: patient.referring_provider_id || '',
+      provider_id: patient.provider_id || patient.providerID || '',
 
       // Portal Settings
       allow_patient_portal: patient.allow_patient_portal || '',
-      cmsportal_login: patient.cmsportal_login || '',
-
-      // HIPAA Preferences
-      hipaa_notice: patient.hipaa_notice || 'NO',
-      hipaa_allowsms: patient.hipaa_allowsms || 'NO',
-      hipaa_voice: patient.hipaa_voice || 'NO',
-      hipaa_mail: patient.hipaa_mail || 'NO',
-      hipaa_email: patient.hipaa_email || 'NO'
+      cmsportal_login: patient.cmsportal_login || ''
     });
     setIsEditing(true);
     setError(null);
@@ -210,10 +188,6 @@ function DemographicsTab({ data, onDataUpdate }) {
 
       if (!formData.payment_type) {
         throw new Error('Payment Type is required');
-      }
-
-      if (formData.email_direct && !formData.email_direct.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-        throw new Error('Invalid contact email format');
       }
 
       // Call API to update demographics
@@ -392,11 +366,6 @@ function DemographicsTab({ data, onDataUpdate }) {
                     {renderField('Middle Name', formData.mname, 'mname')}
                     {renderField('Last Name', formData.lname, 'lname', 'text', null, true)}
                     {renderField('Preferred Name', formData.preferred_name, 'preferred_name')}
-                    {renderField('Pronouns', formData.pronouns, 'pronouns', 'text',
-                      dropdownOptions.pronouns && dropdownOptions.pronouns.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.pronouns]
-                        : null
-                    )}
                     {renderField('DOB', formData.DOB, 'DOB', 'date')}
                     {renderField('Legal Sex (For billing purposes ONLY)', formData.sex, 'sex', 'text',
                       dropdownOptions.sex && dropdownOptions.sex.length > 0
@@ -442,11 +411,6 @@ function DemographicsTab({ data, onDataUpdate }) {
                       <div className="form-field-value">{patient.fname} {patient.mname && patient.mname + ' '}{patient.lname}</div>
                     </div>
                     {renderField('Preferred Name', patient.preferred_name)}
-                    {renderField('Pronouns', patient.pronouns, null, 'text',
-                      dropdownOptions.pronouns && dropdownOptions.pronouns.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.pronouns]
-                        : null
-                    )}
                     {renderField('DOB', patient.DOB)}
                     {renderField('Birth Sex', patient.birth_sex)}
                     {renderField('Gender Identity', patient.gender_identity, null, 'text',
@@ -574,7 +538,6 @@ function DemographicsTab({ data, onDataUpdate }) {
                 {renderField('Mobile Phone', patient.phone_cell, 'phone_cell', 'tel', null, true)}
                 {renderField('Work Phone', patient.phone_biz, 'phone_biz', 'tel')}
                 {renderField('Trusted Email', patient.email, 'email', 'email', null, true)}
-                {renderField('Contact Email', patient.email_direct, 'email_direct', 'email')}
                 {!isEditing && patient.additional_addresses && (
                   <div className="col-span-2 form-field">
                     <div className="form-field-label">Additional Addresses</div>
@@ -642,86 +605,6 @@ function DemographicsTab({ data, onDataUpdate }) {
             </div>
           </div>
 
-          {/* Is the Client at Risk Section */}
-          <div className="card-main">
-            <h2 className="card-header">Is the Client at Risk?</h2>
-            <div className="card-inner">
-              {isEditing ? (
-                <div>
-                  {renderField('Risk Indicator', formData.protect_indicator, 'protect_indicator', 'text',
-                    dropdownOptions.protect_indicator && dropdownOptions.protect_indicator.length > 0
-                      ? [{ value: '', label: 'Select...' }, ...dropdownOptions.protect_indicator]
-                      : null
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="form-field">
-                    <div className="form-field-label">Risk Indicator</div>
-                    <div className="form-field-value">{patient.protection_indicator}</div>
-                  </div>
-                  {patient.protection_indicator_code === 'YES' && (
-                    <div className="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-3">
-                      <p className="alert-text text-yellow-800">
-                        ⚠️ Risk factors documented. See Clinical Notes for the Risk Assessment.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Referral Information Section */}
-          <div className="card-main">
-            <h2 className="card-header">Referral Information</h2>
-            <div className="card-inner">
-              <div className="grid grid-cols-2 gap-3">
-                {isEditing ? (
-                  <div className="col-span-2">
-                    {renderField('Referring Provider', formData.referring_provider_id, 'referring_provider_id', 'text',
-                      providers && providers.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...providers]
-                        : null
-                    )}
-                  </div>
-                ) : (
-                  renderField('Referring Provider', patient.referring_provider)
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Reminder Preferences Section */}
-          <div className="card-main">
-            <h2 className="card-header">Reminder Preferences</h2>
-            <div className="card-inner">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2">
-                  {renderField('HIPAA Notice Received', patient.hipaa_notice, 'hipaa_notice', 'text', [
-                    { value: 'NO', label: 'NO' },
-                    { value: 'YES', label: 'YES' }
-                  ])}
-                </div>
-                {renderField('Allow SMS', patient.hipaa_allowsms, 'hipaa_allowsms', 'text', [
-                  { value: 'NO', label: 'NO' },
-                  { value: 'YES', label: 'YES' }
-                ])}
-                {renderField('Allow Voice Message', patient.hipaa_voice, 'hipaa_voice', 'text', [
-                  { value: 'NO', label: 'NO' },
-                  { value: 'YES', label: 'YES' }
-                ])}
-                {renderField('Allow Mail Message', patient.hipaa_mail, 'hipaa_mail', 'text', [
-                  { value: 'NO', label: 'NO' },
-                  { value: 'YES', label: 'YES' }
-                ])}
-                {renderField('Allow Email', patient.hipaa_email, 'hipaa_email', 'text', [
-                  { value: 'NO', label: 'NO' },
-                  { value: 'YES', label: 'YES' }
-                ])}
-              </div>
-            </div>
-          </div>
 
           {/* Portal Settings Section */}
           <div className="card-main">

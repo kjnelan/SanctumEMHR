@@ -74,6 +74,7 @@ try {
     $params = [];
 
     // Define allowed fields with their database column names (SanctumEMHR schema)
+    // Frontend field name => Database column name
     $allowedFields = [
         // Personal Information
         'fname' => 'first_name',
@@ -85,25 +86,28 @@ try {
         'gender_identity' => 'gender_identity',
         'sexual_orientation' => 'sexual_orientation',
         'marital_status' => 'marital_status',
+        'ethnicity' => 'ethnicity',
         'ss' => 'ssn_encrypted',
 
-        // Contact Information
-        'street' => 'street',
-        'street_line_2' => 'street_line_2',
+        // Contact Information - Address
+        'street' => 'address_line1',
+        'street_line_2' => 'address_line2',
         'city' => 'city',
         'state' => 'state',
-        'postal_code' => 'postal_code',
+        'postal_code' => 'zip',
         'county' => 'county',
-        'contact_relationship' => 'contact_relationship',
-        'phone_contact' => 'phone_contact',
-        'phone_home' => 'phone_home',
-        'phone_cell' => 'phone_cell',
-        'phone_biz' => 'phone_work',
-        'email' => 'email',
-        'email_direct' => 'email_direct',
 
-        // Risk & Protection
-        'protect_indicator' => 'protect_indicator',
+        // Contact Information - Phone
+        'phone_home' => 'phone_home',
+        'phone_cell' => 'phone_mobile',
+        'phone_biz' => 'phone_work',
+
+        // Contact Information - Email
+        'email' => 'email',
+
+        // Emergency Contact
+        'contact_relationship' => 'emergency_contact_relation',
+        'phone_contact' => 'emergency_contact_phone',
 
         // Client Status
         'status' => 'status',
@@ -113,19 +117,11 @@ try {
         'custom_session_fee' => 'custom_session_fee',
 
         // Clinician Information
-        'provider_id' => 'provider_id',
-        'referring_provider_id' => 'referring_provider_id',
+        'provider_id' => 'primary_provider_id',
 
         // Portal Settings
-        'allow_patient_portal' => 'allow_patient_portal',
-        'cmsportal_login' => 'portal_username',
-
-        // HIPAA Preferences
-        'hipaa_notice' => 'hipaa_notice_received',
-        'hipaa_allowsms' => 'hipaa_allow_sms',
-        'hipaa_voice' => 'hipaa_allow_voice',
-        'hipaa_mail' => 'hipaa_allow_mail',
-        'hipaa_email' => 'hipaa_allow_email'
+        'allow_patient_portal' => 'portal_access',
+        'cmsportal_login' => 'portal_username'
     ];
 
     // Build the SET clause
