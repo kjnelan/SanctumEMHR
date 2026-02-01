@@ -162,12 +162,10 @@ try {
                 }
 
                 // Add the assignment
-                $db->execute(
+                $newId = $db->insert(
                     "INSERT INTO client_providers (client_id, provider_id, role, assigned_at, assigned_by, notes) VALUES (?, ?, ?, CURRENT_DATE, ?, ?)",
                     [$clientId, $providerId, $role, $currentUserId, $notes]
                 );
-
-                $newId = $db->getLastInsertId();
 
                 echo json_encode([
                     'success' => true,
