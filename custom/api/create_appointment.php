@@ -72,7 +72,10 @@ try {
     }
 
     // Extract and validate inputs
-    $patientId = isset($input['patientId']) && $input['patientId'] !== '' ? intval($input['patientId']) : null;
+    // patientId can be null/0/empty for non-client appointments (availability blocks, supervision, etc.)
+    $patientId = isset($input['patientId']) && $input['patientId'] !== '' && $input['patientId'] !== 0 && $input['patientId'] !== '0'
+        ? intval($input['patientId'])
+        : null;
     $providerId = intval($input['providerId']);
     $categoryId = intval($input['categoryId']);
     $eventDate = $input['eventDate']; // YYYY-MM-DD format
