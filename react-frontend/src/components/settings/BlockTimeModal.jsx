@@ -1,6 +1,6 @@
 /**
  * SanctumEMHR EMHR
- * Block Time Modal - Modal for creating provider availability blocks
+ * Availability Modal - Modal for creating provider availability entries
  *
  * Author: Kenneth J. Nelan
  * License: Proprietary and Confidential
@@ -108,7 +108,7 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
     setRecurrenceConflicts(null);
 
     if (!categoryId) {
-      setError('Please select a block type');
+      setError('Please select an availability type');
       setLoading(false);
       return;
     }
@@ -178,7 +178,7 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
         : await createAppointment(blockData);
 
       if (response.success) {
-        setSuccess(block ? 'Block updated successfully!' : 'Time blocked successfully!');
+        setSuccess(block ? 'Availability updated successfully!' : 'Availability saved successfully!');
         setTimeout(() => {
           handleClose();
         }, 1000);
@@ -214,7 +214,7 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
     if (!block) return;
 
     // Build confirmation message based on series scope
-    let confirmMessage = 'Are you sure you want to delete this availability block?';
+    let confirmMessage = 'Are you sure you want to delete this availability entry?';
     if (isEditingRecurringSeries) {
       if (seriesScope === 'all') {
         confirmMessage = 'Are you sure you want to delete ALL occurrences in this recurring series?';
@@ -242,8 +242,8 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
 
       if (response.success) {
         const successMsg = isEditingRecurringSeries && seriesScope !== 'single'
-          ? `${response.deletedCount || 'Multiple'} block(s) deleted successfully!`
-          : 'Block deleted successfully!';
+          ? `${response.deletedCount || 'Multiple'} entries deleted successfully!`
+          : 'Availability deleted successfully!';
         setSuccess(successMsg);
         setTimeout(() => {
           handleClose();
@@ -309,10 +309,10 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
         <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 px-8 pt-6 bg-gradient-to-r from-purple-50 to-pink-50">
           <div>
             <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              {block ? 'Edit Availability Block' : 'Block Time'}
+              {block ? 'Edit Availability' : 'Add Availability'}
             </h2>
             <p className="text-sm text-gray-600 mt-1">
-              {block ? 'Update or remove this availability block' : 'Mark yourself as unavailable during this time'}
+              {block ? 'Update or remove this availability entry' : 'Define when you are available or unavailable'}
             </p>
           </div>
           <button
@@ -401,10 +401,10 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
                 </svg>
                 <div className="flex-1">
                   <p className="text-purple-700 font-medium mb-2">
-                    Recurring Availability Block Series
+                    Recurring Availability Series
                   </p>
                   <p className="text-purple-600 text-sm mb-3">
-                    This block is part of a recurring series. Choose what to update:
+                    This is part of a recurring series. Choose what to update:
                   </p>
                   <div className="space-y-2">
                     <label className="flex items-center gap-2">
@@ -448,7 +448,7 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Block Type */}
+            {/* Availability Type */}
             <div>
               <FormLabel>
                 Reason <RequiredAsterisk />
@@ -663,7 +663,7 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
                 value={comments}
                 onChange={(e) => setComments(e.target.value)}
                 rows={3}
-                placeholder="Add any notes about this blocked time..."
+                placeholder="Add any notes about this availability entry..."
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
               />
             </div>
@@ -693,7 +693,7 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
                 className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
               >
-                {loading ? (block ? 'Updating...' : 'Blocking...') : (block ? 'Update Block' : 'Block Time')}
+                {loading ? (block ? 'Updating...' : 'Saving...') : (block ? 'Update Availability' : 'Save Availability')}
               </button>
             </div>
           </form>

@@ -249,15 +249,12 @@ function Calendar() {
     return status === 'cancelled' || status === 'no_show';
   };
 
-  // Check if appointment is an availability block (Out of Office, Vacation, Holiday)
-  // Client appointments are NEVER availability blocks - they always show as appointments
-  // Uses blocksAvailability flag from API, falls back to checking holiday type
+  // Check if entry is an availability block (any non-client category)
+  // All non-client categories (clinic, holiday) show as striped availability blocks
+  // Client appointments show as solid appointments (therapy sessions, etc.)
   const isAvailabilityBlock = (apt) => {
-    // Client appointments always show as appointments, never as availability blocks
-    if (apt.categoryType === 'client') {
-      return false;
-    }
-    return apt.blocksAvailability || apt.categoryType === 'holiday';
+    // All non-client categories are availability blocks with striped styling
+    return apt.categoryType !== 'client';
   };
 
   // Check if appointment is a client appointment (therapy sessions, etc.)

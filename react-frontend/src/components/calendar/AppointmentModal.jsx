@@ -169,9 +169,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
 
   const loadCategories = async () => {
     try {
-      // Exclude 'holiday' categories (Vacation, Out of Office) from appointment modal
-      // Those are only for clinician calendar settings
-      const response = await getAppointmentCategories(0, 'holiday');
+      // Only fetch 'client' type categories for appointment scheduling
+      // 'clinic' and 'holiday' categories are for availability blocks, not appointments
+      const response = await getAppointmentCategories('client');
       console.log('getAppointmentCategories response:', response);
       console.log('Categories array:', response.categories);
       setCategories(response.categories || []);

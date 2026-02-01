@@ -1,7 +1,7 @@
 /**
  * SanctumEMHR EMHR
- * Calendar Availability - Provider availability/blocking management
- * Allows providers to block time on their calendar (vacation, meetings, etc.)
+ * Calendar Availability - Provider availability management
+ * Allows providers to set their availability (in office, vacation, meetings, etc.)
  *
  * Author: Kenneth J. Nelan
  * License: Proprietary and Confidential
@@ -70,14 +70,13 @@ function CalendarAvailability() {
       console.log('[CalendarAvailability] Total appointments:', response.appointments?.length);
 
       // Filter to only show availability blocks for THIS user
-      // Use blocksAvailability flag from API, or fall back to checking holiday type
+      // All non-client categories (clinic, holiday) are availability blocks
       const blocks = response.appointments.filter(apt => {
-        const isAvailabilityBlock = apt.blocksAvailability || apt.categoryType === 'holiday';
+        const isAvailabilityBlock = apt.categoryType !== 'client';
         const isCurrentProvider = apt.providerId == currentUser.id; // Use == for loose comparison
         console.log('[CalendarAvailability] Checking appointment:', {
           id: apt.id,
           categoryType: apt.categoryType,
-          blocksAvailability: apt.blocksAvailability,
           providerId: apt.providerId,
           currentUserId: currentUser.id,
           isAvailabilityBlock,
@@ -222,7 +221,7 @@ function CalendarAvailability() {
     <div className="glass-card p-6">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Manage My Availability</h2>
-        <p className="text-gray-600">Block time for vacation, meetings, lunch breaks, and other unavailable periods</p>
+        <p className="text-gray-600">Set your availability for vacation, meetings, lunch breaks, in-office hours, and more</p>
       </div>
 
       {/* Navigation */}
@@ -382,7 +381,7 @@ function CalendarAvailability() {
         </div>
       )}
 
-      {/* Block Time Modal */}
+      {/* Availability Modal */}
       <BlockTimeModal
         isOpen={showBlockModal}
         onClose={() => setShowBlockModal(false)}
