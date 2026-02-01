@@ -63,6 +63,7 @@ try {
                             id,
                             name,
                             description,
+                            color,
                             default_duration,
                             is_billable,
                             is_active,
@@ -98,6 +99,7 @@ try {
                     $sql = "INSERT INTO appointment_categories (
                                 name,
                                 description,
+                                color,
                                 default_duration,
                                 is_billable,
                                 is_active,
@@ -105,11 +107,12 @@ try {
                                 requires_cpt_selection,
                                 blocks_availability,
                                 sort_order
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
                     $params = [
                         $input['name'],
                         $input['description'] ?? null,
+                        $input['color'] ?? '#3B82F6',
                         $input['default_duration'] ?? 50,
                         $input['is_billable'] ?? 1,
                         $input['is_active'] ?? 1,
@@ -150,6 +153,10 @@ try {
                     if (isset($input['description'])) {
                         $updateFields[] = "description = ?";
                         $params[] = $input['description'];
+                    }
+                    if (isset($input['color'])) {
+                        $updateFields[] = "color = ?";
+                        $params[] = $input['color'];
                     }
                     if (isset($input['default_duration'])) {
                         $updateFields[] = "default_duration = ?";

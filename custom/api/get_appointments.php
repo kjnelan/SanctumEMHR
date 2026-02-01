@@ -73,6 +73,7 @@ try {
     }
 
     // Build SQL query for SanctumEMHR schema
+    // Use COALESCE for color and blocks_availability in case columns don't exist
     $sql = "SELECT DISTINCT
         a.id,
         a.start_datetime,
@@ -92,7 +93,7 @@ try {
         c.category_type,
         c.color AS category_color,
         c.is_billable,
-        c.blocks_availability,
+        COALESCE(c.blocks_availability, 0) AS blocks_availability,
         CONCAT(cl.first_name, ' ', cl.last_name) AS client_name,
         cl.date_of_birth AS client_dob,
         u.first_name AS provider_first_name,
@@ -193,9 +194,9 @@ try {
             'categoryId' => $row['category_id'],
             'categoryName' => $row['category_name'],
             'categoryType' => $row['category_type'],
-            'categoryColor' => $row['category_color'],
-            'blocksAvailability' => (bool)$row['blocks_availability'],
-            'isBillable' => (bool)$row['is_billable'],
+            'categoryColor' => $row['category_color'] ?? null,
+            'blocksAvailability' => (bool)($row['blocks_availability'] ?? 0),
+            'isBillable' => (bool)($row['is_billable'] ?? 0),
             'apptstatus' => $row['status'],
             'status' => $row['status'],
             'title' => $row['title'],
