@@ -378,17 +378,14 @@ function CalendarCategories() {
                     </button>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <button
-                      onClick={() => handleEdit(category)}
-                      className="text-blue-600 hover:text-blue-800 mr-3"
-                    >
-                      Edit
-                    </button>
-                    <DangerButton
-                      onClick={() => handleDelete(category.id)}
-                    >
-                      Delete
-                    </DangerButton>
+                    <div className="flex items-center justify-center gap-3">
+                      <SecondaryButton onClick={() => handleEdit(category)}>
+                        Edit
+                      </SecondaryButton>
+                      <DangerButton onClick={() => handleDelete(category.id)}>
+                        Delete
+                      </DangerButton>
+                    </div>
                   </td>
                 </tr>
               ))

@@ -15,6 +15,7 @@ import React, { useState, useEffect } from 'react';
 import { getAppointments, getProviders, getCalendarSettings } from '../utils/api';
 import MiniCalendar from '../components/calendar/MiniCalendar';
 import AppointmentModal from '../components/calendar/AppointmentModal';
+import { PrimaryButton } from '../components/PrimaryButton';
 
 function Calendar() {
   const [view, setView] = useState('week'); // day, week, month
@@ -249,8 +250,13 @@ function Calendar() {
   };
 
   // Check if appointment is an availability block (Out of Office, Vacation, Holiday)
+  // Client appointments are NEVER availability blocks - they always show as appointments
   // Uses blocksAvailability flag from API, falls back to checking holiday type
   const isAvailabilityBlock = (apt) => {
+    // Client appointments always show as appointments, never as availability blocks
+    if (apt.categoryType === 'client') {
+      return false;
+    }
     return apt.blocksAvailability || apt.categoryType === 'holiday';
   };
 
@@ -519,12 +525,9 @@ function Calendar() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
-            <button
-              onClick={goToToday}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors"
-            >
+            <PrimaryButton onClick={goToToday}>
               Today
-            </button>
+            </PrimaryButton>
             <h2 className="text-xl font-semibold text-gray-900">{getDateRangeDisplay()}</h2>
           </div>
         </div>
