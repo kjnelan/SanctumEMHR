@@ -69,14 +69,15 @@ function CalendarAvailability() {
       console.log('[CalendarAvailability] API response:', response);
       console.log('[CalendarAvailability] Total appointments:', response.appointments?.length);
 
-      // Filter to only show availability blocks (clinic/holiday categories) for THIS user
+      // Filter to only show availability blocks for THIS user
+      // Use blocksAvailability flag from API, or fall back to checking holiday type
       const blocks = response.appointments.filter(apt => {
-        // Availability blocks are 'clinic' or 'holiday' type categories (not 'client' appointments)
-        const isAvailabilityBlock = apt.categoryType === 'clinic' || apt.categoryType === 'holiday';
+        const isAvailabilityBlock = apt.blocksAvailability || apt.categoryType === 'holiday';
         const isCurrentProvider = apt.providerId == currentUser.id; // Use == for loose comparison
         console.log('[CalendarAvailability] Checking appointment:', {
           id: apt.id,
           categoryType: apt.categoryType,
+          blocksAvailability: apt.blocksAvailability,
           providerId: apt.providerId,
           currentUserId: currentUser.id,
           isAvailabilityBlock,
@@ -350,24 +351,23 @@ function CalendarAvailability() {
                         {/* Blocks with absolute positioning */}
                         {dayBlocks.map(block => {
                           const { top, height } = calculateBlockPosition(block);
-                          const bgColor = '#E5E7EB';
-                          const borderColor = '#9CA3AF80';
+                          // Use category color from admin settings, fallback to gray
+                          const blockColor = block.categoryColor || '#9CA3AF';
 
                           return (
                             <div
                               key={block.id}
                               onClick={(e) => handleBlockClick(block, e)}
-                              className="absolute left-1 right-1 px-2 py-1 rounded-lg text-xs border hover:opacity-80 hover:shadow-md transition-all cursor-pointer z-10 overflow-hidden"
+                              className="availability-block-card absolute left-1 right-1 px-2 py-1 rounded-lg text-xs z-10 overflow-hidden"
                               style={{
+                                '--block-color': blockColor,
                                 top: `${top}px`,
-                                height: `${height}px`,
-                                backgroundColor: `${bgColor}B3`,
-                                borderColor: borderColor
+                                height: `${height}px`
                               }}
                             >
-                              <div className="font-semibold text-gray-900">{block.categoryName}</div>
+                              <div className="font-semibold text-gray-800">{block.categoryName}</div>
                               {height > 30 && block.comments && (
-                                <div className="text-gray-700 text-[10px] truncate">{block.comments}</div>
+                                <div className="text-gray-600 text-[10px] truncate">{block.comments}</div>
                               )}
                             </div>
                           );

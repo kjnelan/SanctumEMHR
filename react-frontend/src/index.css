@@ -175,6 +175,60 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
+/* Availability block styling - uses CSS custom property --block-color for category color */
+.availability-block {
+  --block-color: #9CA3AF; /* Default gray, overridden by inline style */
+  background-color: color-mix(in srgb, var(--block-color) 20%, transparent);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 8px,
+    rgba(255, 255, 255, 0.4) 8px,
+    rgba(255, 255, 255, 0.4) 16px
+  );
+  border-left: 3px solid var(--block-color);
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.availability-block:hover {
+  opacity: 0.85;
+}
+
+/* Availability block card (clickable label) */
+.availability-block-card {
+  --block-color: #9CA3AF;
+  background-color: color-mix(in srgb, var(--block-color) 25%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--block-color) 50%, transparent);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 4px,
+    rgba(255, 255, 255, 0.3) 4px,
+    rgba(255, 255, 255, 0.3) 8px
+  );
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.availability-block-card:hover {
+  opacity: 0.85;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Compact availability block label for grid views */
+.availability-block-label {
+  --block-color: #9CA3AF;
+  background-color: color-mix(in srgb, var(--block-color) 20%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--block-color) 40%, transparent);
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.availability-block-label:hover {
+  opacity: 0.85;
+}
+
 @layer components {
   .text-label {
     @apply text-sm text-gray-700 font-semibold;

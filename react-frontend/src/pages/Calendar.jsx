@@ -249,14 +249,19 @@ function Calendar() {
   };
 
   // Check if appointment is an availability block (Out of Office, Vacation, Holiday)
-  // These should display with gray stripes, not provider colors
+  // Uses blocksAvailability flag from API, falls back to checking holiday type
   const isAvailabilityBlock = (apt) => {
-    return apt.categoryType === 'holiday';
+    return apt.blocksAvailability || apt.categoryType === 'holiday';
   };
 
   // Check if appointment is a client appointment (therapy sessions, etc.)
   const isClientAppointment = (apt) => {
     return apt.categoryType === 'client';
+  };
+
+  // Get the category color for availability blocks (admin-defined)
+  const getBlockColor = (apt) => {
+    return apt.categoryColor || '#9CA3AF';
   };
 
   // Convert hex color to pastel by mixing with white
@@ -672,11 +677,8 @@ function Calendar() {
                                 {/* Availability blocks shown as background stripes */}
                                 {dayAvailabilityBlocks.length > 0 && (
                                   <div
-                                    className="absolute inset-0 pointer-events-none z-0"
-                                    style={{
-                                      backgroundColor: `${dayAvailabilityBlocks[0].categoryColor || '#9CA3AF'}20`,
-                                      backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,.4) 8px, rgba(255,255,255,.4) 16px)'
-                                    }}
+                                    className="availability-block absolute inset-0 pointer-events-none z-0"
+                                    style={{ '--block-color': getBlockColor(dayAvailabilityBlocks[0]) }}
                                     title={dayAvailabilityBlocks.map(b => b.categoryName).join(', ')}
                                   />
                                 )}
@@ -689,12 +691,8 @@ function Calendar() {
                                         e.stopPropagation();
                                         handleAppointmentClick(block, e);
                                       }}
-                                      className="px-2 py-1 rounded text-xs border border-dashed cursor-pointer hover:opacity-80"
-                                      style={{
-                                        backgroundColor: `${block.categoryColor || '#9CA3AF'}30`,
-                                        borderColor: `${block.categoryColor || '#9CA3AF'}60`,
-                                        color: '#374151'
-                                      }}
+                                      className="availability-block-label px-2 py-1 rounded text-xs text-gray-700"
+                                      style={{ '--block-color': getBlockColor(block) }}
                                     >
                                       <span className="font-medium">{formatTime12Hour(block.startTime).replace(' ', '')}</span>
                                       {' '}{block.categoryName}
@@ -820,18 +818,15 @@ function Calendar() {
 
                             // Availability blocks render as background with category color (admin-defined)
                             if (isAvailBlock) {
-                              const blockColor = apt.categoryColor || '#9CA3AF'; // Use category color, fallback to gray
                               return (
                                 <div
                                   key={apt.id}
                                   onClick={(e) => handleAppointmentClick(apt, e)}
-                                  className="absolute left-0 right-0 z-5 cursor-pointer hover:opacity-80 transition-opacity"
+                                  className="availability-block absolute left-0 right-0 z-5"
                                   style={{
+                                    '--block-color': getBlockColor(apt),
                                     top: `${top}px`,
-                                    height: `${height}px`,
-                                    backgroundColor: `${blockColor}25`, // 15% opacity
-                                    backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.3) 10px, rgba(255,255,255,.3) 20px)',
-                                    borderLeft: `3px solid ${blockColor}`
+                                    height: `${height}px`
                                   }}
                                   title={`${apt.categoryName}${apt.comments ? ': ' + apt.comments : ''}`}
                                 >
@@ -947,17 +942,14 @@ function Calendar() {
 
                           // Availability blocks use category color (admin-defined) with stripes
                           if (isAvailBlock) {
-                            const blockColor = apt.categoryColor || '#9CA3AF';
                             return (
                               <div
                                 key={apt.id}
                                 onClick={(e) => handleAppointmentClick(apt, e)}
-                                className="mb-1 px-3 py-2 rounded-xl text-sm border border-dashed hover:opacity-80 hover:shadow-md transition-all cursor-pointer"
+                                className="availability-block-card mb-1 px-3 py-2 rounded-xl text-sm"
                                 style={{
-                                  height: `${heightPx}px`,
-                                  backgroundColor: `${blockColor}30`,
-                                  borderColor: `${blockColor}60`,
-                                  backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,.3) 4px, rgba(255,255,255,.3) 8px)'
+                                  '--block-color': getBlockColor(apt),
+                                  height: `${heightPx}px`
                                 }}
                               >
                                 <div className="font-semibold text-gray-800 flex items-center gap-1">
@@ -1072,17 +1064,12 @@ function Calendar() {
 
                           // Availability blocks use category color (admin-defined) with stripes
                           if (isAvailBlock) {
-                            const blockColor = apt.categoryColor || '#9CA3AF';
                             return (
                               <div
                                 key={apt.id}
                                 onClick={(e) => handleAppointmentClick(apt, e)}
-                                className="px-2 py-1.5 rounded-lg text-xs border border-dashed truncate hover:opacity-80 hover:shadow-md transition-all cursor-pointer"
-                                style={{
-                                  backgroundColor: `${blockColor}30`,
-                                  borderColor: `${blockColor}60`,
-                                  backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,.3) 4px, rgba(255,255,255,.3) 8px)'
-                                }}
+                                className="availability-block-card px-2 py-1.5 rounded-lg text-xs truncate"
+                                style={{ '--block-color': getBlockColor(apt) }}
                               >
                                 <div className="font-semibold text-gray-800 flex items-center gap-1">
                                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
