@@ -50,11 +50,10 @@ function DemographicsTab({ data, onDataUpdate }) {
     const loadOtherOptions = async () => {
       try {
         // Fetch remaining options that aren't in reference lists yet
-        const [sexOptions, protectOptions, stateOptions, categoriesOptions, careTeamStatusOptions, paymentTypeOptions] = await Promise.all([
+        const [sexOptions, protectOptions, stateOptions, careTeamStatusOptions, paymentTypeOptions] = await Promise.all([
           getListOptions('sex'),
           getListOptions('yesno'),
           getListOptions('state'),
-          getListOptions('Patient_Groupings'),
           getListOptions('Care_Team_Status'),
           getListOptions('payment_type')
         ]);
@@ -64,7 +63,6 @@ function DemographicsTab({ data, onDataUpdate }) {
           sex: sexOptions.options || [],
           protect_indicator: protectOptions.options || [],
           state: stateOptions.options || [],
-          patient_categories: categoriesOptions.options || [],
           care_team_status: careTeamStatusOptions.options || [],
           payment_type: paymentTypeOptions.options || []
         }));
@@ -137,8 +135,6 @@ function DemographicsTab({ data, onDataUpdate }) {
       sexual_orientation: patient.sexual_orientation || '',
       marital_status: patient.marital_status || '',
       ethnicity: patient.ethnicity || '',
-      previous_names: patient.previous_names || '', // TODO: Add UI in Admin Notes section for editing
-      patient_categories: patient.patient_categories || '',
       ss: patient.ss || '',
 
       // Contact Information
