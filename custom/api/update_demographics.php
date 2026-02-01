@@ -164,15 +164,15 @@ try {
     // Log the update in audit log
     $auditSql = "INSERT INTO audit_logs (
         user_id,
-        action,
-        table_name,
-        record_id,
-        description,
+        event_type,
+        entity_type,
+        entity_id,
+        action_description,
         created_at
     ) VALUES (
         ?,
-        'update',
-        'clients',
+        'demographics_updated',
+        'client',
         ?,
         ?,
         NOW()
