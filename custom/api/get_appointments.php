@@ -72,17 +72,8 @@ try {
         error_log("Could not check for appointment_attendees table: " . $e->getMessage());
     }
 
-    // Check if color column exists in appointment_categories
-    $colorColumnExists = false;
-    try {
-        $colCheck = $db->query("SHOW COLUMNS FROM appointment_categories LIKE 'color'");
-        $colorColumnExists = !empty($colCheck);
-    } catch (Exception $e) {
-        error_log("Could not check for color column: " . $e->getMessage());
-    }
-
     // Build SQL query for SanctumEMHR schema
-    $colorSelect = $colorColumnExists ? "c.color AS category_color," : "NULL AS category_color,";
+    // Color column is standard in appointment_categories table
 
     $sql = "SELECT DISTINCT
         a.id,
@@ -101,7 +92,7 @@ try {
         a.facility_id,
         c.name AS category_name,
         c.category_type,
-        $colorSelect
+        c.color AS category_color,
         c.is_billable,
         COALESCE(c.blocks_availability, 0) AS blocks_availability,
         CONCAT(cl.first_name, ' ', cl.last_name) AS client_name,

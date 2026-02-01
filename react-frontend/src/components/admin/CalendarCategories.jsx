@@ -327,11 +327,14 @@ function CalendarCategories() {
                 <tr key={category.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div
-                        className="w-4 h-4 rounded-full border border-gray-300 flex-shrink-0"
-                        style={{ backgroundColor: category.color || '#3B82F6' }}
-                        title={category.color || 'Default blue'}
-                      />
+                      {/* Color dot only for non-client types (client types use clinician color) */}
+                      {category.category_type !== 'client' && (
+                        <div
+                          className="w-4 h-4 rounded-full border border-gray-300 flex-shrink-0"
+                          style={{ backgroundColor: category.color || '#3B82F6' }}
+                          title={category.color || 'Default blue'}
+                        />
+                      )}
                       <div>
                         <div className="text-sm font-semibold text-gray-900">{category.name}</div>
                         {category.description && (
@@ -434,32 +437,35 @@ function CalendarCategories() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <FormLabel>Category Color</FormLabel>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      value={formData.color}
-                      onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                      className="w-12 h-10 rounded border border-gray-300 cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={formData.color}
-                      onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
-                      placeholder="#3B82F6"
-                    />
-                    <div
-                      className="w-10 h-10 rounded-lg border border-gray-300"
-                      style={{ backgroundColor: formData.color }}
-                      title="Color preview"
-                    />
+              {/* Color picker - only for non-client types (clinic/holiday use admin color, client uses clinician color) */}
+              {formData.category_type !== 'client' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <FormLabel>Category Color</FormLabel>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={formData.color}
+                        onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                        className="w-12 h-10 rounded border border-gray-300 cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={formData.color}
+                        onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
+                        placeholder="#3B82F6"
+                      />
+                      <div
+                        className="w-10 h-10 rounded-lg border border-gray-300"
+                        style={{ backgroundColor: formData.color }}
+                        title="Color preview"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Used for availability blocks on calendars</p>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Used for availability blocks on calendars</p>
                 </div>
-              </div>
+              )}
 
               <div>
                 <FormLabel>Description</FormLabel>
