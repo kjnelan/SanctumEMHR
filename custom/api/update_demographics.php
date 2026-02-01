@@ -124,8 +124,8 @@ try {
         'cmsportal_login' => 'portal_username'
     ];
 
-    // Fields that should be converted to NULL if empty (decimal/numeric types)
-    $nullableFields = ['custom_session_fee', 'primary_provider_id'];
+    // Fields that should be converted to NULL if empty (decimal/numeric/integer types)
+    $nullableFields = ['custom_session_fee', 'primary_provider_id', 'allow_patient_portal'];
 
     // Build the SET clause
     foreach ($allowedFields as $field => $column) {
