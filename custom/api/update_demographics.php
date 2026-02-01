@@ -124,11 +124,21 @@ try {
         'cmsportal_login' => 'portal_username'
     ];
 
+    // Fields that should be converted to NULL if empty (decimal/numeric types)
+    $nullableFields = ['custom_session_fee', 'primary_provider_id'];
+
     // Build the SET clause
     foreach ($allowedFields as $field => $column) {
         if (isset($data[$field])) {
+            $value = $data[$field];
+
+            // Convert empty strings to NULL for numeric/nullable fields
+            if (in_array($field, $nullableFields) && $value === '') {
+                $value = null;
+            }
+
             $updateFields[] = "$column = ?";
-            $params[] = $data[$field];
+            $params[] = $value;
         }
     }
 
