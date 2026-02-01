@@ -559,9 +559,13 @@ function DemographicsTab({ data, onDataUpdate }) {
               {isEditing ? (
                 <div className="space-y-3">
                   {renderField('Client Status', formData.status, 'status', 'text',
-                    dropdownOptions.status && dropdownOptions.status.length > 0
-                      ? [{ value: '', label: 'Select...' }, ...dropdownOptions.status]
-                      : null,
+                    [
+                      { value: '', label: 'Select...' },
+                      { value: 'active', label: 'Active' },
+                      { value: 'inactive', label: 'Inactive' },
+                      { value: 'discharged', label: 'Discharged' },
+                      { value: 'deceased', label: 'Deceased' }
+                    ],
                     true
                   )}
                   {renderField('Payment Type', formData.payment_type, 'payment_type', 'text',
@@ -573,7 +577,7 @@ function DemographicsTab({ data, onDataUpdate }) {
                     ],
                     true
                   )}
-                  {(formData.payment_type === 'self-pay' || formData.payment_type === 'pro-bono') && (
+                  {formData.payment_type === 'self-pay' && (
                     renderField('Custom Session Fee ($)', formData.custom_session_fee, 'custom_session_fee', 'number', null, {
                       step: '0.01',
                       placeholder: '120.00'
@@ -583,9 +587,12 @@ function DemographicsTab({ data, onDataUpdate }) {
               ) : (
                 <div className="space-y-3">
                   {renderField('Client Status', patient.status, null, 'text',
-                    dropdownOptions.status && dropdownOptions.status.length > 0
-                      ? dropdownOptions.status
-                      : null
+                    [
+                      { value: 'active', label: 'Active' },
+                      { value: 'inactive', label: 'Inactive' },
+                      { value: 'discharged', label: 'Discharged' },
+                      { value: 'deceased', label: 'Deceased' }
+                    ]
                   )}
                   {renderField('Payment Type', patient.payment_type, null, 'text',
                     [
@@ -594,7 +601,7 @@ function DemographicsTab({ data, onDataUpdate }) {
                       { value: 'pro-bono', label: 'Pro Bono' }
                     ]
                   )}
-                  {(patient.payment_type === 'self-pay' || patient.payment_type === 'pro-bono') && patient.custom_session_fee && (
+                  {patient.payment_type === 'self-pay' && patient.custom_session_fee && (
                     <div className="form-field">
                       <div className="form-field-label">Custom Session Fee</div>
                       <div className="form-field-value">${parseFloat(patient.custom_session_fee).toFixed(2)}</div>
