@@ -68,8 +68,8 @@ function InsuranceTab({ data, onDataUpdate }) {
 
   const { patient, insurances } = data;
 
-  // Determine if client is self-pay based on payment_type field
-  const isSelfPay = patient.payment_type === 'client';
+  // Determine if client is NOT on insurance (self-pay or pro-bono)
+  const isNotInsurance = patient.payment_type === 'self-pay' || patient.payment_type === 'pro-bono';
 
   // Get insurance by type with placeholders - memoized to prevent re-render loops
   const { primaryInsurance, secondaryInsurance, tertiaryInsurance } = useMemo(() => {
@@ -114,8 +114,8 @@ function InsuranceTab({ data, onDataUpdate }) {
       primary = createPlaceholder('primary');
     }
 
-    // Only show secondary/tertiary placeholders if NOT self-pay (i.e., payment_type is 'insurance')
-    if (!isSelfPay) {
+    // Only show secondary/tertiary placeholders if payment_type is 'insurance'
+    if (!isNotInsurance) {
       if (!secondary) {
         secondary = createPlaceholder('secondary');
       }
@@ -129,7 +129,7 @@ function InsuranceTab({ data, onDataUpdate }) {
       secondaryInsurance: secondary,
       tertiaryInsurance: tertiary
     };
-  }, [insurances, isSelfPay]);
+  }, [insurances, isNotInsurance]);
 
   // Helper function to initialize form data from insurance record
   const initializeFormData = (insurance) => {
@@ -512,10 +512,15 @@ function InsuranceTab({ data, onDataUpdate }) {
                          patient.employer_state || patient.employer_postal_code || patient.employer_occupation;
 
   // Payment type label for display
-  const paymentTypeLabel = isSelfPay ? 'Self-Pay (Client)' : 'Insurance';
+  const paymentTypeLabels = {
+    'insurance': 'Insurance',
+    'self-pay': 'Self-Pay',
+    'pro-bono': 'Pro Bono'
+  };
+  const paymentTypeLabel = paymentTypeLabels[patient.payment_type] || patient.payment_type;
 
   // Determine if we should show insurance sections
-  const showInsuranceSections = !isSelfPay || showInsuranceWhenSelfPay;
+  const showInsuranceSections = !isNotInsurance || showInsuranceWhenSelfPay;
 
   // Auto-expand secondary/tertiary if they have data
   useEffect(() => {
@@ -538,11 +543,11 @@ function InsuranceTab({ data, onDataUpdate }) {
           <div className="flex items-center justify-between py-3 px-2">
             <div className="flex items-center gap-3">
               <div className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Payment Type:</div>
-              <div className={`text-lg font-bold ${isSelfPay ? 'text-orange-600' : 'text-blue-600'}`}>
+              <div className={`text-lg font-bold ${isNotInsurance ? 'text-orange-600' : 'text-blue-600'}`}>
                 {paymentTypeLabel}
               </div>
             </div>
-            {isSelfPay && insurances && insurances.length > 0 && (
+            {isNotInsurance && insurances && insurances.length > 0 && (
               <button
                 onClick={() => setShowInsuranceWhenSelfPay(!showInsuranceWhenSelfPay)}
                 className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
