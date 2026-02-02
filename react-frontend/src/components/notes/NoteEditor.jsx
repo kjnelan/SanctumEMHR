@@ -18,6 +18,8 @@ import {
 } from '../../utils/api';
 import BIRPTemplate from './BIRPTemplate';
 import PIRPTemplate from './PIRPTemplate';
+import SOAPTemplate from './SOAPTemplate';
+import CaseManagementTemplate from './CaseManagementTemplate';
 import MSETemplate from './MSETemplate';
 import IntakeTemplate from './IntakeTemplate';
 import DischargeTemplate from './DischargeTemplate';
@@ -34,8 +36,15 @@ import { ErrorMessage } from '../ErrorMessage';
 
 /**
  * Map note type to template type
+ * @param {string} noteType - The note type selected
+ * @param {string} templateFormat - Optional template format (BIRP, PIRP, SOAP) for progress notes
  */
-const getNoteTemplateType = (noteType) => {
+const getNoteTemplateType = (noteType, templateFormat = null) => {
+  // For progress notes, use the selected template format if provided
+  if (noteType === 'progress' && templateFormat) {
+    return templateFormat; // BIRP, PIRP, or SOAP
+  }
+
   const mapping = {
     'progress': 'BIRP',           // Progress notes use BIRP by default
     'intake': 'Intake',           // Intake Assessment
@@ -47,6 +56,7 @@ const getNoteTemplateType = (noteType) => {
     'risk_assessment': 'RiskAssessment',  // Risk Assessment
     'appointment_status': 'AppointmentStatus',  // Appointment Status (No Show, Cancel, etc)
     'client_communication': 'ClientCommunication',  // Client Communication (calls, emails)
+    'case_management': 'CaseManagement',  // Case Management (Social Workers)
     'admin': 'Administrative',    // Administrative Note (deprecated - use Admin Notes tab)
     // Legacy mappings (deprecated)
     'noshow': 'AppointmentStatus',  // Redirect to new appointment_status
@@ -62,11 +72,12 @@ const getNoteTemplateType = (noteType) => {
  * - patientId: number - Patient ID (required for new notes)
  * - appointmentId: number - Optional appointment ID
  * - noteType: string - Note type (from selector)
+ * - templateFormat: string - Optional template format (BIRP, PIRP, SOAP) for progress notes
  * - onClose: function - Callback to close editor
  * - onSave: function - Callback after save
  */
-function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, onClose, onSave }) {
-  const mappedTemplateType = getNoteTemplateType(noteType);
+function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, templateFormat = null, onClose, onSave }) {
+  const mappedTemplateType = getNoteTemplateType(noteType, templateFormat);
 
   const [note, setNote] = useState({
     patientId,
@@ -403,13 +414,17 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-2xl font-semibold text-gray-800">
-            {noteType === 'progress' && '📝 Progress Note'}
+            {noteType === 'progress' && `📝 Progress Note (${note.templateType})`}
             {noteType === 'intake' && '👋 Intake Assessment'}
             {noteType === 'crisis' && '⚠️ Crisis Note'}
             {noteType === 'discharge' && '✅ Discharge Summary'}
             {noteType === 'mse' && '🧠 Mental Status Exam'}
             {noteType === 'risk_assessment' && '🛡️ Risk Assessment'}
             {noteType === 'diagnosis' && '🏥 Diagnosis Note'}
+            {noteType === 'case_management' && '🤝 Case Management Note'}
+            {noteType === 'treatment_plan' && '📋 Treatment Plan'}
+            {noteType === 'appointment_status' && '📅 Appointment Status'}
+            {noteType === 'client_communication' && '📞 Client Communication'}
             {noteType === 'admin' && '📋 Administrative Note'}
           </h1>
 
@@ -472,6 +487,21 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
             note={note}
             onChange={handleFieldChange}
             patientId={patientId}
+            autoSave={triggerAutoSave}
+          />
+        )}
+        {note.templateType === 'SOAP' && (
+          <SOAPTemplate
+            note={note}
+            onChange={handleFieldChange}
+            patientId={patientId}
+            autoSave={triggerAutoSave}
+          />
+        )}
+        {note.templateType === 'CaseManagement' && (
+          <CaseManagementTemplate
+            note={note}
+            onChange={handleFieldChange}
             autoSave={triggerAutoSave}
           />
         )}
