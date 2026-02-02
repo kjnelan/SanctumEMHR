@@ -164,7 +164,34 @@ export async function getClients(status = 'all') {
  */
 export async function getClientDetail(clientId) {
   console.log('Fetching client detail for ID:', clientId);
-  return apiRequest(`/custom/api/client_detail.php?id=${clientId}`);
+
+  const response = await fetch(`/custom/api/client_detail.php?id=${clientId}`, {
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const data = await response.json();
+
+  // Handle 403 (access denied) specially - return the accessInfo for UI display
+  if (response.status === 403 && data.accessDenied) {
+    return {
+      accessDenied: true,
+      accessInfo: data.accessInfo
+    };
+  }
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem('user');
+      window.location.href = '/app/';
+      throw new Error('Authentication required');
+    }
+    throw new Error(data.message || data.error || `API request failed: ${response.statusText}`);
+  }
+
+  return data;
 }
 
 /**

@@ -368,20 +368,28 @@ class PermissionChecker
     }
 
     /**
-     * Get access denial message based on role
+     * Get access info message based on role (trauma-informed, helpful messaging)
      *
-     * @return string Appropriate error message
+     * @return string Appropriate message with guidance
      */
     public function getAccessDeniedMessage(): string
     {
-        if ($this->isSocialWorker() && !$this->isProvider()) {
-            return 'You do not have access to this client. Social workers can only access clients they are assigned to.';
-        }
+        return 'This client is not currently on your caseload. If you need access to work with this client, please contact your supervisor or an administrator to be added to their care team.';
+    }
 
-        if ($this->isSupervisor()) {
-            return 'You do not have access to this client. Supervisors can only access their own clients and their supervisees\' clients.';
-        }
-
-        return 'You do not have access to this client. You can only access clients you are assigned to.';
+    /**
+     * Get access info for API response (includes type for frontend styling)
+     *
+     * @return array Message info with type for frontend
+     */
+    public function getAccessInfo(): array
+    {
+        return [
+            'type' => 'info',
+            'title' => 'Client Not on Your Caseload',
+            'message' => 'This client is not currently on your caseload. If you need access to work with this client, please contact your supervisor or an administrator to be added to their care team.',
+            'actionText' => 'Return to Client List',
+            'actionUrl' => '/app/clients'
+        ];
     }
 }

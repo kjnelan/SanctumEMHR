@@ -9,6 +9,7 @@ require_once(__DIR__ . '/../init.php');
 
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
+use Custom\Lib\Auth\PermissionChecker;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -55,8 +56,12 @@ try {
         exit;
     }
 
-    // Initialize database
+    // Initialize database and permission checker
     $db = Database::getInstance();
+    $permissionChecker = new PermissionChecker($db);
+
+    // Get access filter based on user's role
+    $accessFilter = $permissionChecker->buildClientAccessFilter('c.id');
 
     // Build the SQL query for SanctumEMHR schema
     $sql = "SELECT
@@ -69,9 +74,9 @@ try {
         c.phone_home,
         c.email
     FROM clients c
-    WHERE 1=1";
+    WHERE ({$accessFilter['sql']})";
 
-    $params = [];
+    $params = $accessFilter['params'];
 
     // If both fname and lname provided, use AND (exact match on both)
     // If only one provided, search BOTH fields with OR (match either)

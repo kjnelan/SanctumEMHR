@@ -58,11 +58,12 @@ try {
     // Check permission to access this client
     $permissionChecker = new PermissionChecker($db);
     if (!$permissionChecker->canAccessClient((int) $clientId)) {
-        error_log("Client detail: Access denied for user " . $session->getUserId() . " to client " . $clientId);
+        error_log("Client detail: Access info - user " . $session->getUserId() . " does not have client " . $clientId . " on caseload");
         http_response_code(403);
+        $accessInfo = $permissionChecker->getAccessInfo();
         echo json_encode([
-            'error' => 'Access denied',
-            'message' => $permissionChecker->getAccessDeniedMessage()
+            'accessDenied' => true,
+            'accessInfo' => $accessInfo
         ]);
         exit;
     }
