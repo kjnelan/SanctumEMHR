@@ -149,7 +149,7 @@ try {
                 echo json_encode(['user' => $user]);
 
             } elseif ($action === 'supervisors') {
-                // Get list of potential supervisors (providers and admins)
+                // Get list of users who are marked as supervisors
                 $sql = "SELECT
                     id,
                     username,
@@ -157,10 +157,12 @@ try {
                     first_name AS fname,
                     last_name AS lname,
                     user_type,
-                    is_provider
+                    is_provider,
+                    is_supervisor
                 FROM users
                 WHERE is_active = 1
-                AND (is_provider = 1 OR user_type = 'admin')
+                AND is_supervisor = 1
+                AND deleted_at IS NULL
                 ORDER BY last_name, first_name";
 
                 $supervisors = $db->queryAll($sql);
@@ -426,17 +428,14 @@ try {
                 }
             }
 
-            if (empty($updateFields)) {
-                http_response_code(400);
-                echo json_encode(['error' => 'No fields to update']);
-                exit;
+            // Update user fields if any were provided
+            if (!empty($updateFields)) {
+                $params[] = $userId;
+                $sql = "UPDATE users SET " . implode(', ', $updateFields) . " WHERE id = ?";
+                $db->execute($sql, $params);
             }
 
-            $params[] = $userId;
-            $sql = "UPDATE users SET " . implode(', ', $updateFields) . " WHERE id = ?";
-            $db->execute($sql, $params);
-
-            // Handle supervisor relationships if provided
+            // Handle supervisor relationships if provided (this can be the only change)
             if (isset($input['supervisor_ids']) && is_array($input['supervisor_ids'])) {
                 // End all existing supervisor relationships
                 $endSql = "UPDATE user_supervisors SET ended_at = CURDATE() WHERE user_id = ? AND ended_at IS NULL";
