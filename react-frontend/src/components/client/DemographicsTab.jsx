@@ -406,38 +406,40 @@ function DemographicsTab({ data, onDataUpdate }) {
                   </>
                 ) : (
                   <>
-                    <div className="form-field">
-                      <div className="form-field-label">Legal Name</div>
-                      <div className="form-field-value">{patient.fname} {patient.mname && patient.mname + ' '}{patient.lname}</div>
-                    </div>
+                    {renderField('First Name', patient.fname)}
+                    {renderField('Middle Name', patient.mname)}
+                    {renderField('Last Name', patient.lname)}
                     {renderField('Preferred Name', patient.preferred_name)}
                     {renderField('DOB', patient.DOB)}
-                    {renderField('Birth Sex', patient.birth_sex)}
+                    {renderField('Legal Sex (For billing purposes ONLY)', patient.sex, null, 'text',
+                      dropdownOptions.sex && dropdownOptions.sex.length > 0
+                        ? dropdownOptions.sex
+                        : [{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }, { value: 'other', label: 'Other' }, { value: 'unknown', label: 'Unknown' }]
+                    )}
                     {renderField('Gender Identity', patient.gender_identity, null, 'text',
                       dropdownOptions.gender_identity && dropdownOptions.gender_identity.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.gender_identity]
+                        ? dropdownOptions.gender_identity
                         : null
                     )}
-                    {renderField('Legal Sex (For billing)', patient.sex)}
                     {renderField('Sexual Orientation', patient.sexual_orientation, null, 'text',
                       dropdownOptions.sexual_orientation && dropdownOptions.sexual_orientation.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.sexual_orientation]
+                        ? dropdownOptions.sexual_orientation
+                        : null
+                    )}
+                    {renderField('Marital Status', patient.marital_status, null, 'text',
+                      dropdownOptions.marital_status && dropdownOptions.marital_status.length > 0
+                        ? dropdownOptions.marital_status
+                        : null
+                    )}
+                    {renderField('Ethnicity', patient.ethnicity, null, 'text',
+                      dropdownOptions.ethnicity && dropdownOptions.ethnicity.length > 0
+                        ? dropdownOptions.ethnicity
                         : null
                     )}
                     <div className="form-field">
                       <div className="form-field-label">S.S.</div>
                       <div className="form-field-value">{patient.ss ? '***-**-' + patient.ss.slice(-4) : ''}</div>
                     </div>
-                    {renderField('Marital Status', patient.marital_status, null, 'text',
-                      dropdownOptions.marital_status && dropdownOptions.marital_status.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.marital_status]
-                        : null
-                    )}
-                    {renderField('Ethnicity', patient.ethnicity, null, 'text',
-                      dropdownOptions.ethnicity && dropdownOptions.ethnicity.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.ethnicity]
-                        : null
-                    )}
                   </>
                 )}
               </div>
