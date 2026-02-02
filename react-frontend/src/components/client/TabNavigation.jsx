@@ -9,7 +9,7 @@ function TabNavigation({ activeTab, onTabChange, permissions = {} }) {
     { id: 'encounters', label: 'Sessions', requiresPermission: null, hideForSocialWorker: true },
     { id: 'clinical', label: 'Notes', requiresPermission: 'canAccessNotes' },
     { id: 'documents', label: 'Documents', requiresPermission: null },
-    { id: 'billing', label: 'Billing', requiresPermission: null },
+    { id: 'billing', label: 'Billing', requiresPermission: null, adminOnly: true },
     { id: 'admin', label: 'Admin Notes', requiresPermission: null }
   ];
 
@@ -18,6 +18,10 @@ function TabNavigation({ activeTab, onTabChange, permissions = {} }) {
 
   // Filter tabs based on permissions
   const tabs = allTabs.filter(tab => {
+    // Admin-only tabs (like Billing) - hide from clinicians, social workers, supervisors
+    if (tab.adminOnly && !permissions.isAdmin) {
+      return false;
+    }
     // Hide Sessions tab from social workers
     if (tab.hideForSocialWorker && permissions.isSocialWorker && !permissions.isAdmin) {
       return false;
