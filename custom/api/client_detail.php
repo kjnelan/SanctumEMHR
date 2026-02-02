@@ -88,6 +88,7 @@ try {
         NULL AS referring_provider_name,
         c.ssn_encrypted AS ss,
         c.marital_status,
+        lo_marital.title AS marital_status_text,
         c.payment_type,
         c.custom_session_fee,
         c.sexual_orientation,
@@ -133,6 +134,7 @@ try {
     LEFT JOIN facilities f ON f.id = c.facility_id
     LEFT JOIN settings_lists lo_gender ON lo_gender.list_id = 'gender_identity' AND lo_gender.option_id = c.gender_identity
     LEFT JOIN settings_lists lo_orientation ON lo_orientation.list_id = 'sexual_orientation' AND lo_orientation.option_id = c.sexual_orientation
+    LEFT JOIN settings_lists lo_marital ON lo_marital.list_id = 'marital-status' AND lo_marital.option_id = c.marital_status
     WHERE c.id = ?";
 
     $patient = $db->query($patientSql, [$clientId]);

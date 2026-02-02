@@ -88,6 +88,14 @@ function DemographicsTab({ data, onDataUpdate }) {
     loadGuardians();
   }, [data]);
 
+  // Format date for display (e.g., "Mar 15, 1985")
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const [year, month, day] = dateStr.split(/[-T]/);
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
   if (!data) {
     return (
       <div className="empty-state">
@@ -410,32 +418,14 @@ function DemographicsTab({ data, onDataUpdate }) {
                     {renderField('Middle Name', patient.mname)}
                     {renderField('Last Name', patient.lname)}
                     {renderField('Preferred Name', patient.preferred_name)}
-                    {renderField('DOB', patient.DOB)}
+                    {renderField('DOB', formatDate(patient.DOB))}
                     {renderField('Legal Sex (For billing purposes ONLY)', patient.sex, null, 'text',
-                      dropdownOptions.sex && dropdownOptions.sex.length > 0
-                        ? dropdownOptions.sex
-                        : [{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }, { value: 'other', label: 'Other' }, { value: 'unknown', label: 'Unknown' }]
+                      [{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }, { value: 'other', label: 'Other' }, { value: 'unknown', label: 'Unknown' }]
                     )}
-                    {renderField('Gender Identity', patient.gender_identity, null, 'text',
-                      dropdownOptions.gender_identity && dropdownOptions.gender_identity.length > 0
-                        ? dropdownOptions.gender_identity
-                        : null
-                    )}
-                    {renderField('Sexual Orientation', patient.sexual_orientation, null, 'text',
-                      dropdownOptions.sexual_orientation && dropdownOptions.sexual_orientation.length > 0
-                        ? dropdownOptions.sexual_orientation
-                        : null
-                    )}
-                    {renderField('Marital Status', patient.marital_status, null, 'text',
-                      dropdownOptions.marital_status && dropdownOptions.marital_status.length > 0
-                        ? dropdownOptions.marital_status
-                        : null
-                    )}
-                    {renderField('Ethnicity', patient.ethnicity, null, 'text',
-                      dropdownOptions.ethnicity && dropdownOptions.ethnicity.length > 0
-                        ? dropdownOptions.ethnicity
-                        : null
-                    )}
+                    {renderField('Gender Identity', patient.gender_identity_text || patient.gender_identity)}
+                    {renderField('Sexual Orientation', patient.sexual_orientation_text || patient.sexual_orientation)}
+                    {renderField('Marital Status', patient.marital_status_text || patient.marital_status)}
+                    {renderField('Ethnicity', patient.ethnicity)}
                     <div className="form-field">
                       <div className="form-field-label">S.S.</div>
                       <div className="form-field-value">{patient.ss ? '***-**-' + patient.ss.slice(-4) : ''}</div>
