@@ -8,6 +8,7 @@ require_once(__DIR__ . '/../init.php');
 
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
+use Custom\Lib\Auth\PermissionChecker;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -51,10 +52,33 @@ try {
         exit;
     }
 
-    error_log("Clinical notes: User authenticated - " . $session->getUserId() . ", fetching notes for patient ID: " . $patientId);
-
-    // Initialize database
+    // Initialize database and permission checker
     $db = Database::getInstance();
+    $permissionChecker = new PermissionChecker($db);
+
+    // Check if user can access this client
+    if (!$permissionChecker->canAccessClient((int) $patientId)) {
+        error_log("Clinical notes: Access denied for user " . $session->getUserId() . " to patient " . $patientId);
+        http_response_code(403);
+        echo json_encode([
+            'error' => 'Access denied',
+            'message' => $permissionChecker->getAccessDeniedMessage()
+        ]);
+        exit;
+    }
+
+    // Check if user can view clinical notes (social workers cannot)
+    if (!$permissionChecker->canViewClinicalNotes((int) $patientId)) {
+        error_log("Clinical notes: Clinical notes hidden from user " . $session->getUserId() . " (social worker role)");
+        http_response_code(403);
+        echo json_encode([
+            'error' => 'Access denied',
+            'message' => 'Social workers cannot view clinical notes. Please contact the clinical team for information about this client.'
+        ]);
+        exit;
+    }
+
+    error_log("Clinical notes: User authenticated - " . $session->getUserId() . ", fetching notes for patient ID: " . $patientId);
 
     // Fetch all clinical notes for this client
     $notesSql = "SELECT

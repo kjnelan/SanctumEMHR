@@ -56,12 +56,37 @@ export function useAuth() {
                     return;
                 }
 
+                // Extract role flags from user details
+                const isSupervisor = userDetails?.isSupervisor || false;
+                const isSocialWorker = userDetails?.isSocialWorker || false;
+                const isProvider = userDetails?.isProvider || false;
+                const userType = userDetails?.userType || 'user';
+
+                // Determine primary role for display
+                let role = 'user';
+                if (isAdmin) role = 'admin';
+                else if (isSupervisor) role = 'supervisor';
+                else if (isSocialWorker) role = 'social_worker';
+                else if (isProvider) role = 'provider';
+
+                // Build permissions array
+                const permissions = [];
+                if (isAdmin) permissions.push('admin', 'view_all_clients', 'edit_all_clients', 'view_all_notes');
+                if (isSupervisor) permissions.push('view_supervisee_clients', 'view_supervisee_notes');
+                if (isProvider) permissions.push('view_own_clients', 'edit_own_clients', 'view_own_notes', 'create_clinical_notes');
+                if (isSocialWorker) permissions.push('view_assigned_clients', 'edit_demographics', 'create_case_notes');
+
                 setUser({
                     id: userId,
                     name: displayName,
                     initials,
-                    role: isAdmin ? 'admin' : 'user',
-                    permissions: isAdmin ? ['admin'] : [],
+                    role,
+                    userType,
+                    isAdmin,
+                    isSupervisor,
+                    isSocialWorker,
+                    isProvider,
+                    permissions,
                     unreadMessages: 0
                 });
 

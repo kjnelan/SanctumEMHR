@@ -1,16 +1,23 @@
 import React from 'react';
 
-function TabNavigation({ activeTab, onTabChange }) {
-  const tabs = [
-    { id: 'summary', label: 'Summary' },
-    { id: 'demographics', label: 'Demographics' },
-    { id: 'insurance', label: 'Insurance' },
-    { id: 'encounters', label: 'Sessions' },
-    { id: 'clinical', label: 'Clinical Notes' },
-    { id: 'documents', label: 'Documents' },
-    { id: 'billing', label: 'Billing' },
-    { id: 'admin', label: 'Admin Notes' }
+function TabNavigation({ activeTab, onTabChange, permissions = {} }) {
+  // Define all tabs with their required permissions
+  const allTabs = [
+    { id: 'summary', label: 'Summary', requiresPermission: null },
+    { id: 'demographics', label: 'Demographics', requiresPermission: null },
+    { id: 'insurance', label: 'Insurance', requiresPermission: null },
+    { id: 'encounters', label: 'Sessions', requiresPermission: null },
+    { id: 'clinical', label: 'Clinical Notes', requiresPermission: 'canViewClinicalNotes' },
+    { id: 'documents', label: 'Documents', requiresPermission: null },
+    { id: 'billing', label: 'Billing', requiresPermission: null },
+    { id: 'admin', label: 'Admin Notes', requiresPermission: null }
   ];
+
+  // Filter tabs based on permissions
+  const tabs = allTabs.filter(tab => {
+    if (!tab.requiresPermission) return true;
+    return permissions[tab.requiresPermission] !== false;
+  });
 
   return (
     <div className="tab-nav mb-6">

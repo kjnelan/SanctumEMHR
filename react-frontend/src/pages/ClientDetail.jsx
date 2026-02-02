@@ -117,7 +117,11 @@ function ClientDetail() {
       onLogout={handleLogout}
     >
       <ClientHeader client={clientData?.patient} />
-      <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+      <TabNavigation
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        permissions={clientData?.permissions || {}}
+      />
       {renderTabContent()}
     </AppShell>
   );

@@ -78,7 +78,7 @@ try {
         exit;
     }
 
-    // Return user information
+    // Return user information with role flags
     http_response_code(200);
     echo json_encode([
         'id' => $user['id'],
@@ -90,7 +90,10 @@ try {
         'displayName' => $user['display_name'],
         'userType' => $user['user_type'],
         'isProvider' => (bool) $user['is_provider'],
-        'admin' => $user['user_type'] === 'admin',
+        'isAdmin' => $user['user_type'] === 'admin',
+        'isSupervisor' => (bool) ($user['is_supervisor'] ?? false),
+        'isSocialWorker' => (bool) ($user['is_social_worker'] ?? false),
+        'admin' => $user['user_type'] === 'admin', // legacy field
         'npi' => $user['npi'] ?? null,
         'phone' => $user['phone'] ?? null
     ]);

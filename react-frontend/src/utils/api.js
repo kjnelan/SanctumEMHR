@@ -94,6 +94,11 @@ export async function getUserDetails() {
         fullName: response.fullName || response.fullName || '',
         displayName: response.displayName || response.fullName || '',
         admin: response.isAdmin || response.admin || false,
+        isAdmin: response.isAdmin || response.admin || false,
+        isSupervisor: response.isSupervisor || false,
+        isSocialWorker: response.isSocialWorker || false,
+        isProvider: response.isProvider || false,
+        userType: response.userType || 'user',
         username: response.username || null
       };
     }

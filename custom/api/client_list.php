@@ -9,6 +9,7 @@ require_once(__DIR__ . '/../init.php');
 
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
+use Custom\Lib\Auth\PermissionChecker;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -49,8 +50,12 @@ try {
     $statusFilter = $_GET['status'] ?? 'all';
     error_log("Client list: Status filter - " . $statusFilter);
 
-    // Initialize database
+    // Initialize database and permission checker
     $db = Database::getInstance();
+    $permissionChecker = new PermissionChecker($db);
+
+    // Get access filter based on user's role
+    $accessFilter = $permissionChecker->buildClientAccessFilter('c.id');
 
     // Build SQL query for SanctumEMHR schema
     $sql = "SELECT
@@ -66,9 +71,9 @@ try {
         c.status,
         YEAR(CURDATE()) - YEAR(c.date_of_birth) - (DATE_FORMAT(CURDATE(), '%m%d') < DATE_FORMAT(c.date_of_birth, '%m%d')) AS age
     FROM clients c
-    WHERE 1=1";
+    WHERE ({$accessFilter['sql']})";
 
-    $params = [];
+    $params = $accessFilter['params'];
 
     // Add status filter if specified
     if ($statusFilter !== 'all') {
@@ -77,6 +82,12 @@ try {
     }
 
     $sql .= " ORDER BY c.last_name, c.first_name";
+
+    // Log access info for debugging
+    $currentUser = $permissionChecker->getCurrentUser();
+    error_log("Client list: User role info - is_admin: " . ($permissionChecker->isAdmin() ? 'yes' : 'no') .
+              ", is_supervisor: " . ($permissionChecker->isSupervisor() ? 'yes' : 'no') .
+              ", is_social_worker: " . ($permissionChecker->isSocialWorker() ? 'yes' : 'no'));
 
     error_log("Client list SQL: " . $sql);
     error_log("Client list params: " . print_r($params, true));

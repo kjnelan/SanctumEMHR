@@ -8,6 +8,7 @@ require_once(__DIR__ . '/../init.php');
 
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
+use Custom\Lib\Auth\PermissionChecker;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -54,7 +55,25 @@ try {
         exit;
     }
 
-    error_log("Client detail: User authenticated - " . $session->getUserId() . ", fetching client ID: " . $clientId);
+    // Check permission to access this client
+    $permissionChecker = new PermissionChecker($db);
+    if (!$permissionChecker->canAccessClient((int) $clientId)) {
+        error_log("Client detail: Access denied for user " . $session->getUserId() . " to client " . $clientId);
+        http_response_code(403);
+        echo json_encode([
+            'error' => 'Access denied',
+            'message' => $permissionChecker->getAccessDeniedMessage()
+        ]);
+        exit;
+    }
+
+    // Get user's role for this client (for frontend to know what to show)
+    $userRole = $permissionChecker->getClientRole($session->getUserId(), (int) $clientId);
+    $canViewClinicalNotes = $permissionChecker->canViewClinicalNotes((int) $clientId);
+    $canCreateClinicalNotes = $permissionChecker->canCreateClinicalNotes((int) $clientId);
+
+    error_log("Client detail: User authenticated - " . $session->getUserId() . ", fetching client ID: " . $clientId .
+              ", role: " . ($userRole ?? 'supervisor/admin') . ", can_view_notes: " . ($canViewClinicalNotes ? 'yes' : 'no'));
 
     // Fetch patient demographics - mapped to SanctumEMHR schema
     $patientSql = "SELECT
@@ -325,8 +344,9 @@ try {
     $hasNotesTable = ($notesTableCheck && $notesTableCheck['count'] > 0);
 
     // Fetch recent clinical notes if table exists - mapped to SanctumEMHR schema
+    // Only fetch clinical notes if user has permission (social workers cannot view clinical notes)
     $clinicalNotes = [];
-    if ($hasNotesTable) {
+    if ($hasNotesTable && $canViewClinicalNotes) {
         try {
             $notesSql = "SELECT
                 n.id,
@@ -349,6 +369,8 @@ try {
             error_log("Clinical notes query failed: " . $e->getMessage());
             $clinicalNotes = [];
         }
+    } elseif (!$canViewClinicalNotes) {
+        error_log("Client detail: Clinical notes hidden from user (social worker role)");
     }
 
     // Fetch recent encounters - mapped to SanctumEMHR schema
@@ -395,6 +417,16 @@ try {
             'total_clinical_notes' => count($clinicalNotes),
             'total_encounters' => count($encounters),
             'has_insurance' => !empty($insurance['primary'])
+        ],
+        // Permission info for frontend
+        'permissions' => [
+            'canViewClinicalNotes' => $canViewClinicalNotes,
+            'canCreateClinicalNotes' => $canCreateClinicalNotes,
+            'canEditDemographics' => $permissionChecker->canEditDemographics((int) $clientId),
+            'userRole' => $userRole,
+            'isAdmin' => $permissionChecker->isAdmin(),
+            'isSupervisor' => $permissionChecker->isSupervisor(),
+            'isSocialWorker' => $permissionChecker->isSocialWorker()
         ]
     ];
 

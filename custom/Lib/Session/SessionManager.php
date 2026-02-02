@@ -313,11 +313,20 @@ class SessionManager implements SessionHandlerInterface
         // Regenerate session ID for security
         $this->regenerate();
 
+        // Determine role flags
+        $isAdmin = ($user['user_type'] ?? '') === 'admin';
+        $isSupervisor = (bool) ($user['is_supervisor'] ?? false);
+        $isSocialWorker = (bool) ($user['is_social_worker'] ?? false);
+        $isProvider = (bool) ($user['is_provider'] ?? false);
+
         // Set session variables
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['user_type'] = $user['user_type'];
-        $_SESSION['is_provider'] = $user['is_provider'] ?? false;
+        $_SESSION['is_provider'] = $isProvider;
+        $_SESSION['is_admin'] = $isAdmin;
+        $_SESSION['is_supervisor'] = $isSupervisor;
+        $_SESSION['is_social_worker'] = $isSocialWorker;
         $_SESSION['full_name'] = trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? ''));
         $_SESSION['login_time'] = time();
 
@@ -329,7 +338,10 @@ class SessionManager implements SessionHandlerInterface
             'last_name' => $user['last_name'] ?? '',
             'email' => $user['email'] ?? '',
             'user_type' => $user['user_type'],
-            'is_provider' => $user['is_provider'] ?? false
+            'is_provider' => $isProvider,
+            'is_admin' => $isAdmin,
+            'is_supervisor' => $isSupervisor,
+            'is_social_worker' => $isSocialWorker
         ];
     }
 
