@@ -48,15 +48,17 @@ try {
     // Initialize database
     $db = Database::getInstance();
 
-    // Fetch all active authorized users (providers/clinicians) from SanctumEMHR schema
+    // Fetch all active staff who can have appointments (providers and social workers) from SanctumEMHR schema
     $sql = "SELECT
         id,
         CONCAT(first_name, ' ', last_name) AS full_name,
         first_name,
         last_name,
-        username
+        username,
+        is_provider,
+        is_social_worker
     FROM users
-    WHERE is_active = 1 AND is_provider = 1
+    WHERE is_active = 1 AND (is_provider = 1 OR is_social_worker = 1)
     ORDER BY last_name, first_name";
 
     error_log("Get providers SQL: " . $sql);
@@ -73,7 +75,7 @@ try {
         ];
     }
 
-    error_log("Get providers: Found " . count($providers) . " active providers");
+    error_log("Get providers: Found " . count($providers) . " active providers/social workers");
 
     http_response_code(200);
     echo json_encode([
