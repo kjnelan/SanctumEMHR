@@ -24,6 +24,12 @@ export function useAuth() {
                 let isAdmin = currentUser.admin || false;
                 let userId = currentUser.id;
 
+                // Variables for role flags
+                let isSupervisor = false;
+                let isSocialWorker = false;
+                let isProvider = false;
+                let userType = 'user';
+
                 try {
                     // Verify session is still valid and get latest user details
                     const userDetails = await getUserDetails();
@@ -41,6 +47,12 @@ export function useAuth() {
                             userId = userDetails.id;
                         }
 
+                        // Extract role flags from user details
+                        isSupervisor = userDetails.isSupervisor || false;
+                        isSocialWorker = userDetails.isSocialWorker || false;
+                        isProvider = userDetails.isProvider || false;
+                        userType = userDetails.userType || 'user';
+
                         // Compute initials from full name
                         const nameParts = displayName.trim().split(/\s+/);
                         if (nameParts.length > 1) {
@@ -55,12 +67,6 @@ export function useAuth() {
                     navigate('/');
                     return;
                 }
-
-                // Extract role flags from user details
-                const isSupervisor = userDetails?.isSupervisor || false;
-                const isSocialWorker = userDetails?.isSocialWorker || false;
-                const isProvider = userDetails?.isProvider || false;
-                const userType = userDetails?.userType || 'user';
 
                 // Determine primary role for display
                 let role = 'user';
