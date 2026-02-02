@@ -19,6 +19,7 @@ import Facilities from '../components/admin/Facilities';
 import SecuritySettings from '../components/admin/SecuritySettings';
 import CPTCodes from '../components/admin/CPTCodes';
 import BillingModifiers from '../components/admin/BillingModifiers';
+import ICD10Import from './ICD10Import';
 import About from '../components/admin/About';
 
 function Admin() {
@@ -51,6 +52,7 @@ function Admin() {
       sections: [
         { id: 'reference-lists', label: 'Reference Lists', available: true },
         { id: 'document-categories', label: 'Document Categories', available: true },
+        { id: 'icd10-codes', label: 'ICD-10 Codes', available: true },
       ]
     },
     {
@@ -187,6 +189,7 @@ function Admin() {
           {activeSection === 'calendar-settings' && <CalendarSettings />}
           {activeSection === 'reference-lists' && <ReferenceLists />}
           {activeSection === 'document-categories' && <DocumentCategories />}
+          {activeSection === 'icd10-codes' && <ICD10Import />}
           {activeSection === 'cpt-codes' && <CPTCodes />}
           {activeSection === 'billing-modifiers' && <BillingModifiers />}
           {activeSection === 'facilities' && <Facilities />}
