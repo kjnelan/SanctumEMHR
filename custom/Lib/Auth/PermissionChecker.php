@@ -218,6 +218,38 @@ class PermissionChecker
     }
 
     /**
+     * Check if current user can create case management notes for a client
+     * Social workers can create case management notes for clients they are assigned to
+     *
+     * @param int $clientId Client ID
+     * @return bool True if can create case management notes
+     */
+    public function canCreateCaseNotes(int $clientId): bool
+    {
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return false;
+        }
+
+        // Must have access to the client first
+        if (!$this->canAccessClient($clientId)) {
+            return false;
+        }
+
+        // Admin can create any notes
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        // Social workers CAN create case management notes
+        if ($this->isSocialWorker()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Check if current user can create clinical notes for a client
      *
      * @param int $clientId Client ID

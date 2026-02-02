@@ -423,6 +423,7 @@ try {
         'permissions' => [
             'canViewClinicalNotes' => $canViewClinicalNotes,
             'canCreateClinicalNotes' => $canCreateClinicalNotes,
+            'canCreateCaseNotes' => $permissionChecker->canCreateCaseNotes((int) $clientId),
             'canEditDemographics' => $permissionChecker->canEditDemographics((int) $clientId),
             'userRole' => $userRole,
             'isAdmin' => $permissionChecker->isAdmin(),

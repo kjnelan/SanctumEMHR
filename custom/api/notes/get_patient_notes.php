@@ -66,12 +66,18 @@ try {
         exit;
     }
 
-    // Check if user can view clinical notes (social workers cannot)
-    if (!$permissionChecker->canViewClinicalNotes((int) $patientId)) {
+    // Check permissions - social workers can only see their own case management notes
+    $canViewClinicalNotes = $permissionChecker->canViewClinicalNotes((int) $patientId);
+    $canCreateCaseNotes = $permissionChecker->canCreateCaseNotes((int) $patientId);
+    $isSocialWorker = $permissionChecker->isSocialWorker() && !$permissionChecker->isProvider();
+    $currentUserId = $session->getUserId();
+
+    // If user can't view clinical notes AND can't create case notes, deny access
+    if (!$canViewClinicalNotes && !$canCreateCaseNotes) {
         http_response_code(403);
         echo json_encode([
             'error' => 'Access denied',
-            'message' => 'Social workers cannot view clinical notes. Please contact the clinical team for information about this client.'
+            'message' => 'You do not have permission to view notes for this client.'
         ]);
         exit;
     }
@@ -133,6 +139,12 @@ try {
     WHERE n.patient_id = ?";
 
     $params = [$patientId];
+
+    // Social workers can only see their own case management notes
+    if ($isSocialWorker && !$canViewClinicalNotes) {
+        $sql .= " AND n.note_type = 'case_management' AND n.created_by = ?";
+        $params[] = $currentUserId;
+    }
 
     // Add optional filters
     if ($noteType) {
