@@ -146,11 +146,37 @@
   - [ ] Backup encryption
 
 - [ ] **Access controls**
-  - [ ] Role-based permissions (RBAC)
+  - [x] Role-based permissions (RBAC) - Basic implementation complete
   - [ ] Minimum necessary standard
   - [ ] Emergency access procedures
 
 - [ ] **Breach notification** - Procedures and logging
+
+### Configurable RBAC System (Future Enhancement)
+- [ ] **Admin UI for Role-Permission Configuration**
+  - [ ] Create admin interface to configure which roles can access which features
+  - [ ] Database tables: `roles`, `permissions`, `role_permissions`
+  - [ ] Permission matrix UI showing roles vs features
+  - [ ] Ability to create custom roles beyond standard (admin, provider, supervisor, social_worker)
+
+- [ ] **Granular Permission Categories**
+  - [ ] Client access (view, edit, create, delete)
+  - [ ] Clinical notes (view, create, sign, view_others)
+  - [ ] Billing (view, create, submit_claims)
+  - [ ] Calendar (view_own, view_all, manage_others)
+  - [ ] Admin settings (users, facilities, codes, system)
+  - [ ] Reports (clinical, financial, compliance)
+
+- [ ] **Backend Permission Checks**
+  - [ ] Update PermissionChecker.php to read from database config
+  - [ ] Cache permission lookups for performance
+  - [ ] API endpoint to fetch user's effective permissions
+
+- [ ] **Current Hardcoded Permissions** (to be made configurable)
+  - Admins: Full access to everything
+  - Supervisors: Own clients + supervisees' clients, no billing
+  - Providers/Clinicians: Own clients only, clinical notes, no billing
+  - Social Workers: Own clients, case management notes only, no clinical notes, no billing
 
 ### Business Associate Agreements
 - [ ] Document all third-party services

@@ -19,7 +19,8 @@ import { RequiredAsterisk } from '../RequiredAsterisk';
 import { ErrorMessage } from '../ErrorMessage';
 import { DangerButton } from '../DangerButton';
 
-function CalendarCategories() {
+// Reusable Calendar Categories Tab component (for use in CalendarSettings)
+export function CalendarCategoriesTab() {
   const [categories, setCategories] = useState([]);
   const [cptCodes, setCptCodes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -247,14 +248,12 @@ function CalendarCategories() {
 
   if (loading) {
     return (
-      <div className="glass-card p-8">
-        <div className="text-center text-gray-600">Loading calendar categories...</div>
-      </div>
+      <div className="text-center text-gray-600 py-8">Loading calendar categories...</div>
     );
   }
 
   return (
-    <div className="glass-card p-6">
+    <>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -592,6 +591,15 @@ function CalendarCategories() {
           </Modal.Footer>
         </div>
       </Modal>
+    </>
+  );
+}
+
+// Standalone Calendar Categories component (wraps the tab with glass-card)
+function CalendarCategories() {
+  return (
+    <div className="glass-card p-6">
+      <CalendarCategoriesTab />
     </div>
   );
 }

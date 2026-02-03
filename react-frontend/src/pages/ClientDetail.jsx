@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getClientDetail, logout } from '../utils/api';
 import { useAuth } from '../hooks/useAuth';
 import { ErrorInline } from '../components/ErrorInline';
@@ -18,8 +18,10 @@ import ComingSoon from './ComingSoon';
 
 function ClientDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const [clientData, setClientData] = useState(null);
+  const [accessInfo, setAccessInfo] = useState(null);
   const [activeTab, setActiveTab] = useState('summary');
   const [activeNav, setActiveNav] = useState('clients');
   const [loading, setLoading] = useState(true);
@@ -40,10 +42,18 @@ function ClientDetail() {
     try {
       setLoading(true);
       setError(null);
+      setAccessInfo(null);
       console.log('Fetching client data for ID:', id);
       const data = await getClientDetail(id);
       console.log('Client data received:', data);
-      setClientData(data);
+
+      // Check if access was denied (client not on caseload)
+      if (data.accessDenied) {
+        setAccessInfo(data.accessInfo);
+        setClientData(null);
+      } else {
+        setClientData(data);
+      }
     } catch (err) {
       console.error('Error fetching client data:', err);
       setError(err.message || 'Failed to load client data');
@@ -63,6 +73,40 @@ function ClientDetail() {
       return (
         <div className="card-main p-12 text-center">
           <div className="text-gray-700">Loading client data...</div>
+        </div>
+      );
+    }
+
+    // Show info box when client is not on user's caseload
+    if (accessInfo) {
+      return (
+        <div className="card-main p-8">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 max-w-2xl mx-auto">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                  {accessInfo.title || 'Client Not on Your Caseload'}
+                </h3>
+                <p className="text-blue-800 mb-4">
+                  {accessInfo.message || 'This client is not currently on your caseload. If you need access to work with this client, please contact your supervisor or an administrator to be added to their care team.'}
+                </p>
+                <button
+                  onClick={() => navigate('/app/clients')}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  {accessInfo.actionText || 'Return to Client List'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       );
     }
@@ -117,7 +161,11 @@ function ClientDetail() {
       onLogout={handleLogout}
     >
       <ClientHeader client={clientData?.patient} />
-      <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+      <TabNavigation
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        permissions={clientData?.permissions || {}}
+      />
       {renderTabContent()}
     </AppShell>
   );

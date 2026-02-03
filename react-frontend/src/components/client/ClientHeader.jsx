@@ -33,13 +33,17 @@ function ClientHeader({ client }) {
 
   const formatDOB = (dob) => {
     if (!dob) return '';
-    const date = new Date(dob);
+    // Parse date parts manually to avoid timezone offset issues
+    const [year, month, day] = dob.split('-');
+    const date = new Date(year, month - 1, day); // month is 0-indexed
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   const formatClientSince = (date) => {
     if (!date) return '';
-    const d = new Date(date);
+    // Parse date parts manually to avoid timezone offset issues
+    const [year, month, day] = date.split('-');
+    const d = new Date(year, month - 1, day); // month is 0-indexed
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 

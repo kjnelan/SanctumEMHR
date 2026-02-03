@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { updateDemographics, getListOptions, getCurrentUser, getProviders, getRelatedPersons, saveRelatedPerson, deleteRelatedPerson } from '../../utils/api';
+import { updateDemographics, getListOptions, getProviders, getRelatedPersons, saveRelatedPerson, deleteRelatedPerson } from '../../utils/api';
 import useReferenceLists from '../../hooks/useReferenceLists';
+import { RequiredAsterisk } from '../shared/RequiredAsterisk';
 
 function DemographicsTab({ data, onDataUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -9,7 +10,6 @@ function DemographicsTab({ data, onDataUpdate }) {
   const [error, setError] = useState(null);
   const [dropdownOptions, setDropdownOptions] = useState({});
   const [providers, setProviders] = useState([]);
-  const [currentUser, setCurrentUser] = useState(null);
   const [guardians, setGuardians] = useState([]);
   const [showGuardianModal, setShowGuardianModal] = useState(false);
   const [editingGuardian, setEditingGuardian] = useState(null);
@@ -20,10 +20,7 @@ function DemographicsTab({ data, onDataUpdate }) {
     'gender-identity',
     'marital-status',
     'client-status',
-    'pronouns',
-    'ethnicity',
-    'insurance-type',
-    'referral-source'
+    'ethnicity'
   ]);
 
   // Load reference lists into dropdown options when they're available
@@ -34,11 +31,8 @@ function DemographicsTab({ data, onDataUpdate }) {
         sexual_orientation: referenceLists['sexual-orientation'] || [],
         gender_identity: referenceLists['gender-identity'] || [],
         marital_status: referenceLists['marital-status'] || [],
-        status: referenceLists['client-status'] || [], // Use 'status' to match DB column
-        pronouns: referenceLists['pronouns'] || [],
-        ethnicity: referenceLists['ethnicity'] || [],
-        insurance_type: referenceLists['insurance-type'] || [],
-        referral_source: referenceLists['referral-source'] || []
+        status: referenceLists['client-status'] || [],
+        ethnicity: referenceLists['ethnicity'] || []
       });
     }
   }, [referenceLists, listsLoading]);
@@ -48,35 +42,20 @@ function DemographicsTab({ data, onDataUpdate }) {
     const loadOtherOptions = async () => {
       try {
         // Fetch remaining options that aren't in reference lists yet
-        const [sexOptions, protectOptions, stateOptions, categoriesOptions, careTeamStatusOptions, paymentTypeOptions] = await Promise.all([
+        const [sexOptions, stateOptions, paymentTypeOptions] = await Promise.all([
           getListOptions('sex'),
-          getListOptions('yesno'),
           getListOptions('state'),
-          getListOptions('Patient_Groupings'),
-          getListOptions('Care_Team_Status'),
           getListOptions('payment_type')
         ]);
 
         setDropdownOptions(prev => ({
           ...prev,
           sex: sexOptions.options || [],
-          protect_indicator: protectOptions.options || [],
           state: stateOptions.options || [],
-          patient_categories: categoriesOptions.options || [],
-          care_team_status: careTeamStatusOptions.options || [],
           payment_type: paymentTypeOptions.options || []
         }));
       } catch (err) {
         console.error('Failed to load dropdown options:', err);
-      }
-    };
-
-    const loadUser = async () => {
-      try {
-        const user = getCurrentUser();
-        setCurrentUser(user);
-      } catch (err) {
-        console.error('Failed to load current user:', err);
       }
     };
 
@@ -90,7 +69,6 @@ function DemographicsTab({ data, onDataUpdate }) {
     };
 
     loadOtherOptions();
-    loadUser();
     loadProviders();
   }, []);
 
@@ -110,6 +88,14 @@ function DemographicsTab({ data, onDataUpdate }) {
     loadGuardians();
   }, [data]);
 
+  // Format date for display (e.g., "Mar 15, 1985")
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const [year, month, day] = dateStr.split(/[-T]/);
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
   if (!data) {
     return (
       <div className="empty-state">
@@ -122,21 +108,19 @@ function DemographicsTab({ data, onDataUpdate }) {
 
   const handleEdit = () => {
     // Initialize form data with current patient data
+    // Only include fields that exist in the SanctumEMHR database schema
     setFormData({
       // Personal Information
       fname: patient.fname || '',
       mname: patient.mname || '',
       lname: patient.lname || '',
       preferred_name: patient.preferred_name || '',
-      pronouns: patient.pronouns || '',
       DOB: patient.DOB || '',
       sex: patient.sex || '',
       gender_identity: patient.gender_identity || '',
       sexual_orientation: patient.sexual_orientation || '',
       marital_status: patient.marital_status || '',
       ethnicity: patient.ethnicity || '',
-      previous_names: patient.previous_names || '', // TODO: Add UI in Admin Notes section for editing
-      patient_categories: patient.patient_categories || '',
       ss: patient.ss || '',
 
       // Contact Information
@@ -152,32 +136,20 @@ function DemographicsTab({ data, onDataUpdate }) {
       phone_cell: patient.phone_cell || '',
       phone_biz: patient.phone_biz || '',
       email: patient.email || '',
-      email_direct: patient.email_direct || '',
-
-      // Risk & Protection
-      protect_indicator: patient.protection_indicator_code || '',
 
       // Client Status
-      status: patient.status || 'active',
+      status: patient.status || patient.care_team_status || 'active',
 
       // Payment Type
       payment_type: patient.payment_type || 'insurance',
       custom_session_fee: patient.custom_session_fee || '',
 
       // Clinician Information
-      provider_id: patient.provider_id || '',
-      referring_provider_id: patient.referring_provider_id || '',
+      provider_id: patient.provider_id || patient.providerID || '',
 
       // Portal Settings
       allow_patient_portal: patient.allow_patient_portal || '',
-      cmsportal_login: patient.cmsportal_login || '',
-
-      // HIPAA Preferences
-      hipaa_notice: patient.hipaa_notice || 'NO',
-      hipaa_allowsms: patient.hipaa_allowsms || 'NO',
-      hipaa_voice: patient.hipaa_voice || 'NO',
-      hipaa_mail: patient.hipaa_mail || 'NO',
-      hipaa_email: patient.hipaa_email || 'NO'
+      cmsportal_login: patient.cmsportal_login || ''
     });
     setIsEditing(true);
     setError(null);
@@ -206,24 +178,24 @@ function DemographicsTab({ data, onDataUpdate }) {
         throw new Error('First name and last name are required');
       }
 
-      if (!formData.sex) {
-        throw new Error('Sex is required');
-      }
-
-      if (!formData.gender_identity) {
-        throw new Error('Gender Identity is required');
-      }
-
-      if (!formData.sexual_orientation) {
-        throw new Error('Sexual Orientation is required');
+      if (!formData.email) {
+        throw new Error('Trusted Email is required');
       }
 
       if (formData.email && !formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
         throw new Error('Invalid email format');
       }
 
-      if (formData.email_direct && !formData.email_direct.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-        throw new Error('Invalid contact email format');
+      if (!formData.phone_cell) {
+        throw new Error('Mobile Phone is required');
+      }
+
+      if (!formData.status) {
+        throw new Error('Client Status is required');
+      }
+
+      if (!formData.payment_type) {
+        throw new Error('Payment Type is required');
       }
 
       // Call API to update demographics
@@ -286,17 +258,20 @@ function DemographicsTab({ data, onDataUpdate }) {
     }
   };
 
-  const renderField = (label, value, fieldName, type = 'text', options = null) => {
+  const renderField = (label, value, fieldName, type = 'text', options = null, required = false) => {
+    const labelClass = required ? "form-field-label required-field-label" : "form-field-label";
+
     if (isEditing && fieldName) {
       if (options) {
         // Render select dropdown
         return (
           <div className="form-field">
-            <div className="form-field-label">{label}</div>
+            <div className={labelClass}>{label}{required && <RequiredAsterisk />}</div>
             <select
               value={formData[fieldName] || ''}
               onChange={(e) => handleChange(fieldName, e.target.value)}
               className="input-md"
+              required={required}
             >
               {options.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -308,12 +283,13 @@ function DemographicsTab({ data, onDataUpdate }) {
         // Render text input
         return (
           <div className="form-field">
-            <div className="form-field-label">{label}</div>
+            <div className={labelClass}>{label}{required && <RequiredAsterisk />}</div>
             <input
               type={type}
               value={formData[fieldName] || ''}
               onChange={(e) => handleChange(fieldName, e.target.value)}
               className="input-md"
+              required={required}
             />
           </div>
         );
@@ -394,17 +370,12 @@ function DemographicsTab({ data, onDataUpdate }) {
               <div className="grid grid-cols-2 gap-3">
                 {isEditing ? (
                   <>
-                    {renderField('First Name *', formData.fname, 'fname')}
+                    {renderField('First Name', formData.fname, 'fname', 'text', null, true)}
                     {renderField('Middle Name', formData.mname, 'mname')}
-                    {renderField('Last Name *', formData.lname, 'lname')}
+                    {renderField('Last Name', formData.lname, 'lname', 'text', null, true)}
                     {renderField('Preferred Name', formData.preferred_name, 'preferred_name')}
-                    {renderField('Pronouns', formData.pronouns, 'pronouns', 'text',
-                      dropdownOptions.pronouns && dropdownOptions.pronouns.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.pronouns]
-                        : null
-                    )}
                     {renderField('DOB', formData.DOB, 'DOB', 'date')}
-                    {renderField('Sex *', formData.sex, 'sex', 'text',
+                    {renderField('Legal Sex (For billing purposes ONLY)', formData.sex, 'sex', 'text',
                       dropdownOptions.sex && dropdownOptions.sex.length > 0
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.sex]
                         : [{ value: '', label: 'Select...' }, { value: 'Male', label: 'Male' }, { value: 'Female', label: 'Female' }]
@@ -440,59 +411,24 @@ function DemographicsTab({ data, onDataUpdate }) {
                         className="input-md"
                       />
                     </div>
-                    <div className="col-span-2">
-                      {renderField('Client Categories', formData.patient_categories, 'patient_categories', 'text',
-                        dropdownOptions.patient_categories && dropdownOptions.patient_categories.length > 0
-                          ? [{ value: '', label: 'Select...' }, ...dropdownOptions.patient_categories]
-                          : null
-                      )}
-                    </div>
                   </>
                 ) : (
                   <>
-                    <div className="form-field">
-                      <div className="form-field-label">Legal Name</div>
-                      <div className="form-field-value">{patient.fname} {patient.mname && patient.mname + ' '}{patient.lname}</div>
-                    </div>
+                    {renderField('First Name', patient.fname)}
+                    {renderField('Middle Name', patient.mname)}
+                    {renderField('Last Name', patient.lname)}
                     {renderField('Preferred Name', patient.preferred_name)}
-                    {renderField('Pronouns', patient.pronouns, null, 'text',
-                      dropdownOptions.pronouns && dropdownOptions.pronouns.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.pronouns]
-                        : null
+                    {renderField('DOB', formatDate(patient.DOB))}
+                    {renderField('Legal Sex (For billing purposes ONLY)', patient.sex, null, 'text',
+                      [{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }, { value: 'other', label: 'Other' }, { value: 'unknown', label: 'Unknown' }]
                     )}
-                    {renderField('DOB', patient.DOB)}
-                    {renderField('Birth Sex', patient.birth_sex)}
-                    {renderField('Gender Identity', patient.gender_identity, null, 'text',
-                      dropdownOptions.gender_identity && dropdownOptions.gender_identity.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.gender_identity]
-                        : null
-                    )}
-                    {renderField('Sex', patient.sex)}
-                    {renderField('Sexual Orientation', patient.sexual_orientation, null, 'text',
-                      dropdownOptions.sexual_orientation && dropdownOptions.sexual_orientation.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.sexual_orientation]
-                        : null
-                    )}
+                    {renderField('Gender Identity', patient.gender_identity_text || patient.gender_identity)}
+                    {renderField('Sexual Orientation', patient.sexual_orientation_text || patient.sexual_orientation)}
+                    {renderField('Marital Status', patient.marital_status_text || patient.marital_status)}
+                    {renderField('Ethnicity', patient.ethnicity)}
                     <div className="form-field">
                       <div className="form-field-label">S.S.</div>
                       <div className="form-field-value">{patient.ss ? '***-**-' + patient.ss.slice(-4) : ''}</div>
-                    </div>
-                    {renderField('Marital Status', patient.marital_status, null, 'text',
-                      dropdownOptions.marital_status && dropdownOptions.marital_status.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.marital_status]
-                        : null
-                    )}
-                    {renderField('Ethnicity', patient.ethnicity, null, 'text',
-                      dropdownOptions.ethnicity && dropdownOptions.ethnicity.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.ethnicity]
-                        : null
-                    )}
-                    <div className="col-span-2">
-                      {renderField('Client Categories', patient.patient_categories, null, 'text',
-                        dropdownOptions.patient_categories && dropdownOptions.patient_categories.length > 0
-                          ? [{ value: '', label: 'Select...' }, ...dropdownOptions.patient_categories]
-                          : null
-                      )}
                     </div>
                   </>
                 )}
@@ -591,10 +527,9 @@ function DemographicsTab({ data, onDataUpdate }) {
                 {renderField('Emergency Contact', patient.contact_relationship, 'contact_relationship')}
                 {renderField('Emergency Phone', patient.phone_contact, 'phone_contact', 'tel')}
                 {renderField('Home Phone', patient.phone_home, 'phone_home', 'tel')}
-                {renderField('Mobile Phone', patient.phone_cell, 'phone_cell', 'tel')}
+                {renderField('Mobile Phone', patient.phone_cell, 'phone_cell', 'tel', null, true)}
                 {renderField('Work Phone', patient.phone_biz, 'phone_biz', 'tel')}
-                {renderField('Trusted Email', patient.email, 'email', 'email')}
-                {renderField('Contact Email', patient.email_direct, 'email_direct', 'email')}
+                {renderField('Trusted Email', patient.email, 'email', 'email', null, true)}
                 {!isEditing && patient.additional_addresses && (
                   <div className="col-span-2 form-field">
                     <div className="form-field-label">Additional Addresses</div>
@@ -616,18 +551,25 @@ function DemographicsTab({ data, onDataUpdate }) {
               {isEditing ? (
                 <div className="space-y-3">
                   {renderField('Client Status', formData.status, 'status', 'text',
-                    dropdownOptions.status && dropdownOptions.status.length > 0
-                      ? [{ value: '', label: 'Select...' }, ...dropdownOptions.status]
-                      : null
+                    [
+                      { value: '', label: 'Select...' },
+                      { value: 'active', label: 'Active' },
+                      { value: 'inactive', label: 'Inactive' },
+                      { value: 'discharged', label: 'Discharged' },
+                      { value: 'deceased', label: 'Deceased' }
+                    ],
+                    true
                   )}
                   {renderField('Payment Type', formData.payment_type, 'payment_type', 'text',
                     [
+                      { value: '', label: 'Select...' },
                       { value: 'insurance', label: 'Insurance' },
                       { value: 'self-pay', label: 'Self-Pay' },
                       { value: 'pro-bono', label: 'Pro Bono' }
-                    ]
+                    ],
+                    true
                   )}
-                  {(formData.payment_type === 'self-pay' || formData.payment_type === 'pro-bono') && (
+                  {formData.payment_type === 'self-pay' && (
                     renderField('Custom Session Fee ($)', formData.custom_session_fee, 'custom_session_fee', 'number', null, {
                       step: '0.01',
                       placeholder: '120.00'
@@ -637,9 +579,12 @@ function DemographicsTab({ data, onDataUpdate }) {
               ) : (
                 <div className="space-y-3">
                   {renderField('Client Status', patient.status, null, 'text',
-                    dropdownOptions.status && dropdownOptions.status.length > 0
-                      ? dropdownOptions.status
-                      : null
+                    [
+                      { value: 'active', label: 'Active' },
+                      { value: 'inactive', label: 'Inactive' },
+                      { value: 'discharged', label: 'Discharged' },
+                      { value: 'deceased', label: 'Deceased' }
+                    ]
                   )}
                   {renderField('Payment Type', patient.payment_type, null, 'text',
                     [
@@ -648,7 +593,7 @@ function DemographicsTab({ data, onDataUpdate }) {
                       { value: 'pro-bono', label: 'Pro Bono' }
                     ]
                   )}
-                  {(patient.payment_type === 'self-pay' || patient.payment_type === 'pro-bono') && patient.custom_session_fee && (
+                  {patient.payment_type === 'self-pay' && patient.custom_session_fee && (
                     <div className="form-field">
                       <div className="form-field-label">Custom Session Fee</div>
                       <div className="form-field-value">${parseFloat(patient.custom_session_fee).toFixed(2)}</div>
@@ -659,105 +604,6 @@ function DemographicsTab({ data, onDataUpdate }) {
             </div>
           </div>
 
-          {/* Is the Client at Risk Section */}
-          <div className="card-main">
-            <h2 className="card-header">Is the Client at Risk?</h2>
-            <div className="card-inner">
-              {isEditing ? (
-                <div>
-                  {renderField('Risk Indicator', formData.protect_indicator, 'protect_indicator', 'text',
-                    dropdownOptions.protect_indicator && dropdownOptions.protect_indicator.length > 0
-                      ? [{ value: '', label: 'Select...' }, ...dropdownOptions.protect_indicator]
-                      : null
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="form-field">
-                    <div className="form-field-label">Risk Indicator</div>
-                    <div className="form-field-value">{patient.protection_indicator}</div>
-                  </div>
-                  {patient.protection_indicator_code === 'YES' && (
-                    <div className="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-3">
-                      <p className="alert-text text-yellow-800">
-                        ⚠️ Risk factors documented. See Clinical Notes for the Risk Assessment.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Clinician Information Section */}
-          <div className="card-main">
-            <h2 className="card-header">Clinician Information</h2>
-            <div className="card-inner">
-              <div className="grid grid-cols-2 gap-3">
-                {isEditing ? (
-                  <>
-                    {currentUser && currentUser.admin ? (
-                      <div className="col-span-2">
-                        {renderField('Assigned Clinician', formData.provider_id, 'provider_id', 'text',
-                          providers && providers.length > 0
-                            ? [{ value: '', label: 'Select...' }, ...providers]
-                            : null
-                        )}
-                      </div>
-                    ) : (
-                      <div className="col-span-2 form-field">
-                        <div className="form-field-label">Assigned Clinician</div>
-                        <div className="form-field-value">{patient.provider}</div>
-                      </div>
-                    )}
-                    <div className="col-span-2">
-                      {renderField('Referring Provider', formData.referring_provider_id, 'referring_provider_id', 'text',
-                        providers && providers.length > 0
-                          ? [{ value: '', label: 'Select...' }, ...providers]
-                          : null
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {renderField('Assigned Clinician', patient.provider)}
-                    {renderField('Referring Provider', patient.referring_provider)}
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Reminder Preferences Section */}
-          <div className="card-main">
-            <h2 className="card-header">Reminder Preferences</h2>
-            <div className="card-inner">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2">
-                  {renderField('HIPAA Notice Received', patient.hipaa_notice, 'hipaa_notice', 'text', [
-                    { value: 'NO', label: 'NO' },
-                    { value: 'YES', label: 'YES' }
-                  ])}
-                </div>
-                {renderField('Allow SMS', patient.hipaa_allowsms, 'hipaa_allowsms', 'text', [
-                  { value: 'NO', label: 'NO' },
-                  { value: 'YES', label: 'YES' }
-                ])}
-                {renderField('Allow Voice Message', patient.hipaa_voice, 'hipaa_voice', 'text', [
-                  { value: 'NO', label: 'NO' },
-                  { value: 'YES', label: 'YES' }
-                ])}
-                {renderField('Allow Mail Message', patient.hipaa_mail, 'hipaa_mail', 'text', [
-                  { value: 'NO', label: 'NO' },
-                  { value: 'YES', label: 'YES' }
-                ])}
-                {renderField('Allow Email', patient.hipaa_email, 'hipaa_email', 'text', [
-                  { value: 'NO', label: 'NO' },
-                  { value: 'YES', label: 'YES' }
-                ])}
-              </div>
-            </div>
-          </div>
 
           {/* Portal Settings Section */}
           <div className="card-main">

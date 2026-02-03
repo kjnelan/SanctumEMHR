@@ -57,7 +57,8 @@ try {
                     u.license_number,
                     u.license_state,
                     u.title,
-                    u.is_supervisor,
+                    CAST(u.is_supervisor AS CHAR) AS is_supervisor,
+                    CAST(COALESCE(u.is_social_worker, 0) AS CHAR) AS is_social_worker,
                     CAST(u.is_provider AS CHAR) AS authorized,
                     CAST(u.is_active AS CHAR) AS active,
                     CAST(CASE WHEN u.user_type = 'admin' THEN 1 ELSE 0 END AS CHAR) AS calendar,
@@ -125,6 +126,7 @@ try {
                     CAST(is_provider AS CHAR) AS authorized,
                     CAST(is_active AS CHAR) AS active,
                     CAST(is_supervisor AS CHAR) AS is_supervisor,
+                    CAST(COALESCE(is_social_worker, 0) AS CHAR) AS is_social_worker,
                     CAST(portal_user AS CHAR) AS portal_user,
                     CAST(CASE WHEN user_type = 'admin' THEN 1 ELSE 0 END AS CHAR) AS calendar,
                     user_type,
@@ -147,18 +149,21 @@ try {
                 echo json_encode(['user' => $user]);
 
             } elseif ($action === 'supervisors') {
-                // Get list of potential supervisors (providers and admins)
+                // Get list of users who are marked as supervisors
+                // Only filter by is_active to be consistent with user list behavior
                 $sql = "SELECT
                     id,
                     username,
                     CONCAT(first_name, ' ', last_name) AS full_name,
                     first_name AS fname,
                     last_name AS lname,
+                    title,
                     user_type,
-                    is_provider
+                    is_provider,
+                    is_supervisor
                 FROM users
                 WHERE is_active = 1
-                AND (is_provider = 1 OR user_type = 'admin')
+                AND is_supervisor = 1
                 ORDER BY last_name, first_name";
 
                 $supervisors = $db->queryAll($sql);
@@ -275,10 +280,11 @@ try {
                 'middle_name' => $input['mname'] ?? null,
                 'title' => $input['title'] ?? null,
                 'suffix' => $input['suffix'] ?? null,
-                'user_type' => $input['user_type'] ?? 'staff',
+                'user_type' => ($input['calendar'] ?? false) ? 'admin' : ($input['user_type'] ?? 'staff'),
                 'is_provider' => ($input['authorized'] ?? 0) ? 1 : 0,
                 'is_active' => ($input['active'] ?? 1) ? 1 : 0,
                 'is_supervisor' => ($input['is_supervisor'] ?? 0) ? 1 : 0,
+                'is_social_worker' => ($input['is_social_worker'] ?? 0) ? 1 : 0,
                 'portal_user' => ($input['portal_user'] ?? 0) ? 1 : 0,
                 'npi' => $input['npi'] ?? null,
                 'license_number' => $input['state_license_number'] ?? null,
@@ -396,12 +402,21 @@ try {
                 $params[] = $input['is_supervisor'] ? 1 : 0;
             }
 
+            if (isset($input['is_social_worker'])) {
+                $updateFields[] = "is_social_worker = ?";
+                $params[] = $input['is_social_worker'] ? 1 : 0;
+            }
+
             if (isset($input['portal_user'])) {
                 $updateFields[] = "portal_user = ?";
                 $params[] = $input['portal_user'] ? 1 : 0;
             }
 
-            if (isset($input['user_type'])) {
+            // Handle calendar (admin) checkbox - this takes precedence over user_type
+            if (isset($input['calendar'])) {
+                $updateFields[] = "user_type = ?";
+                $params[] = $input['calendar'] ? 'admin' : 'staff';
+            } elseif (isset($input['user_type'])) {
                 $updateFields[] = "user_type = ?";
                 $params[] = $input['user_type'];
             }
@@ -418,17 +433,14 @@ try {
                 }
             }
 
-            if (empty($updateFields)) {
-                http_response_code(400);
-                echo json_encode(['error' => 'No fields to update']);
-                exit;
+            // Update user fields if any were provided
+            if (!empty($updateFields)) {
+                $params[] = $userId;
+                $sql = "UPDATE users SET " . implode(', ', $updateFields) . " WHERE id = ?";
+                $db->execute($sql, $params);
             }
 
-            $params[] = $userId;
-            $sql = "UPDATE users SET " . implode(', ', $updateFields) . " WHERE id = ?";
-            $db->execute($sql, $params);
-
-            // Handle supervisor relationships if provided
+            // Handle supervisor relationships if provided (this can be the only change)
             if (isset($input['supervisor_ids']) && is_array($input['supervisor_ids'])) {
                 // End all existing supervisor relationships
                 $endSql = "UPDATE user_supervisors SET ended_at = CURDATE() WHERE user_id = ? AND ended_at IS NULL";

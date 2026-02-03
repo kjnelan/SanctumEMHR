@@ -8,6 +8,7 @@ require_once(__DIR__ . '/../init.php');
 
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
+use Custom\Lib\Auth\PermissionChecker;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -54,7 +55,26 @@ try {
         exit;
     }
 
-    error_log("Client detail: User authenticated - " . $session->getUserId() . ", fetching client ID: " . $clientId);
+    // Check permission to access this client
+    $permissionChecker = new PermissionChecker($db);
+    if (!$permissionChecker->canAccessClient((int) $clientId)) {
+        error_log("Client detail: Access info - user " . $session->getUserId() . " does not have client " . $clientId . " on caseload");
+        http_response_code(403);
+        $accessInfo = $permissionChecker->getAccessInfo();
+        echo json_encode([
+            'accessDenied' => true,
+            'accessInfo' => $accessInfo
+        ]);
+        exit;
+    }
+
+    // Get user's role for this client (for frontend to know what to show)
+    $userRole = $permissionChecker->getClientRole($session->getUserId(), (int) $clientId);
+    $canViewClinicalNotes = $permissionChecker->canViewClinicalNotes((int) $clientId);
+    $canCreateClinicalNotes = $permissionChecker->canCreateClinicalNotes((int) $clientId);
+
+    error_log("Client detail: User authenticated - " . $session->getUserId() . ", fetching client ID: " . $clientId .
+              ", role: " . ($userRole ?? 'supervisor/admin') . ", can_view_notes: " . ($canViewClinicalNotes ? 'yes' : 'no'));
 
     // Fetch patient demographics - mapped to SanctumEMHR schema
     $patientSql = "SELECT
@@ -79,16 +99,22 @@ try {
         c.county,
         c.emergency_contact_relation AS contact_relationship,
         c.status AS care_team_status,
+        c.status,
         c.primary_provider_id AS providerID,
+        c.primary_provider_id AS provider_id,
         NULL AS ref_providerID,
+        NULL AS referring_provider_id,
         CONCAT(u_provider.first_name, ' ', u_provider.last_name) AS provider_name,
         NULL AS referring_provider_name,
         c.ssn_encrypted AS ss,
-        NULL AS status,
+        c.marital_status,
+        rl_marital.name AS marital_status_text,
+        c.payment_type,
+        c.custom_session_fee,
         c.sexual_orientation,
         c.gender_identity,
-        lo_gender.title AS gender_identity_text,
-        lo_orientation.title AS sexual_orientation_text,
+        rl_gender.name AS gender_identity_text,
+        rl_orientation.name AS sexual_orientation_text,
         NULL AS birth_fname,
         NULL AS birth_lname,
         NULL AS birth_mname,
@@ -126,8 +152,9 @@ try {
     FROM clients c
     LEFT JOIN users u_provider ON u_provider.id = c.primary_provider_id
     LEFT JOIN facilities f ON f.id = c.facility_id
-    LEFT JOIN settings_lists lo_gender ON lo_gender.list_id = 'gender_identity' AND lo_gender.option_id = c.gender_identity
-    LEFT JOIN settings_lists lo_orientation ON lo_orientation.list_id = 'sexual_orientation' AND lo_orientation.option_id = c.sexual_orientation
+    LEFT JOIN reference_lists rl_gender ON rl_gender.id = c.gender_identity
+    LEFT JOIN reference_lists rl_orientation ON rl_orientation.id = c.sexual_orientation
+    LEFT JOIN reference_lists rl_marital ON rl_marital.id = c.marital_status
     WHERE c.id = ?";
 
     $patient = $db->query($patientSql, [$clientId]);
@@ -318,8 +345,9 @@ try {
     $hasNotesTable = ($notesTableCheck && $notesTableCheck['count'] > 0);
 
     // Fetch recent clinical notes if table exists - mapped to SanctumEMHR schema
+    // Only fetch clinical notes if user has permission (social workers cannot view clinical notes)
     $clinicalNotes = [];
-    if ($hasNotesTable) {
+    if ($hasNotesTable && $canViewClinicalNotes) {
         try {
             $notesSql = "SELECT
                 n.id,
@@ -342,6 +370,8 @@ try {
             error_log("Clinical notes query failed: " . $e->getMessage());
             $clinicalNotes = [];
         }
+    } elseif (!$canViewClinicalNotes) {
+        error_log("Client detail: Clinical notes hidden from user (social worker role)");
     }
 
     // Fetch recent encounters - mapped to SanctumEMHR schema
@@ -388,6 +418,17 @@ try {
             'total_clinical_notes' => count($clinicalNotes),
             'total_encounters' => count($encounters),
             'has_insurance' => !empty($insurance['primary'])
+        ],
+        // Permission info for frontend
+        'permissions' => [
+            'canViewClinicalNotes' => $canViewClinicalNotes,
+            'canCreateClinicalNotes' => $canCreateClinicalNotes,
+            'canCreateCaseNotes' => $permissionChecker->canCreateCaseNotes((int) $clientId),
+            'canEditDemographics' => $permissionChecker->canEditDemographics((int) $clientId),
+            'userRole' => $userRole,
+            'isAdmin' => $permissionChecker->isAdmin(),
+            'isSupervisor' => $permissionChecker->isSupervisor(),
+            'isSocialWorker' => $permissionChecker->isSocialWorker()
         ]
     ];
 

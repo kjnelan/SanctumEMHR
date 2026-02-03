@@ -530,6 +530,9 @@ class CustomAuth
         if (isset($userData['is_supervisor'])) {
             $userData['is_supervisor'] = (int) $userData['is_supervisor'];
         }
+        if (isset($userData['is_social_worker'])) {
+            $userData['is_social_worker'] = (int) $userData['is_social_worker'];
+        }
         if (isset($userData['portal_user'])) {
             $userData['portal_user'] = (int) $userData['portal_user'];
         }

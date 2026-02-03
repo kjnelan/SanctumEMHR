@@ -16,6 +16,7 @@ require_once(__DIR__ . '/../../init.php');
 
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
+use Custom\Lib\Auth\PermissionChecker;
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -44,6 +45,7 @@ try {
     }
 
     $db = Database::getInstance();
+    $permissionChecker = new PermissionChecker($db);
 
     // Get patient ID from query parameter
     $patientId = $_GET['patient_id'] ?? null;
@@ -51,6 +53,32 @@ try {
     if (!$patientId) {
         http_response_code(400);
         echo json_encode(['error' => 'Patient ID is required']);
+        exit;
+    }
+
+    // Check if user can access this client
+    if (!$permissionChecker->canAccessClient((int) $patientId)) {
+        http_response_code(403);
+        echo json_encode([
+            'error' => 'Access denied',
+            'message' => $permissionChecker->getAccessDeniedMessage()
+        ]);
+        exit;
+    }
+
+    // Check permissions - social workers can only see their own case management notes
+    $canViewClinicalNotes = $permissionChecker->canViewClinicalNotes((int) $patientId);
+    $canCreateCaseNotes = $permissionChecker->canCreateCaseNotes((int) $patientId);
+    $isSocialWorker = $permissionChecker->isSocialWorker() && !$permissionChecker->isProvider();
+    $currentUserId = $session->getUserId();
+
+    // If user can't view clinical notes AND can't create case notes, deny access
+    if (!$canViewClinicalNotes && !$canCreateCaseNotes) {
+        http_response_code(403);
+        echo json_encode([
+            'error' => 'Access denied',
+            'message' => 'You do not have permission to view notes for this client.'
+        ]);
         exit;
     }
 
@@ -111,6 +139,12 @@ try {
     WHERE n.patient_id = ?";
 
     $params = [$patientId];
+
+    // Social workers can only see their own case management notes
+    if ($isSocialWorker && !$canViewClinicalNotes) {
+        $sql .= " AND n.note_type = 'case_management' AND n.created_by = ?";
+        $params[] = $currentUserId;
+    }
 
     // Add optional filters
     if ($noteType) {

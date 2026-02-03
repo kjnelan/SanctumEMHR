@@ -12,7 +12,6 @@
 
 import { useState } from 'react';
 import CalendarSettings from '../components/admin/CalendarSettings';
-import CalendarCategories from '../components/admin/CalendarCategories';
 import DocumentCategories from '../components/settings/DocumentCategories';
 import ReferenceLists from '../components/admin/ReferenceLists';
 import UserManagement from '../components/admin/UserManagement';
@@ -20,6 +19,8 @@ import Facilities from '../components/admin/Facilities';
 import SecuritySettings from '../components/admin/SecuritySettings';
 import CPTCodes from '../components/admin/CPTCodes';
 import BillingModifiers from '../components/admin/BillingModifiers';
+import ICD10Import from './ICD10Import';
+import ClinicalSettings from '../components/admin/ClinicalSettings';
 import About from '../components/admin/About';
 
 function Admin() {
@@ -50,8 +51,10 @@ function Admin() {
       label: 'Documentation',
       icon: '🏥',
       sections: [
+        { id: 'clinical-settings', label: 'Clinical Settings', available: true },
         { id: 'reference-lists', label: 'Reference Lists', available: true },
         { id: 'document-categories', label: 'Document Categories', available: true },
+        { id: 'icd10-codes', label: 'ICD-10 Codes', available: true },
       ]
     },
     {
@@ -60,7 +63,6 @@ function Admin() {
       icon: '📅',
       sections: [
         { id: 'calendar-settings', label: 'Calendar Settings', available: true },
-        { id: 'calendar-categories', label: 'Calendar Categories', available: true },
       ]
     },
     {
@@ -187,9 +189,10 @@ function Admin() {
         <div className="flex-1">
           {activeSection === 'security' && <SecuritySettings />}
           {activeSection === 'calendar-settings' && <CalendarSettings />}
-          {activeSection === 'calendar-categories' && <CalendarCategories />}
           {activeSection === 'reference-lists' && <ReferenceLists />}
           {activeSection === 'document-categories' && <DocumentCategories />}
+          {activeSection === 'icd10-codes' && <ICD10Import />}
+          {activeSection === 'clinical-settings' && <ClinicalSettings />}
           {activeSection === 'cpt-codes' && <CPTCodes />}
           {activeSection === 'billing-modifiers' && <BillingModifiers />}
           {activeSection === 'facilities' && <Facilities />}
@@ -197,7 +200,7 @@ function Admin() {
           {activeSection === 'about' && <About />}
 
           {/* Coming Soon for unavailable sections */}
-          {!['security', 'calendar-settings', 'calendar-categories', 'reference-lists', 'document-categories', 'cpt-codes', 'billing-modifiers', 'facilities', 'users', 'about'].includes(activeSection) && (
+          {!['security', 'calendar-settings', 'reference-lists', 'document-categories', 'icd10-codes', 'clinical-settings', 'cpt-codes', 'billing-modifiers', 'facilities', 'users', 'about'].includes(activeSection) && (
             <div className="glass-card p-12 text-center">
               <div className="text-gray-700 text-lg font-semibold">
                 {sectionGroups.flatMap(g => g.sections).find(s => s.id === activeSection)?.label}

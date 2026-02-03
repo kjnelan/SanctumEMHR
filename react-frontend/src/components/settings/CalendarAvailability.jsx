@@ -1,7 +1,7 @@
 /**
  * SanctumEMHR EMHR
- * Calendar Availability - Provider availability/blocking management
- * Allows providers to block time on their calendar (vacation, meetings, etc.)
+ * Calendar Availability - Provider availability management
+ * Allows providers to set their availability (in office, vacation, meetings, etc.)
  *
  * Author: Kenneth J. Nelan
  * License: Proprietary and Confidential
@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getAppointments, getAppointmentCategories, createAppointment, getCurrentUser } from '../../utils/api';
+import { getAppointments, getAppointmentCategories, createAppointment, getCurrentUser, getCalendarSettings } from '../../utils/api';
 import BlockTimeModal from './BlockTimeModal';
 
 function CalendarAvailability() {
@@ -24,9 +24,16 @@ function CalendarAvailability() {
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [editingBlock, setEditingBlock] = useState(null);
+  // Calendar settings from admin
+  const [calendarSettings, setCalendarSettings] = useState({
+    startHour: 8,
+    endHour: 17,
+    interval: 15
+  });
 
-  // Load availability categories (Type 1) on mount
+  // Load calendar settings and categories on mount
   useEffect(() => {
+    loadCalendarSettings();
     loadCategories();
   }, []);
 
@@ -34,6 +41,22 @@ function CalendarAvailability() {
   useEffect(() => {
     loadAvailabilityBlocks();
   }, [currentDate, view]);
+
+  const loadCalendarSettings = async () => {
+    try {
+      const response = await getCalendarSettings();
+      if (response.settings) {
+        setCalendarSettings({
+          startHour: response.settings.startHour || 8,
+          endHour: response.settings.endHour || 17,
+          interval: response.settings.interval || 15
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load calendar settings:', err);
+      // Keep defaults if settings fail to load
+    }
+  };
 
   const loadCategories = async () => {
     try {
@@ -70,14 +93,13 @@ function CalendarAvailability() {
       console.log('[CalendarAvailability] Total appointments:', response.appointments?.length);
 
       // Filter to only show availability blocks for THIS user
-      // Use blocksAvailability flag from API, or fall back to checking holiday type
+      // All non-client categories (clinic, holiday) are availability blocks
       const blocks = response.appointments.filter(apt => {
-        const isAvailabilityBlock = apt.blocksAvailability || apt.categoryType === 'holiday';
+        const isAvailabilityBlock = apt.categoryType !== 'client';
         const isCurrentProvider = apt.providerId == currentUser.id; // Use == for loose comparison
         console.log('[CalendarAvailability] Checking appointment:', {
           id: apt.id,
           categoryType: apt.categoryType,
-          blocksAvailability: apt.blocksAvailability,
           providerId: apt.providerId,
           currentUserId: currentUser.id,
           isAvailabilityBlock,
@@ -185,28 +207,33 @@ function CalendarAvailability() {
     }
   };
 
-  // Generate time slots (8 AM to 6 PM, 15-minute intervals)
-  const timeSlots = Array.from({ length: 40 }, (_, i) => {
-    const hour = Math.floor(i / 4) + 8;
-    const minutes = (i % 4) * 15;
+  // Generate time slots based on admin calendar settings
+  const { startHour, endHour, interval } = calendarSettings;
+  const slotsPerHour = 60 / interval;
+  const totalHours = endHour - startHour;
+  const totalSlots = totalHours * slotsPerHour;
+
+  const timeSlots = Array.from({ length: totalSlots }, (_, i) => {
+    const hour = Math.floor(i / slotsPerHour) + startHour;
+    const minutes = (i % slotsPerHour) * interval;
     return { hour, minutes };
   });
 
   // Calculate absolute position for blocks (OpenEMR style)
   const calculateBlockPosition = (block) => {
     const [hours, minutes] = block.startTime.split(':').map(Number);
-    const startMinutes = hours * 60 + minutes;
-    const scheduleStartMinutes = 8 * 60; // 8 AM start
+    const blockStartMinutes = hours * 60 + minutes;
+    const scheduleStartMinutes = startHour * 60;
 
     // Calculate top position in pixels
-    const minutesFromStart = startMinutes - scheduleStartMinutes;
-    const intervalsFromStart = minutesFromStart / 15;
-    const slotHeight = 60; // Each 15-minute slot is 60px tall
+    const minutesFromStart = blockStartMinutes - scheduleStartMinutes;
+    const intervalsFromStart = minutesFromStart / interval;
+    const slotHeight = 60; // Each slot is 60px tall
     const top = intervalsFromStart * slotHeight;
 
     // Calculate height in pixels
     const durationMinutes = block.duration || 0;
-    const durationIntervals = durationMinutes / 15;
+    const durationIntervals = durationMinutes / interval;
     const height = durationIntervals * slotHeight;
 
     return { top, height };
@@ -222,7 +249,7 @@ function CalendarAvailability() {
     <div className="glass-card p-6">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Manage My Availability</h2>
-        <p className="text-gray-600">Block time for vacation, meetings, lunch breaks, and other unavailable periods</p>
+        <p className="text-gray-600">Set your availability for vacation, meetings, lunch breaks, in-office hours, and more</p>
       </div>
 
       {/* Navigation */}
@@ -382,7 +409,7 @@ function CalendarAvailability() {
         </div>
       )}
 
-      {/* Block Time Modal */}
+      {/* Availability Modal */}
       <BlockTimeModal
         isOpen={showBlockModal}
         onClose={() => setShowBlockModal(false)}

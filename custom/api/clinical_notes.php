@@ -8,6 +8,7 @@ require_once(__DIR__ . '/../init.php');
 
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
+use Custom\Lib\Auth\PermissionChecker;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -51,28 +52,79 @@ try {
         exit;
     }
 
-    error_log("Clinical notes: User authenticated - " . $session->getUserId() . ", fetching notes for patient ID: " . $patientId);
-
-    // Initialize database
+    // Initialize database and permission checker
     $db = Database::getInstance();
+    $permissionChecker = new PermissionChecker($db);
 
-    // Fetch all clinical notes for this client
-    $notesSql = "SELECT
-        n.id,
-        n.note_type,
-        n.note_date,
-        n.created_at,
-        n.updated_at,
-        CONCAT(u.first_name, ' ', u.last_name) AS user_name,
-        u.id AS user_id,
-        n.encounter_id
-    FROM clinical_notes n
-    LEFT JOIN users u ON u.id = n.created_by
-    WHERE n.client_id = ? AND n.is_deleted = 0
-    ORDER BY n.note_date DESC, n.created_at DESC";
+    // Check if user can access this client
+    if (!$permissionChecker->canAccessClient((int) $patientId)) {
+        error_log("Clinical notes: Access denied for user " . $session->getUserId() . " to patient " . $patientId);
+        http_response_code(403);
+        echo json_encode([
+            'error' => 'Access denied',
+            'message' => $permissionChecker->getAccessDeniedMessage()
+        ]);
+        exit;
+    }
+
+    // Check permissions - social workers can only see their own case management notes
+    $canViewClinicalNotes = $permissionChecker->canViewClinicalNotes((int) $patientId);
+    $canCreateCaseNotes = $permissionChecker->canCreateCaseNotes((int) $patientId);
+    $isSocialWorker = $permissionChecker->isSocialWorker() && !$permissionChecker->isProvider();
+    $userId = $session->getUserId();
+
+    // If user can't view clinical notes AND can't create case notes, deny access
+    if (!$canViewClinicalNotes && !$canCreateCaseNotes) {
+        error_log("Clinical notes: Access denied for user " . $userId . " - no note permissions");
+        http_response_code(403);
+        echo json_encode([
+            'error' => 'Access denied',
+            'message' => 'You do not have permission to view notes for this client.'
+        ]);
+        exit;
+    }
+
+    error_log("Clinical notes: User authenticated - " . $userId . ", fetching notes for patient ID: " . $patientId);
+
+    // Build query based on user permissions
+    // Social workers can only see case_management notes they created
+    if ($isSocialWorker && !$canViewClinicalNotes) {
+        $notesSql = "SELECT
+            n.id,
+            n.note_type,
+            n.note_date,
+            n.created_at,
+            n.updated_at,
+            CONCAT(u.first_name, ' ', u.last_name) AS user_name,
+            u.id AS user_id,
+            n.encounter_id
+        FROM clinical_notes n
+        LEFT JOIN users u ON u.id = n.created_by
+        WHERE n.client_id = ? AND n.is_deleted = 0
+        AND n.note_type = 'case_management'
+        AND n.created_by = ?
+        ORDER BY n.note_date DESC, n.created_at DESC";
+        $queryParams = [$patientId, $userId];
+    } else {
+        // Full access - show all notes
+        $notesSql = "SELECT
+            n.id,
+            n.note_type,
+            n.note_date,
+            n.created_at,
+            n.updated_at,
+            CONCAT(u.first_name, ' ', u.last_name) AS user_name,
+            u.id AS user_id,
+            n.encounter_id
+        FROM clinical_notes n
+        LEFT JOIN users u ON u.id = n.created_by
+        WHERE n.client_id = ? AND n.is_deleted = 0
+        ORDER BY n.note_date DESC, n.created_at DESC";
+        $queryParams = [$patientId];
+    }
 
     error_log("Notes SQL: " . $notesSql);
-    $rows = $db->queryAll($notesSql, [$patientId]);
+    $rows = $db->queryAll($notesSql, $queryParams);
 
     $notes = [];
     foreach ($rows as $row) {

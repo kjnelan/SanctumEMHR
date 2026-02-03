@@ -249,15 +249,12 @@ function Calendar() {
     return status === 'cancelled' || status === 'no_show';
   };
 
-  // Check if appointment is an availability block (Out of Office, Vacation, Holiday)
-  // Client appointments are NEVER availability blocks - they always show as appointments
-  // Uses blocksAvailability flag from API, falls back to checking holiday type
+  // Check if entry is an availability block (any non-client category)
+  // All non-client categories (clinic, holiday) show as striped availability blocks
+  // Client appointments show as solid appointments (therapy sessions, etc.)
   const isAvailabilityBlock = (apt) => {
-    // Client appointments always show as appointments, never as availability blocks
-    if (apt.categoryType === 'client') {
-      return false;
-    }
-    return apt.blocksAvailability || apt.categoryType === 'holiday';
+    // All non-client categories are availability blocks with striped styling
+    return apt.categoryType !== 'client';
   };
 
   // Check if appointment is a client appointment (therapy sessions, etc.)
@@ -300,8 +297,10 @@ function Calendar() {
     return `rgb(${borderR}, ${borderG}, ${borderB})`;
   };
 
-  // Get appointment styling - returns only dynamic values (colors based on provider)
+  // Get appointment styling - returns only dynamic values (colors based on type)
   // Base glassy styling comes from CSS class .glass-appointment
+  // Client appointments use provider/clinician color
+  // Non-client appointments (clinic/holiday) use category color from admin settings
   const getAppointmentStyle = (apt) => {
     const isCancelled = isCancelledOrNoShow(apt.status);
 
@@ -314,8 +313,11 @@ function Calendar() {
       };
     }
 
-    // Active appointments: compute pastel colors from provider color
-    const color = apt.providerColor || '#3B82F6';
+    // Active appointments: compute pastel colors
+    // Client appointments use provider color, non-client use category color
+    const color = apt.categoryType === 'client'
+      ? (apt.providerColor || '#3B82F6')
+      : (apt.categoryColor || '#9CA3AF');
     const pastel = toPastel(color);
     const borderColor = getPastelBorder(color);
 
@@ -596,37 +598,35 @@ function Calendar() {
               /* Schedule Grid View - All Providers */
               <div className="glass-card overflow-hidden">
                 {/* Header Row - Provider column + Days */}
-                <div className="flex border-b border-white/30">
+                <div className="grid grid-cols-[160px_repeat(7,1fr)] border-b border-white/30">
                   {/* Provider column header */}
-                  <div className="w-40 flex-shrink-0 p-4 bg-white/20 border-r border-white/30 font-semibold text-gray-700">
+                  <div className="p-4 bg-white/20 border-r border-white/30 font-semibold text-gray-700">
                     Provider
                   </div>
 
                   {/* Day headers */}
-                  <div className="flex-1 flex">
-                    {getWeekDays().map((day, index) => {
-                      const isToday = day.toDateString() === new Date().toDateString();
-                      return (
-                        <div
-                          key={index}
-                          className={`flex-1 p-4 border-r border-white/30 text-center ${
-                            isToday ? 'bg-blue-100/40' : 'bg-white/20'
-                          }`}
-                        >
-                          <div className="text-sm text-gray-600">
-                            {day.toLocaleDateString('en-US', { weekday: 'short' })}
-                          </div>
-                          <div className={`text-lg font-semibold ${isToday ? 'text-blue-600' : 'text-gray-900'}`}>
-                            {day.getDate()}
-                          </div>
+                  {getWeekDays().map((day, index) => {
+                    const isToday = day.toDateString() === new Date().toDateString();
+                    return (
+                      <div
+                        key={index}
+                        className={`p-4 border-r border-white/30 text-center ${
+                          isToday ? 'bg-blue-100/40' : 'bg-white/20'
+                        }`}
+                      >
+                        <div className="text-sm text-gray-600">
+                          {day.toLocaleDateString('en-US', { weekday: 'short' })}
                         </div>
-                      );
-                    })}
-                  </div>
+                        <div className={`text-lg font-semibold ${isToday ? 'text-blue-600' : 'text-gray-900'}`}>
+                          {day.getDate()}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {/* Provider Rows */}
-                <div className="max-h-[600px] overflow-y-auto">
+                <div>
                   {providers.map(provider => {
                     // Get all appointments for this provider
                     const providerAppointments = appointments.filter(apt =>
@@ -634,10 +634,10 @@ function Calendar() {
                     );
 
                     return (
-                      <div key={provider.value} className="flex border-b border-white/30 min-h-[80px]">
+                      <div key={provider.value} className="grid grid-cols-[160px_repeat(7,1fr)] border-b border-white/30 min-h-[80px]">
                         {/* Provider name cell */}
                         <div
-                          className="w-40 flex-shrink-0 p-3 bg-white/10 border-r border-white/30 flex items-start"
+                          className="p-3 bg-white/10 border-r border-white/30 flex items-start"
                           style={{
                             borderLeft: `4px solid ${providerAppointments[0]?.providerColor || '#3B82F6'}`
                           }}
@@ -651,7 +651,6 @@ function Calendar() {
                         </div>
 
                         {/* Day cells for this provider */}
-                        <div className="flex-1 flex">
                           {getWeekDays().map((day, dayIndex) => {
                             const dateStr = day.toISOString().split('T')[0];
                             // Separate availability blocks from regular appointments
@@ -673,7 +672,7 @@ function Calendar() {
                                   setEditingAppointment(null);
                                   setShowAppointmentModal(true);
                                 }}
-                                className={`flex-1 p-2 border-r border-white/30 hover:bg-white/10 cursor-pointer transition-colors relative ${
+                                className={`p-2 border-r border-white/30 hover:bg-white/10 cursor-pointer transition-colors relative ${
                                   isToday ? 'bg-blue-50/30' : ''
                                 }`}
                               >
@@ -737,7 +736,6 @@ function Calendar() {
                               </div>
                             );
                           })}
-                        </div>
                       </div>
                     );
                   })}

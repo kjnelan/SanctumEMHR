@@ -32,7 +32,9 @@ function BillingTab({ data }) {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A';
-    const date = new Date(dateStr);
+    // Parse date parts manually to avoid timezone offset issues
+    const [year, month, day] = dateStr.split(/[-T]/);
+    const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',

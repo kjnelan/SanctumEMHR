@@ -8,14 +8,17 @@ function ClinicalNotesTab({ data }) {
   const [view, setView] = useState('list'); // 'list', 'create', 'edit', 'view'
   const [selectedNoteId, setSelectedNoteId] = useState(null);
   const [selectedNoteType, setSelectedNoteType] = useState(null);
+  const [selectedTemplateFormat, setSelectedTemplateFormat] = useState(null);
 
   const handleCreateNote = () => {
     setView('selectType');
     setSelectedNoteType(null);
+    setSelectedTemplateFormat(null);
   };
 
-  const handleNoteTypeSelected = (noteType) => {
+  const handleNoteTypeSelected = (noteType, templateFormat = null) => {
     setSelectedNoteType(noteType);
+    setSelectedTemplateFormat(templateFormat);
     setView('create');
   };
 
@@ -41,12 +44,14 @@ function ClinicalNotesTab({ data }) {
     setView('list');
     setSelectedNoteId(null);
     setSelectedNoteType(null);
+    setSelectedTemplateFormat(null);
   };
 
   const handleClose = () => {
     setView('list');
     setSelectedNoteId(null);
     setSelectedNoteType(null);
+    setSelectedTemplateFormat(null);
   };
 
   // Render different views
@@ -64,6 +69,7 @@ function ClinicalNotesTab({ data }) {
       <NoteEditor
         patientId={data?.patient?.pid}
         noteType={selectedNoteType}
+        templateFormat={selectedTemplateFormat}
         onSave={handleNoteSaved}
         onClose={handleClose}
       />

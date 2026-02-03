@@ -112,7 +112,7 @@ try {
     // Get full user details for response
     $userDetails = $userService->getUserWithFormattedName($user['id']);
 
-    // Return success response
+    // Return success response with role flags
     http_response_code(200);
     echo json_encode([
         'success' => true,
@@ -126,7 +126,10 @@ try {
             'displayName' => $userDetails['display_name'],
             'userType' => $userDetails['user_type'],
             'isProvider' => (bool) $userDetails['is_provider'],
-            'admin' => $userDetails['user_type'] === 'admin',
+            'isAdmin' => $userDetails['user_type'] === 'admin',
+            'isSupervisor' => (bool) ($userDetails['is_supervisor'] ?? false),
+            'isSocialWorker' => (bool) ($userDetails['is_social_worker'] ?? false),
+            'admin' => $userDetails['user_type'] === 'admin', // legacy field
             'npi' => $userDetails['npi'] ?? null
         ]
     ]);

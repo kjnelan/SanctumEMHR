@@ -1,15 +1,19 @@
 import NavItem from './NavItem';
 
 function NavBar({ activeNav, setActiveNav, user }) {
-    const hasAdminAccess =
+  const hasAdminAccess =
     user?.permissions?.includes('admin') || user?.permissions?.includes('emergency_login');
+
+  // Check if user is admin (for billing access)
+  const isAdmin = user?.isAdmin || user?.userType === 'admin';
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'calendar', label: 'Calendar' },
     { id: 'clients', label: 'Clients' },
     { id: 'messages', label: 'Messages' },
-    { id: 'billing', label: 'Billing' },
+    // Billing is admin-only
+    ...(isAdmin ? [{ id: 'billing', label: 'Billing' }] : []),
     { id: 'reports', label: 'Reports' },
     ...(hasAdminAccess ? [{ id: 'admin', label: 'Admin Settings' }] : [])
   ];

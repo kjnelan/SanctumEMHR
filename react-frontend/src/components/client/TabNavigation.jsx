@@ -1,16 +1,38 @@
 import React from 'react';
 
-function TabNavigation({ activeTab, onTabChange }) {
-  const tabs = [
-    { id: 'summary', label: 'Summary' },
-    { id: 'demographics', label: 'Demographics' },
-    { id: 'insurance', label: 'Insurance' },
-    { id: 'encounters', label: 'Sessions' },
-    { id: 'clinical', label: 'Clinical Notes' },
-    { id: 'documents', label: 'Documents' },
-    { id: 'billing', label: 'Billing' },
-    { id: 'admin', label: 'Admin Notes' }
+function TabNavigation({ activeTab, onTabChange, permissions = {} }) {
+  // Define all tabs with their required permissions
+  const allTabs = [
+    { id: 'summary', label: 'Summary', requiresPermission: null },
+    { id: 'demographics', label: 'Demographics', requiresPermission: null },
+    { id: 'insurance', label: 'Insurance', requiresPermission: null },
+    { id: 'encounters', label: 'Sessions', requiresPermission: null, hideForSocialWorker: true },
+    { id: 'clinical', label: 'Notes', requiresPermission: 'canAccessNotes' },
+    { id: 'documents', label: 'Documents', requiresPermission: null },
+    { id: 'billing', label: 'Billing', requiresPermission: null, adminOnly: true },
+    { id: 'admin', label: 'Admin Notes', requiresPermission: null }
   ];
+
+  // Check if user can access notes tab (either clinical notes OR case management notes)
+  const canAccessNotes = permissions.canViewClinicalNotes || permissions.canCreateCaseNotes;
+
+  // Filter tabs based on permissions
+  const tabs = allTabs.filter(tab => {
+    // Admin-only tabs (like Billing) - hide from clinicians, social workers, supervisors
+    if (tab.adminOnly && !permissions.isAdmin) {
+      return false;
+    }
+    // Hide Sessions tab from social workers
+    if (tab.hideForSocialWorker && permissions.isSocialWorker && !permissions.isAdmin) {
+      return false;
+    }
+    // Special handling for notes tab - show if can view clinical OR create case notes
+    if (tab.requiresPermission === 'canAccessNotes') {
+      return canAccessNotes;
+    }
+    if (!tab.requiresPermission) return true;
+    return permissions[tab.requiresPermission] !== false;
+  });
 
   return (
     <div className="tab-nav mb-6">

@@ -24,6 +24,12 @@ export function useAuth() {
                 let isAdmin = currentUser.admin || false;
                 let userId = currentUser.id;
 
+                // Variables for role flags
+                let isSupervisor = false;
+                let isSocialWorker = false;
+                let isProvider = false;
+                let userType = 'user';
+
                 try {
                     // Verify session is still valid and get latest user details
                     const userDetails = await getUserDetails();
@@ -41,6 +47,12 @@ export function useAuth() {
                             userId = userDetails.id;
                         }
 
+                        // Extract role flags from user details
+                        isSupervisor = userDetails.isSupervisor || false;
+                        isSocialWorker = userDetails.isSocialWorker || false;
+                        isProvider = userDetails.isProvider || false;
+                        userType = userDetails.userType || 'user';
+
                         // Compute initials from full name
                         const nameParts = displayName.trim().split(/\s+/);
                         if (nameParts.length > 1) {
@@ -56,12 +68,31 @@ export function useAuth() {
                     return;
                 }
 
+                // Determine primary role for display
+                let role = 'user';
+                if (isAdmin) role = 'admin';
+                else if (isSupervisor) role = 'supervisor';
+                else if (isSocialWorker) role = 'social_worker';
+                else if (isProvider) role = 'provider';
+
+                // Build permissions array
+                const permissions = [];
+                if (isAdmin) permissions.push('admin', 'view_all_clients', 'edit_all_clients', 'view_all_notes');
+                if (isSupervisor) permissions.push('view_supervisee_clients', 'view_supervisee_notes');
+                if (isProvider) permissions.push('view_own_clients', 'edit_own_clients', 'view_own_notes', 'create_clinical_notes');
+                if (isSocialWorker) permissions.push('view_assigned_clients', 'edit_demographics', 'create_case_notes');
+
                 setUser({
                     id: userId,
                     name: displayName,
                     initials,
-                    role: isAdmin ? 'admin' : 'user',
-                    permissions: isAdmin ? ['admin'] : [],
+                    role,
+                    userType,
+                    isAdmin,
+                    isSupervisor,
+                    isSocialWorker,
+                    isProvider,
+                    permissions,
                     unreadMessages: 0
                 });
 

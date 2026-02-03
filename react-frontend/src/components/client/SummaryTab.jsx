@@ -1,6 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { getProviders, getCurrentUser } from '../../utils/api';
+import AssignedProviders from './AssignedProviders';
 
 function SummaryTab({ data }) {
+  const [providers, setProviders] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Load providers and current user for Care Team
+  useEffect(() => {
+    const loadProviders = async () => {
+      try {
+        const response = await getProviders();
+        setProviders(response.providers || []);
+      } catch (err) {
+        console.error('Failed to load providers:', err);
+      }
+    };
+
+    const loadUser = async () => {
+      try {
+        const user = getCurrentUser();
+        setCurrentUser(user);
+      } catch (err) {
+        console.error('Failed to load current user:', err);
+      }
+    };
+
+    loadProviders();
+    loadUser();
+  }, []);
   if (!data) {
     return (
       <div className="text-gray-700 text-center py-8">
@@ -13,7 +41,9 @@ function SummaryTab({ data }) {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
-    const date = new Date(dateStr);
+    // Parse date parts manually to avoid timezone offset issues
+    const [year, month, day] = dateStr.split(/[-T]/);
+    const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
@@ -129,6 +159,16 @@ function SummaryTab({ data }) {
             ) : (
               <div className="empty-state">No active diagnoses recorded</div>
             )}
+          </div>
+
+          {/* Care Team Card */}
+          <div className="card-main">
+            <h2 className="card-header">Care Team</h2>
+            <AssignedProviders
+              clientId={patient.pid}
+              isAdmin={currentUser?.admin}
+              providers={providers}
+            />
           </div>
 
           {/* Current Medications Card */}
