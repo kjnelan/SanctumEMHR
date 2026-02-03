@@ -1,8 +1,10 @@
 import StatsCard from './StatsCard';
 
-function StatsGrid({ stats, onNewClient, onNewAppointment }) {
+function StatsGrid({ stats, onNewClient, onNewAppointment, pendingReviews, isSupervisor }) {
+    const reviewCount = pendingReviews?.count || 0;
+
     return (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+        <div className={`grid grid-cols-2 md:grid-cols-3 ${isSupervisor ? 'lg:grid-cols-6' : 'lg:grid-cols-5'} gap-4 mb-6`}>
             <StatsCard
                 value={stats.todayAppointments.value}
                 label="Today's Appointments"
@@ -58,6 +60,29 @@ function StatsGrid({ stats, onNewClient, onNewAppointment }) {
                     </svg>
                 }
             />
+
+            {/* Notes Pending Review Card - Only for supervisors */}
+            {isSupervisor && (
+                <div className={`card-main transform hover:scale-105 transition-all hover:shadow-3xl ${reviewCount > 0 ? 'ring-2 ring-red-400' : ''}`}>
+                    {/* Icon + Title row */}
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className={`w-10 h-10 bg-gradient-to-br ${reviewCount > 0 ? 'from-red-400 to-red-600' : 'from-gray-400 to-gray-600'} rounded-xl flex items-center justify-center shadow-lg flex-shrink-0`}>
+                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <span className="text-sm font-semibold text-gray-600">Notes Pending Review</span>
+                    </div>
+                    {/* Value + Action */}
+                    <div className="flex items-baseline gap-3">
+                        <div className={`text-3xl font-bold ${reviewCount > 0 ? 'text-red-600' : 'text-gray-800'}`}>{reviewCount}</div>
+                        {reviewCount > 0 && (
+                            <span className="text-xs font-semibold text-red-500">needs attention</span>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Quick Actions Card */}
             <div className="card-main transform hover:scale-105 transition-all hover:shadow-3xl">

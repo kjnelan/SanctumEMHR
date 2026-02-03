@@ -174,10 +174,27 @@ try {
     $durationOfSymptoms = $input['duration_of_symptoms'] ?? null;
     $previousDiagnoses = $input['previous_diagnoses'] ?? null;
 
-    // Supervision - convert to integer for MySQL
+    // Supervision - auto-detect if supervisor review is required
     $supervisorReviewRequired = 0;
+
+    // First check if explicitly set in input
     if (isset($input['supervisorReviewRequired']) && $input['supervisorReviewRequired'] !== '' && $input['supervisorReviewRequired'] !== null) {
         $supervisorReviewRequired = ($input['supervisorReviewRequired'] === true || $input['supervisorReviewRequired'] === 'true' || $input['supervisorReviewRequired'] === 1 || $input['supervisorReviewRequired'] === '1') ? 1 : 0;
+    } else {
+        // Auto-detect: check if setting is enabled AND user has active supervisors
+        $settingSql = "SELECT setting_value FROM system_settings WHERE setting_key = 'supervision.require_cosign'";
+        $settingRow = $db->query($settingSql);
+        $requireCosign = $settingRow && ($settingRow['setting_value'] === '1' || $settingRow['setting_value'] === 'true');
+
+        if ($requireCosign) {
+            // Check if this user has any active supervisors
+            $supervisorSql = "SELECT COUNT(*) as cnt FROM user_supervisors
+                              WHERE user_id = ? AND (ended_at IS NULL OR ended_at > CURDATE())";
+            $supervisorResult = $db->query($supervisorSql, [$providerId]);
+            $hasSupervisors = $supervisorResult && $supervisorResult['cnt'] > 0;
+
+            $supervisorReviewRequired = $hasSupervisors ? 1 : 0;
+        }
     }
 
     // Generate UUID for API security

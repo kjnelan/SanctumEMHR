@@ -20,6 +20,7 @@ function Dashboard() {
   const [activeNav, setActiveNav] = useState('dashboard');
   const { user, appointments, loading } = useAuth();
   const [clientStats, setClientStats] = useState({ activeClients: 0 });
+  const [pendingReviews, setPendingReviews] = useState({ count: 0, notes: [] });
   const [showNewClientModal, setShowNewClientModal] = useState(false);
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -51,9 +52,27 @@ function Dashboard() {
       }
     };
 
+    const fetchPendingReviews = async () => {
+      // Only fetch if user is a supervisor
+      if (!user?.is_supervisor) return;
+
+      try {
+        const response = await fetch('/custom/api/notes/pending_supervisor_review.php', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setPendingReviews(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch pending reviews:', err);
+      }
+    };
+
     if (user) {
       fetchClientStats();
       fetchProviders();
+      fetchPendingReviews();
     }
   }, [user]);
 
@@ -160,6 +179,8 @@ function Dashboard() {
             stats={stats}
             onNewClient={handleNewClient}
             onNewAppointment={handleNewAppointment}
+            pendingReviews={pendingReviews}
+            isSupervisor={user?.is_supervisor}
           />
           <AppointmentsList
             todaysAppointments={todaysAppointments}
