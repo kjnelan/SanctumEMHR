@@ -3,6 +3,35 @@ import StatsCard from './StatsCard';
 function StatsGrid({ stats, onNewClient, onNewAppointment }) {
     return (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+            {/* Quick Actions Card - First position */}
+            <div className="card-main transform hover:scale-105 transition-all hover:shadow-3xl">
+                {/* Icon + Title row */}
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-gradient-to-br from-slate-500 to-slate-700 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <span className="text-sm font-semibold text-gray-600">Quick Actions</span>
+                </div>
+                {/* Action buttons */}
+                <div className="space-y-2">
+                    <button
+                        onClick={onNewAppointment}
+                        className="w-full px-3 py-2 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors"
+                    >
+                        + New Appointment
+                    </button>
+                    <button
+                        onClick={onNewClient}
+                        className="w-full px-3 py-2 text-sm font-medium text-white bg-green-500 hover:bg-green-600 rounded-lg transition-colors"
+                    >
+                        + Add New Client
+                    </button>
+                </div>
+            </div>
+
             <StatsCard
                 value={stats.todayAppointments.value}
                 label="Today's Appointments"
@@ -58,35 +87,6 @@ function StatsGrid({ stats, onNewClient, onNewAppointment }) {
                     </svg>
                 }
             />
-
-            {/* Quick Actions Card */}
-            <div className="card-main transform hover:scale-105 transition-all hover:shadow-3xl">
-                {/* Icon + Title row */}
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-gradient-to-br from-slate-500 to-slate-700 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
-                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                    </div>
-                    <span className="text-sm font-semibold text-gray-600">Quick Actions</span>
-                </div>
-                {/* Action buttons */}
-                <div className="space-y-2">
-                    <button
-                        onClick={onNewAppointment}
-                        className="w-full px-3 py-2 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors"
-                    >
-                        + New Appointment
-                    </button>
-                    <button
-                        onClick={onNewClient}
-                        className="w-full px-3 py-2 text-sm font-medium text-white bg-green-500 hover:bg-green-600 rounded-lg transition-colors"
-                    >
-                        + Add New Client
-                    </button>
-                </div>
-            </div>
         </div>
     );
 }
