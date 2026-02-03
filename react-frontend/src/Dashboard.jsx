@@ -151,7 +151,7 @@ function Dashboard() {
       setActiveNav={setActiveNav}
       today={today}
       onLogout={handleLogout}
-      wide={activeNav === 'calendar' || activeNav === 'dashboard'}
+      wide={true}
     >
       {activeNav === 'dashboard' && (
         <>
