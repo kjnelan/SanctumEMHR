@@ -21,6 +21,7 @@ function Dashboard() {
   const { user, appointments, loading } = useAuth();
   const [clientStats, setClientStats] = useState({ activeClients: 0 });
   const [pendingReviews, setPendingReviews] = useState({ count: 0, notes: [] });
+  const [myPendingNotes, setMyPendingNotes] = useState({ totalCount: 0, combined: [] });
   const [showNewClientModal, setShowNewClientModal] = useState(false);
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -69,10 +70,25 @@ function Dashboard() {
       }
     };
 
+    const fetchMyPendingNotes = async () => {
+      try {
+        const response = await fetch('/custom/api/notes/my_pending_notes.php', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setMyPendingNotes(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch my pending notes:', err);
+      }
+    };
+
     if (user) {
       fetchClientStats();
       fetchProviders();
       fetchPendingReviews();
+      fetchMyPendingNotes();
     }
   }, [user]);
 
@@ -180,48 +196,94 @@ function Dashboard() {
             onNewClient={handleNewClient}
             onNewAppointment={handleNewAppointment}
           />
-          {/* Notes Pending Review (for supervisors) + Today's Appointments */}
-          <div className={`grid ${user?.isSupervisor ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1'} gap-6`}>
-            {/* Notes Pending Review - Only for supervisors */}
-            {user?.isSupervisor && (
-              <div className={`card-main ${pendingReviews.count > 0 ? 'ring-2 ring-red-400' : ''}`}>
+          {/* Pending Notes Card + Today's Appointments */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Pending Notes Card - Your Notes + Supervisor Reviews */}
+            <div className="card-main">
+              {/* Your Pending Notes Section */}
+              <div className={user?.isSupervisor ? 'pb-4 border-b border-gray-200 mb-4' : ''}>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-gray-800">Notes Pending Review</h3>
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${pendingReviews.count > 0 ? 'bg-gradient-to-br from-red-400 to-red-600' : 'bg-gradient-to-br from-gray-400 to-gray-600'}`}>
+                  <h3 className="text-lg font-bold text-gray-800">Your Pending Notes</h3>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${myPendingNotes.totalCount > 0 ? 'bg-gradient-to-br from-amber-400 to-orange-600' : 'bg-gradient-to-br from-gray-400 to-gray-600'}`}>
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </div>
                 </div>
-                {pendingReviews.count === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <p>No notes awaiting your review</p>
+                {myPendingNotes.totalCount === 0 ? (
+                  <div className="text-center py-4 text-gray-500">
+                    <p className="text-sm">All caught up!</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    <div className={`text-3xl font-bold ${pendingReviews.count > 0 ? 'text-red-600' : 'text-gray-800'}`}>
-                      {pendingReviews.count} <span className="text-sm font-medium text-gray-500">note{pendingReviews.count !== 1 ? 's' : ''}</span>
+                  <div className="space-y-2">
+                    <div className={`text-2xl font-bold ${myPendingNotes.totalCount > 0 ? 'text-orange-600' : 'text-gray-800'}`}>
+                      {myPendingNotes.totalCount} <span className="text-sm font-medium text-gray-500">pending</span>
                     </div>
-                    {pendingReviews.notes?.slice(0, 5).map((note, idx) => (
-                      <div key={idx} className="p-3 bg-white/60 rounded-lg border border-gray-200">
-                        <p className="font-medium text-gray-800">{note.patientName}</p>
-                        <p className="text-sm text-gray-600">
-                          {note.providerName} • {note.noteType} • {new Date(note.serviceDate).toLocaleDateString()}
+                    {myPendingNotes.combined?.slice(0, 3).map((item, idx) => (
+                      <div key={idx} className="p-2 bg-white/60 rounded-lg border border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${item.type === 'draft' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                            {item.type === 'draft' ? 'Draft' : 'Missing'}
+                          </span>
+                          <span className="font-medium text-gray-800 text-sm truncate">{item.patientName}</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {new Date(item.serviceDate).toLocaleDateString()}
                         </p>
                       </div>
                     ))}
-                    {pendingReviews.count > 5 && (
-                      <p className="text-sm text-gray-500 text-center">
-                        +{pendingReviews.count - 5} more notes
+                    {myPendingNotes.totalCount > 3 && (
+                      <p className="text-xs text-gray-500 text-center">
+                        +{myPendingNotes.totalCount - 3} more
                       </p>
                     )}
                   </div>
                 )}
               </div>
-            )}
+
+              {/* Notes Pending Review Section - Only for supervisors */}
+              {user?.isSupervisor && (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-gray-800">Notes Pending Review</h3>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${pendingReviews.count > 0 ? 'bg-gradient-to-br from-red-400 to-red-600' : 'bg-gradient-to-br from-gray-400 to-gray-600'}`}>
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                  </div>
+                  {pendingReviews.count === 0 ? (
+                    <div className="text-center py-4 text-gray-500">
+                      <p className="text-sm">No notes awaiting review</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className={`text-2xl font-bold ${pendingReviews.count > 0 ? 'text-red-600' : 'text-gray-800'}`}>
+                        {pendingReviews.count} <span className="text-sm font-medium text-gray-500">to review</span>
+                      </div>
+                      {pendingReviews.notes?.slice(0, 3).map((note, idx) => (
+                        <div key={idx} className="p-2 bg-white/60 rounded-lg border border-gray-200">
+                          <p className="font-medium text-gray-800 text-sm truncate">{note.patientName}</p>
+                          <p className="text-xs text-gray-500">
+                            {note.providerName} • {new Date(note.serviceDate).toLocaleDateString()}
+                          </p>
+                        </div>
+                      ))}
+                      {pendingReviews.count > 3 && (
+                        <p className="text-xs text-gray-500 text-center">
+                          +{pendingReviews.count - 3} more
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Today's Appointments */}
-            <div className={user?.isSupervisor ? 'lg:col-span-2' : ''}>
+            <div className="lg:col-span-2">
               <AppointmentsList
                 todaysAppointments={todaysAppointments}
                 onAppointmentClick={handleAppointmentClick}
