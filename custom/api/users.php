@@ -150,19 +150,20 @@ try {
 
             } elseif ($action === 'supervisors') {
                 // Get list of users who are marked as supervisors
+                // Only filter by is_active to be consistent with user list behavior
                 $sql = "SELECT
                     id,
                     username,
                     CONCAT(first_name, ' ', last_name) AS full_name,
                     first_name AS fname,
                     last_name AS lname,
+                    title,
                     user_type,
                     is_provider,
                     is_supervisor
                 FROM users
                 WHERE is_active = 1
                 AND is_supervisor = 1
-                AND deleted_at IS NULL
                 ORDER BY last_name, first_name";
 
                 $supervisors = $db->queryAll($sql);
