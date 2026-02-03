@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import AppShell from './components/layout/AppShell';
 import Greeting from './components/dashboard/Greeting';
 import StatsGrid from './components/dashboard/StatsGrid';
-import QuickActions from './components/dashboard/QuickActions';
 import AppointmentsList from './components/dashboard/AppointmentsList';
 import Clients from './components/Clients';
 import Reports from './components/Reports';
@@ -152,19 +151,20 @@ function Dashboard() {
       setActiveNav={setActiveNav}
       today={today}
       onLogout={handleLogout}
-      wide={activeNav === 'calendar'}
+      wide={activeNav === 'calendar' || activeNav === 'dashboard'}
     >
       {activeNav === 'dashboard' && (
         <>
           <Greeting />
-          <StatsGrid stats={stats} />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <QuickActions onNewClient={handleNewClient} onNewAppointment={handleNewAppointment} />
-            <AppointmentsList
-              todaysAppointments={todaysAppointments}
-              onAppointmentClick={handleAppointmentClick}
-            />
-          </div>
+          <StatsGrid
+            stats={stats}
+            onNewClient={handleNewClient}
+            onNewAppointment={handleNewAppointment}
+          />
+          <AppointmentsList
+            todaysAppointments={todaysAppointments}
+            onAppointmentClick={handleAppointmentClick}
+          />
         </>
       )}
 
