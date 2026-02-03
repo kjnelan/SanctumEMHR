@@ -57,7 +57,7 @@ try {
                     u.license_number,
                     u.license_state,
                     u.title,
-                    u.is_supervisor,
+                    CAST(u.is_supervisor AS CHAR) AS is_supervisor,
                     CAST(COALESCE(u.is_social_worker, 0) AS CHAR) AS is_social_worker,
                     CAST(u.is_provider AS CHAR) AS authorized,
                     CAST(u.is_active AS CHAR) AS active,
@@ -279,7 +279,7 @@ try {
                 'middle_name' => $input['mname'] ?? null,
                 'title' => $input['title'] ?? null,
                 'suffix' => $input['suffix'] ?? null,
-                'user_type' => $input['user_type'] ?? 'staff',
+                'user_type' => ($input['calendar'] ?? false) ? 'admin' : ($input['user_type'] ?? 'staff'),
                 'is_provider' => ($input['authorized'] ?? 0) ? 1 : 0,
                 'is_active' => ($input['active'] ?? 1) ? 1 : 0,
                 'is_supervisor' => ($input['is_supervisor'] ?? 0) ? 1 : 0,
@@ -411,7 +411,11 @@ try {
                 $params[] = $input['portal_user'] ? 1 : 0;
             }
 
-            if (isset($input['user_type'])) {
+            // Handle calendar (admin) checkbox - this takes precedence over user_type
+            if (isset($input['calendar'])) {
+                $updateFields[] = "user_type = ?";
+                $params[] = $input['calendar'] ? 'admin' : 'staff';
+            } elseif (isset($input['user_type'])) {
                 $updateFields[] = "user_type = ?";
                 $params[] = $input['user_type'];
             }
