@@ -54,7 +54,7 @@ function Dashboard() {
 
     const fetchPendingReviews = async () => {
       // Only fetch if user is a supervisor
-      if (!user?.is_supervisor) return;
+      if (!user?.isSupervisor) return;
 
       try {
         const response = await fetch('/custom/api/notes/pending_supervisor_review.php', {
@@ -179,13 +179,55 @@ function Dashboard() {
             stats={stats}
             onNewClient={handleNewClient}
             onNewAppointment={handleNewAppointment}
-            pendingReviews={pendingReviews}
-            isSupervisor={user?.is_supervisor}
           />
-          <AppointmentsList
-            todaysAppointments={todaysAppointments}
-            onAppointmentClick={handleAppointmentClick}
-          />
+          {/* Notes Pending Review (for supervisors) + Today's Appointments */}
+          <div className={`grid ${user?.isSupervisor ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1'} gap-6`}>
+            {/* Notes Pending Review - Only for supervisors */}
+            {user?.isSupervisor && (
+              <div className={`card-main ${pendingReviews.count > 0 ? 'ring-2 ring-red-400' : ''}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-gray-800">Notes Pending Review</h3>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${pendingReviews.count > 0 ? 'bg-gradient-to-br from-red-400 to-red-600' : 'bg-gradient-to-br from-gray-400 to-gray-600'}`}>
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                </div>
+                {pendingReviews.count === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No notes awaiting your review</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className={`text-3xl font-bold ${pendingReviews.count > 0 ? 'text-red-600' : 'text-gray-800'}`}>
+                      {pendingReviews.count} <span className="text-sm font-medium text-gray-500">note{pendingReviews.count !== 1 ? 's' : ''}</span>
+                    </div>
+                    {pendingReviews.notes?.slice(0, 5).map((note, idx) => (
+                      <div key={idx} className="p-3 bg-white/60 rounded-lg border border-gray-200">
+                        <p className="font-medium text-gray-800">{note.patientName}</p>
+                        <p className="text-sm text-gray-600">
+                          {note.providerName} • {note.noteType} • {new Date(note.serviceDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))}
+                    {pendingReviews.count > 5 && (
+                      <p className="text-sm text-gray-500 text-center">
+                        +{pendingReviews.count - 5} more notes
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            {/* Today's Appointments */}
+            <div className={user?.isSupervisor ? 'lg:col-span-2' : ''}>
+              <AppointmentsList
+                todaysAppointments={todaysAppointments}
+                onAppointmentClick={handleAppointmentClick}
+              />
+            </div>
+          </div>
         </>
       )}
 
