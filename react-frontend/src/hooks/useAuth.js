@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUser, getUserDetails, getAppointments } from '../utils/api';
-import { getPendingReviews, getMyPendingNotes } from '../services/DashboardService';
 
 export function useAuth() {
     const navigate = useNavigate();

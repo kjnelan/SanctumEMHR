@@ -23,15 +23,3 @@ export const getMyPendingNotes = async () => {
     throw error;
   }
 };
-
-export const getUserDetails = async () => {
-  try {
-    const response = await apiRequest('/custom/api/user_details.php', {
-      credentials: 'include'
-    });
-    return response;
-  } catch (error) {
-    console.error('Error fetching user details:', error);
-    throw error;
-  }
-};
