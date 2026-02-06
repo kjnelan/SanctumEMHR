@@ -56,9 +56,9 @@ try {
         n.created_at,
         n.updated_at,
         n.status,
-        CONCAT(p.first_name, ' ', p.last_name) AS patient_name
+        CONCAT(c.first_name, ' ', c.last_name) AS patient_name
     FROM clinical_notes n
-    LEFT JOIN patients p ON p.id = n.patient_id
+    LEFT JOIN clients c ON c.id = n.patient_id
     WHERE n.created_by = ?
     AND n.is_locked = 0
     AND n.is_deleted = 0
@@ -75,15 +75,15 @@ try {
         a.event_date,
         a.start_time,
         a.duration,
-        a.patient_id,
-        CONCAT(p.first_name, ' ', p.last_name) AS patient_name,
+        a.client_id,
+        CONCAT(c.first_name, ' ', c.last_name) AS patient_name,
         ac.name AS category_name
     FROM appointments a
-    LEFT JOIN patients p ON p.id = a.patient_id
+    LEFT JOIN clients c ON c.id = a.client_id
     LEFT JOIN appointment_categories ac ON ac.id = a.category_id
     LEFT JOIN clinical_notes n ON n.appointment_id = a.id AND n.is_deleted = 0
     WHERE a.provider_id = ?
-    AND a.patient_id IS NOT NULL
+    AND a.client_id IS NOT NULL
     AND a.event_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
     AND a.event_date <= CURDATE()
     AND a.status NOT IN ('cancelled', 'no_show')
@@ -113,7 +113,7 @@ try {
     $formattedMissing = array_map(function($appt) {
         return [
             'appointmentId' => $appt['appointment_id'],
-            'patientId' => $appt['patient_id'],
+            'patientId' => $appt['client_id'],
             'patientName' => $appt['patient_name'],
             'serviceDate' => $appt['event_date'],
             'startTime' => $appt['start_time'],
