@@ -70,8 +70,8 @@ try {
     // Only client appointments (not availability blocks, not admin meetings)
     $missingNotesSql = "SELECT
         a.id AS appointment_id,
-        a.event_date,
-        a.start_time,
+        DATE(a.start_datetime) AS event_date,
+        TIME(a.start_datetime) AS start_time,
         a.duration,
         a.client_id,
         CONCAT(c.first_name, ' ', c.last_name) AS patient_name,
@@ -82,12 +82,12 @@ try {
     LEFT JOIN clinical_notes n ON n.appointment_id = a.id
     WHERE a.provider_id = ?
     AND a.client_id IS NOT NULL
-    AND a.event_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-    AND a.event_date <= CURDATE()
+    AND DATE(a.start_datetime) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+    AND DATE(a.start_datetime) <= CURDATE()
     AND a.status NOT IN ('cancelled', 'no_show')
     AND n.id IS NULL
     AND (ac.category_type IS NULL OR ac.category_type != 1)
-    ORDER BY a.event_date DESC, a.start_time DESC
+    ORDER BY a.start_datetime DESC
     LIMIT 20";
 
     $missingNotes = $db->queryAll($missingNotesSql, [$userId]);
