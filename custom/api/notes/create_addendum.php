@@ -64,8 +64,8 @@ try {
     $addendumReason = $input['addendumReason'];
     $addendumContent = $input['addendumContent'];
 
-    // Verify parent note exists and is locked
-    $checkSql = "SELECT id, patient_id, created_by, note_type, service_date, is_locked
+    // Verify parent note exists and is signed
+    $checkSql = "SELECT id, patient_id, created_by, note_type, service_date, status
                  FROM clinical_notes
                  WHERE id = ?";
     $parentNote = $db->query($checkSql, [$parentNoteId]);
@@ -83,8 +83,8 @@ try {
         throw new Exception("System does not allow post-signature addenda");
     }
 
-    if (!$parentNote['is_locked']) {
-        throw new Exception("Can only create addenda for locked notes. Edit the note directly instead.");
+    if ($parentNote['status'] !== 'signed') {
+        throw new Exception("Can only create addenda for signed notes. Edit the note directly instead.");
     }
 
     // Generate UUID for addendum
@@ -109,9 +109,8 @@ try {
         is_addendum,
         addendum_reason,
         plan,
-        status,
-        is_locked
-    ) VALUES (?, ?, ?, ?, 'addendum', ?, ?, 1, ?, ?, 'draft', 0)";
+        status
+    ) VALUES (?, ?, ?, ?, 'addendum', ?, ?, 1, ?, ?, 'draft')";
 
     $addendumParams = [
         $addendumUuid,
