@@ -67,9 +67,9 @@ try {
     $comments = $input['comments'] ?? null;
 
     // Get the note and verify supervisor has access
-    $noteSql = "SELECT n.id, n.created_by, n.supervisor_review_required, n.is_locked, n.supervisor_reviewed_by
+    $noteSql = "SELECT n.id, n.created_by, n.supervisor_review_required, n.status, n.supervisor_reviewed_by
                 FROM clinical_notes n
-                WHERE n.id = ? AND n.is_deleted = 0";
+                WHERE n.id = ?";
     $note = $db->query($noteSql, [$noteId]);
 
     if (!$note) {
@@ -78,7 +78,7 @@ try {
         exit;
     }
 
-    if (!$note['is_locked']) {
+    if ($note['status'] !== 'signed') {
         http_response_code(400);
         echo json_encode(['error' => 'Note must be signed by the provider before supervisor review']);
         exit;

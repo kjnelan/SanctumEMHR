@@ -46,7 +46,7 @@ try {
     $userId = $session->getUserId();
     $db = Database::getInstance();
 
-    // Get draft/incomplete notes (not signed/locked)
+    // Get draft/incomplete notes (not signed)
     $draftNotesSql = "SELECT
         n.id,
         n.note_uuid,
@@ -60,8 +60,6 @@ try {
     FROM clinical_notes n
     LEFT JOIN clients c ON c.id = n.patient_id
     WHERE n.created_by = ?
-    AND n.is_locked = 0
-    AND n.is_deleted = 0
     AND n.status IN ('draft', 'in_progress')
     ORDER BY n.service_date DESC, n.updated_at DESC
     LIMIT 20";
@@ -81,7 +79,7 @@ try {
     FROM appointments a
     LEFT JOIN clients c ON c.id = a.client_id
     LEFT JOIN appointment_categories ac ON ac.id = a.category_id
-    LEFT JOIN clinical_notes n ON n.appointment_id = a.id AND n.is_deleted = 0
+    LEFT JOIN clinical_notes n ON n.appointment_id = a.id
     WHERE a.provider_id = ?
     AND a.client_id IS NOT NULL
     AND a.event_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)

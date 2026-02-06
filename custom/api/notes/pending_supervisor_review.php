@@ -96,9 +96,8 @@ try {
     LEFT JOIN users u ON u.id = n.created_by
     WHERE n.created_by IN ($placeholders)
     AND n.supervisor_review_required = 1
-    AND n.is_locked = 1
+    AND n.status = 'signed'
     AND n.supervisor_reviewed_by IS NULL
-    AND n.is_deleted = 0
     ORDER BY n.signed_at ASC";
 
     $notes = $db->queryAll($notesSql, $superviseeIds);
