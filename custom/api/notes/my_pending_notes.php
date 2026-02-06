@@ -60,7 +60,7 @@ try {
     FROM clinical_notes n
     LEFT JOIN clients c ON c.id = n.patient_id
     WHERE n.created_by = ?
-    AND n.status IN ('draft', 'in_progress')
+    AND n.status = 'draft'
     ORDER BY n.service_date DESC, n.updated_at DESC
     LIMIT 20";
 
