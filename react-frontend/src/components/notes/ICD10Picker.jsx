@@ -19,7 +19,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { searchCodes } from '../../utils/api';
+import { searchCodes } from '../../services/NoteService';
 import { FormLabel } from '../FormLabel';
 import { ErrorMessage } from '../ErrorMessage';
 

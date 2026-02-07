@@ -17,7 +17,7 @@
 import React, { useState, useEffect } from 'react';
 import InterventionPicker from './InterventionPicker';
 import DiagnosisSelector from './DiagnosisSelector';
-import { getTreatmentGoals } from '../../utils/api';
+import { getTreatmentGoals } from '../../services/NoteService';
 
 /**
  * Props:

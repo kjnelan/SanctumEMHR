@@ -15,7 +15,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getInterventions } from '../../utils/api';
+import { ChevronDown } from 'lucide-react';
+import { getInterventions } from '../../services/NoteService';
 import { ErrorInline } from '../ErrorInline';
 
 /**
@@ -202,16 +203,11 @@ function InterventionPicker({ selectedInterventions = [], onChange, riskPresent 
                   className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 rounded-lg transition-colors"
                 >
                   <span className="font-semibold text-gray-800">{modality}</span>
-                  <svg
+                  <ChevronDown
                     className={`w-5 h-5 text-gray-600 transition-transform ${
-                      expandedModalities[modality] ? 'transform rotate-180' : ''
+                      expandedModalities[modality] ? 'rotate-180' : ''
                     }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
+                  />
                 </button>
 
                 {/* Modality Interventions (Collapsible Content) */}

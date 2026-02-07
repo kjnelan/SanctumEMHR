@@ -12,7 +12,7 @@
  */
 
 import React, { useState } from 'react';
-import { createNote, signNote } from '../../utils/api';
+import { createNote, signNote } from '../../services/NoteService';
 import { ErrorMessage } from '../ErrorMessage';
 
 /**
