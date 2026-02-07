@@ -36,8 +36,7 @@ function UserProfile() {
     phone: '',
     phonecell: '',
     state_license_number: '',
-    npi: '',
-    color: ''
+    npi: ''
   });
 
   useEffect(() => {
@@ -74,8 +73,7 @@ function UserProfile() {
           phone: userData.phone || '',
           phonecell: userData.phonecell || '',
           state_license_number: userData.state_license_number || '',
-          npi: userData.npi || '',
-          color: userData.color || ''
+          npi: userData.npi || ''
         });
       }
 
@@ -318,47 +316,6 @@ function UserProfile() {
           </div>
         </div>
       </div>
-
-      {/* Calendar Settings */}
-      {user?.isProvider && (
-        <div className="glass-card p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Calendar Settings</h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <FormLabel>Calendar Color</FormLabel>
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={formData.color || '#3B82F6'}
-                  onChange={(e) => handleChange('color', e.target.value)}
-                  className="w-12 h-10 rounded border border-gray-300 cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={formData.color || ''}
-                  onChange={(e) => handleChange('color', e.target.value)}
-                  placeholder="#3B82F6"
-                  className="input-field flex-1"
-                  maxLength={7}
-                />
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                This color will be used for your appointments on the calendar
-              </p>
-            </div>
-            <div>
-              <FormLabel>Color Preview</FormLabel>
-              <div
-                className="h-10 rounded-lg border border-gray-200 flex items-center px-3 text-sm font-medium text-gray-800"
-                style={{ backgroundColor: `${formData.color || '#3B82F6'}B3` }}
-              >
-                {formData.fname || 'Your'} Appointment
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Save Button */}
       <div className="flex justify-end">

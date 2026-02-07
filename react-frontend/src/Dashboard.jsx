@@ -192,8 +192,13 @@ function Dashboard() {
           />
           {/* Pending Notes Card + Today's Appointments */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Pending Notes Card - Your Notes + Supervisor Reviews */}
-            <div className="card-main">
+            {/* Left Column: Supervisees (if supervisor) + Pending Notes */}
+            <div className="space-y-6">
+              {/* Supervisees Widget - Only for supervisors */}
+              {user?.isSupervisor && <SuperviseesWidget supervisorId={user.id} />}
+
+              {/* Pending Notes Card - Your Notes + Supervisor Reviews */}
+              <div className="card-main">
               {/* Your Pending Notes Section */}
               <div className={user?.isSupervisor ? 'pb-4 border-b border-gray-200 mb-4' : ''}>
                 <div className="flex items-center justify-between mb-4">
@@ -275,6 +280,7 @@ function Dashboard() {
                 </div>
               )}
             </div>
+            </div>
 
             {/* Today's Appointments */}
             <div className="lg:col-span-2">
@@ -284,13 +290,6 @@ function Dashboard() {
               />
             </div>
           </div>
-
-          {/* Supervisees Widget - Only for supervisors */}
-          {user?.isSupervisor && (
-            <div className="mt-6">
-              <SuperviseesWidget supervisorId={user.id} />
-            </div>
-          )}
         </>
       )}
 

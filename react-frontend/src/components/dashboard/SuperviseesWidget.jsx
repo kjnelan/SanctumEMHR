@@ -96,27 +96,15 @@ function SuperviseesWidget({ supervisorId }) {
             className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-              {supervisee.fname?.charAt(0)}{supervisee.lname?.charAt(0)}
+              {supervisee.firstName?.charAt(0)}{supervisee.lastName?.charAt(0)}
             </div>
             <div className="flex-1">
               <div className="font-medium text-gray-800">
-                {supervisee.fname} {supervisee.lname}
+                {supervisee.label || `${supervisee.firstName} ${supervisee.lastName}`}
                 {supervisee.title && (
                   <span className="text-gray-500 font-normal ml-1">({supervisee.title})</span>
                 )}
               </div>
-              <div className="text-sm text-gray-500 flex items-center gap-3">
-                {supervisee.email && <span>{supervisee.email}</span>}
-              </div>
-            </div>
-            {/* Status indicators */}
-            <div className="flex gap-2">
-              {supervisee.is_provider === '1' && (
-                <span className="badge-outline-success text-xs">Provider</span>
-              )}
-              {supervisee.is_social_worker === '1' && (
-                <span className="badge-outline-purple text-xs">Social Worker</span>
-              )}
             </div>
           </div>
         ))}
