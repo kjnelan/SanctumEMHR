@@ -50,7 +50,7 @@ try {
         s.setting_value,
         s.setting_type,
         s.updated_at,
-        CONCAT(u.fname, ' ', u.lname) AS updated_by_name
+        CONCAT(u.first_name, ' ', u.last_name) AS updated_by_name
     FROM clinical_settings s
     LEFT JOIN users u ON u.id = s.updated_by
     ORDER BY s.setting_key";
