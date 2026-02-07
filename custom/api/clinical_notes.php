@@ -100,7 +100,7 @@ try {
             n.encounter_id
         FROM clinical_notes n
         LEFT JOIN users u ON u.id = n.created_by
-        WHERE n.client_id = ? AND n.is_deleted = 0
+        WHERE n.client_id = ?
         AND n.note_type = 'case_management'
         AND n.created_by = ?
         ORDER BY n.note_date DESC, n.created_at DESC";
@@ -118,7 +118,7 @@ try {
             n.encounter_id
         FROM clinical_notes n
         LEFT JOIN users u ON u.id = n.created_by
-        WHERE n.client_id = ? AND n.is_deleted = 0
+        WHERE n.client_id = ?
         ORDER BY n.note_date DESC, n.created_at DESC";
         $queryParams = [$patientId];
     }

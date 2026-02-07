@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getPatientDiagnoses } from '../../utils/api';
+import { getPatientDiagnoses } from '../../services/NoteService';
 import { ErrorInline } from '../ErrorInline';
 
 /**

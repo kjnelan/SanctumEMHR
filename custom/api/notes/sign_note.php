@@ -191,8 +191,8 @@ try {
     $noteId = intval($input['noteId']);
     $signatureData = $input['signatureData'] ?? null; // Optional electronic signature details
 
-    // Check if note exists and is not already locked
-    $checkSql = "SELECT id, is_locked, status, created_by, supervisor_review_required, supervisor_review_status
+    // Check if note exists and is not already signed
+    $checkSql = "SELECT id, status, created_by, supervisor_review_required, supervisor_review_status
                  FROM clinical_notes
                  WHERE id = ?";
     $note = $db->query($checkSql, [$noteId]);
@@ -201,7 +201,7 @@ try {
         throw new Exception("Note not found");
     }
 
-    if ($note['is_locked']) {
+    if ($note['status'] === 'signed') {
         throw new Exception("Note is already signed and locked");
     }
 
@@ -213,11 +213,9 @@ try {
     // Sign and lock the note
     $signSql = "UPDATE clinical_notes SET
         status = 'signed',
-        is_locked = 1,
         signed_at = NOW(),
         signed_by = ?,
-        signature_data = ?,
-        locked_at = NOW()
+        signature_data = ?
         WHERE id = ?";
 
     $signParams = [

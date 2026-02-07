@@ -88,17 +88,16 @@ try {
         n.created_at,
         n.signed_at,
         n.status,
-        CONCAT(p.first_name, ' ', p.last_name) AS patient_name,
+        CONCAT(c.first_name, ' ', c.last_name) AS patient_name,
         CONCAT(u.first_name, ' ', u.last_name) AS provider_name,
         u.title AS provider_title
     FROM clinical_notes n
-    LEFT JOIN patients p ON p.id = n.patient_id
+    LEFT JOIN clients c ON c.id = n.patient_id
     LEFT JOIN users u ON u.id = n.created_by
     WHERE n.created_by IN ($placeholders)
     AND n.supervisor_review_required = 1
-    AND n.is_locked = 1
+    AND n.status = 'signed'
     AND n.supervisor_reviewed_by IS NULL
-    AND n.is_deleted = 0
     ORDER BY n.signed_at ASC";
 
     $notes = $db->queryAll($notesSql, $superviseeIds);

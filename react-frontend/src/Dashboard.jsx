@@ -13,6 +13,7 @@ import NewClientModal from './components/client/NewClientModal';
 import AppointmentModal from './components/calendar/AppointmentModal';
 import { useAuth } from './hooks/useAuth';
 import { logout, getClientStats, getProviders } from './utils/api';
+import { getPendingReviews, getMyPendingNotes } from './services/DashboardService';
 
 function Dashboard() {
   const location = useLocation();
@@ -58,13 +59,8 @@ function Dashboard() {
       if (!user?.isSupervisor) return;
 
       try {
-        const response = await fetch('/custom/api/notes/pending_supervisor_review.php', {
-          credentials: 'include'
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setPendingReviews(data);
-        }
+        const data = await getPendingReviews();
+        setPendingReviews(data);
       } catch (err) {
         console.error('Failed to fetch pending reviews:', err);
       }
@@ -72,13 +68,8 @@ function Dashboard() {
 
     const fetchMyPendingNotes = async () => {
       try {
-        const response = await fetch('/custom/api/notes/my_pending_notes.php', {
-          credentials: 'include'
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setMyPendingNotes(data);
-        }
+        const data = await getMyPendingNotes();
+        setMyPendingNotes(data);
       } catch (err) {
         console.error('Failed to fetch my pending notes:', err);
       }
@@ -171,10 +162,10 @@ function Dashboard() {
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-mental">
-      <div className="rounded-3xl p-8" style={{ backdropFilter: 'blur(60px) saturate(180%)', background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.4) 100%)', boxShadow: '0 8px 32px rgba(107, 154, 196, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8)', border: '1px solid rgba(255, 255, 255, 0.6)' }}>
-      <div className="animate-spin rounded-full h-16 w-16 mx-auto" style={{ border: '3px solid rgba(107, 154, 196, 0.3)', borderTopColor: 'rgba(107, 154, 196, 0.9)' }}></div>
-      <p className="text-label mt-4 text-center">Loading dashboard...</p>
-      </div>
+        <div className="rounded-3xl p-8" style={{ backdropFilter: 'blur(60px) saturate(180%)', background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.4) 100%)', boxShadow: '0 8px 32px rgba(107, 154, 196, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8)', border: '1px solid rgba(255, 255, 255, 0.6)' }}>
+          <div className="animate-spin rounded-full h-16 w-16 mx-auto" style={{ border: '3px solid rgba(107, 154, 196, 0.3)', borderTopColor: 'rgba(107, 154, 196, 0.9)' }}></div>
+          <p className="text-label mt-4 text-center">Loading dashboard...</p>
+        </div>
       </div>
     );
   }

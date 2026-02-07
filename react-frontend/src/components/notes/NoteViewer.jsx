@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getNote } from '../../utils/api';
+import { getNote } from '../../services/NoteService';
 import { ErrorInline } from '../ErrorInline';
 
 /**
