@@ -16,7 +16,7 @@ import { getProviders } from './utils/api';
 import { logout } from './services/AuthService';
 import { getClientStats } from './services/ClientService';
 import { getPendingReviews, getMyPendingNotes } from './services/DashboardService';
-import SuperviseesWidget from './components/dashboard/SuperviseesWidget';
+import SupervisionWidget from './components/dashboard/SupervisionWidget';
 
 function Dashboard() {
   const location = useLocation();
@@ -192,10 +192,10 @@ function Dashboard() {
           />
           {/* Pending Notes Card + Today's Appointments */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column: Supervisees (if supervisor) + Pending Notes */}
+            {/* Left Column: Supervision + Pending Notes */}
             <div className="space-y-6">
-              {/* Supervisees Widget - Only for supervisors */}
-              {user?.isSupervisor && <SuperviseesWidget supervisorId={user.id} />}
+              {/* Supervision Widget - Shows supervisees (if supervisor) and/or supervisors */}
+              <SupervisionWidget userId={user.id} isSupervisor={user?.isSupervisor} />
 
               {/* Pending Notes Card - Your Notes + Supervisor Reviews */}
               <div className="card-main">
