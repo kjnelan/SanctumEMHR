@@ -197,19 +197,40 @@ try {
                     exit;
                 }
 
+                // Get supervisor IDs and relationship data
                 $sql = "SELECT supervisor_id, relationship_type, started_at, ended_at
                         FROM user_supervisors
                         WHERE user_id = ?
                         AND (ended_at IS NULL OR ended_at > CURDATE())
                         ORDER BY started_at DESC";
 
-                $supervisors = $db->queryAll($sql, [$userId]);
-                $supervisorIds = array_map(fn($s) => $s['supervisor_id'], $supervisors);
+                $relationships = $db->queryAll($sql, [$userId]);
+                $supervisorIds = array_map(fn($s) => $s['supervisor_id'], $relationships);
+
+                // Get full supervisor details
+                $supervisors = [];
+                if (!empty($supervisorIds)) {
+                    $placeholders = implode(',', array_fill(0, count($supervisorIds), '?'));
+                    $detailSql = "SELECT
+                        id,
+                        first_name AS fname,
+                        last_name AS lname,
+                        title,
+                        email,
+                        phone,
+                        mobile AS phonecell
+                    FROM users
+                    WHERE id IN ($placeholders)
+                    ORDER BY last_name, first_name";
+
+                    $supervisors = $db->queryAll($detailSql, $supervisorIds);
+                }
 
                 http_response_code(200);
                 echo json_encode([
                     'supervisor_ids' => $supervisorIds,
-                    'relationships' => $supervisors
+                    'supervisors' => $supervisors,
+                    'relationships' => $relationships
                 ]);
 
             } elseif ($action === 'unlock') {
@@ -336,7 +357,57 @@ try {
             break;
 
         case 'PUT':
-            // Update user
+            // Handle profile self-update (limited fields, own profile only)
+            if ($action === 'update_profile') {
+                $userId = $input['id'] ?? null;
+                $currentUserId = $session->getUserId();
+
+                // Users can only update their own profile
+                if ($userId != $currentUserId) {
+                    http_response_code(403);
+                    echo json_encode(['error' => 'You can only update your own profile']);
+                    exit;
+                }
+
+                // Limited fields that users can update themselves
+                $allowedFields = [
+                    'fname' => 'first_name',
+                    'mname' => 'middle_name',
+                    'lname' => 'last_name',
+                    'title' => 'title',
+                    'suffix' => 'suffix',
+                    'email' => 'email',
+                    'phone' => 'phone',
+                    'phonecell' => 'mobile',
+                    'state_license_number' => 'license_number',
+                    'color' => 'color'
+                ];
+
+                $updateFields = [];
+                $params = [];
+
+                foreach ($allowedFields as $inputKey => $dbField) {
+                    if (isset($input[$inputKey])) {
+                        $updateFields[] = "$dbField = ?";
+                        $params[] = $input[$inputKey] ?: null;
+                    }
+                }
+
+                if (!empty($updateFields)) {
+                    $params[] = $userId;
+                    $sql = "UPDATE users SET " . implode(', ', $updateFields) . " WHERE id = ?";
+                    $db->execute($sql, $params);
+                }
+
+                http_response_code(200);
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Profile updated successfully'
+                ]);
+                break;
+            }
+
+            // Full user update (admin only)
             $userId = $input['id'] ?? null;
 
             if (!$userId) {

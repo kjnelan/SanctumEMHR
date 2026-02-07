@@ -12,12 +12,13 @@
 
 import { useState } from 'react';
 import CalendarAvailability from '../components/settings/CalendarAvailability';
+import UserProfile from '../components/settings/UserProfile';
 
 function Settings() {
-  const [activeSection, setActiveSection] = useState('availability');
+  const [activeSection, setActiveSection] = useState('profile');
 
   const sections = [
-    { id: 'profile', label: 'My Profile', available: false },
+    { id: 'profile', label: 'My Profile', available: true },
     { id: 'preferences', label: 'Preferences', available: false },
     { id: 'calendar-settings', label: 'Calendar Settings', available: false },
     { id: 'availability', label: 'Calendar Availability', available: true },
@@ -63,9 +64,10 @@ function Settings() {
 
         {/* Main Settings Panel */}
         <div className="flex-1">
+          {activeSection === 'profile' && <UserProfile />}
           {activeSection === 'availability' && <CalendarAvailability />}
 
-          {activeSection !== 'availability' && (
+          {activeSection !== 'availability' && activeSection !== 'profile' && (
             <div className="glass-card p-12 text-center">
               <div className="text-gray-700 text-lg font-semibold">
                 {sections.find(s => s.id === activeSection)?.label}

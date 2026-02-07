@@ -16,6 +16,7 @@ import { getProviders } from './utils/api';
 import { logout } from './services/AuthService';
 import { getClientStats } from './services/ClientService';
 import { getPendingReviews, getMyPendingNotes } from './services/DashboardService';
+import SuperviseesWidget from './components/dashboard/SuperviseesWidget';
 
 function Dashboard() {
   const location = useLocation();
@@ -283,6 +284,13 @@ function Dashboard() {
               />
             </div>
           </div>
+
+          {/* Supervisees Widget - Only for supervisors */}
+          {user?.isSupervisor && (
+            <div className="mt-6">
+              <SuperviseesWidget supervisorId={user.id} />
+            </div>
+          )}
         </>
       )}
 
