@@ -12,7 +12,9 @@ import Settings from './pages/Settings';
 import NewClientModal from './components/client/NewClientModal';
 import AppointmentModal from './components/calendar/AppointmentModal';
 import { useAuth } from './hooks/useAuth';
-import { logout, getClientStats, getProviders } from './utils/api';
+import { getProviders } from './utils/api';
+import { logout } from './services/AuthService';
+import { getClientStats } from './services/ClientService';
 import { getPendingReviews, getMyPendingNotes } from './services/DashboardService';
 
 function Dashboard() {
