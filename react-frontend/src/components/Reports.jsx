@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getClientDemographics } from '../utils/api';
+import { getClientDemographics } from '../services/ClientService';
 
 function Reports() {
   const [demographics, setDemographics] = useState({

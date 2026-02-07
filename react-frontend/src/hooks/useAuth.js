@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentUser, getUserDetails, getAppointments } from '../utils/api';
+import { getCurrentUser, getUserDetails } from '../services/AuthService';
+import { getAppointments } from '../services/CalendarService';
 
 export function useAuth() {
     const navigate = useNavigate();

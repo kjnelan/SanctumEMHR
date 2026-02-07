@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createClient } from '../../utils/api';
+import { createClient } from '../../services/ClientService';
 import { FormLabel } from '../FormLabel';
 import { RequiredAsterisk } from '../RequiredAsterisk';
 

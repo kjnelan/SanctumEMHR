@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getClientDetail, logout } from '../utils/api';
+import { getClientDetail } from '../services/ClientService';
+import { logout } from '../services/AuthService';
 import { useAuth } from '../hooks/useAuth';
 import { ErrorInline } from '../components/ErrorInline';
 import AppShell from '../components/layout/AppShell';

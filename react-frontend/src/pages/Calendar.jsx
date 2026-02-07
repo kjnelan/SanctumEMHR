@@ -12,7 +12,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getAppointments, getProviders, getCalendarSettings } from '../utils/api';
+import { getAppointments, getCalendarSettings } from '../services/CalendarService';
+import { getProviders } from '../utils/api';
 import MiniCalendar from '../components/calendar/MiniCalendar';
 import AppointmentModal from '../components/calendar/AppointmentModal';
 import { PrimaryButton } from '../components/PrimaryButton';

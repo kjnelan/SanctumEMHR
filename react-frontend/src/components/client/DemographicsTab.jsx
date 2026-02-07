@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { updateDemographics, getListOptions, getProviders, getRelatedPersons, saveRelatedPerson, deleteRelatedPerson } from '../../utils/api';
+import { updateDemographics, getRelatedPersons, saveRelatedPerson, deleteRelatedPerson } from '../../services/ClientService';
+import { getListOptions, getProviders } from '../../utils/api';
 import useReferenceLists from '../../hooks/useReferenceLists';
 import { RequiredAsterisk } from '../shared/RequiredAsterisk';
 

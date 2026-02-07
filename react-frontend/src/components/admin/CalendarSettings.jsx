@@ -11,7 +11,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { getCalendarSettings, updateCalendarSettings } from '../../utils/api';
+import { getCalendarSettings, updateCalendarSettings } from '../../services/CalendarService';
 import { Modal } from '../Modal';
 import { GlassyTabs, GlassyTab } from '../shared/GlassyTabs';
 import { PrimaryButton } from '../PrimaryButton';
