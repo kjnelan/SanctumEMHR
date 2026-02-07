@@ -236,7 +236,7 @@ function getNoteStats($db, $startDate, $endDate) {
         note_type,
         COUNT(*) AS count
     FROM clinical_notes
-    WHERE note_date BETWEEN ? AND ?
+    WHERE service_date BETWEEN ? AND ?
     GROUP BY note_type
     ORDER BY count DESC";
 
@@ -267,13 +267,13 @@ function getNoteStats($db, $startDate, $endDate) {
     // Notes by signed status
     $statusSql = "SELECT
         CASE
-            WHEN is_signed = 1 THEN 'signed'
-            WHEN supervisor_review_required = 1 AND supervisor_signed_at IS NULL THEN 'pending_review'
+            WHEN signed_at IS NOT NULL THEN 'signed'
+            WHEN supervisor_review_required = 1 AND supervisor_reviewed_at IS NULL THEN 'pending_review'
             ELSE 'unsigned'
         END AS status,
         COUNT(*) AS count
     FROM clinical_notes
-    WHERE note_date BETWEEN ? AND ?
+    WHERE service_date BETWEEN ? AND ?
     GROUP BY status
     ORDER BY count DESC";
 
@@ -304,10 +304,10 @@ function getNoteStats($db, $startDate, $endDate) {
     } catch (Exception $e) {
         // Fallback if supervisor columns don't exist
         $fallbackSql = "SELECT
-            IF(is_signed = 1, 'signed', 'unsigned') AS status,
+            IF(signed_at IS NOT NULL, 'signed', 'unsigned') AS status,
             COUNT(*) AS count
         FROM clinical_notes
-        WHERE note_date BETWEEN ? AND ?
+        WHERE service_date BETWEEN ? AND ?
         GROUP BY status";
 
         $statusRows = $db->queryAll($fallbackSql, [$startDate, $endDate]);
@@ -334,7 +334,7 @@ function getNoteStats($db, $startDate, $endDate) {
         COUNT(*) AS count
     FROM clinical_notes n
     JOIN users u ON u.id = n.created_by
-    WHERE n.note_date BETWEEN ? AND ?
+    WHERE n.service_date BETWEEN ? AND ?
     GROUP BY u.id, u.first_name, u.last_name
     ORDER BY count DESC
     LIMIT 10";
@@ -381,14 +381,14 @@ function getProviderProductivity($db, $startDate, $endDate) {
             SELECT COUNT(*)
             FROM clinical_notes n
             WHERE n.created_by = u.id
-              AND n.note_date BETWEEN ? AND ?
+              AND n.service_date BETWEEN ? AND ?
         ) AS notes_count,
         (
             SELECT COUNT(*)
             FROM clinical_notes n
             WHERE n.created_by = u.id
-              AND n.note_date BETWEEN ? AND ?
-              AND n.is_signed = 1
+              AND n.service_date BETWEEN ? AND ?
+              AND n.signed_at IS NOT NULL
         ) AS signed_notes_count
     FROM users u
     WHERE u.is_active = 1
@@ -470,8 +470,8 @@ function getClientFlowStats($db, $startDate, $endDate) {
                 SELECT pc_pid AS client_id FROM openemr_postcalendar_events
                 WHERE pc_eventDate BETWEEN ? AND ? AND pc_pid > 0
                 UNION
-                SELECT client_id FROM clinical_notes
-                WHERE note_date BETWEEN ? AND ?
+                SELECT patient_id AS client_id FROM clinical_notes
+                WHERE service_date BETWEEN ? AND ?
             ) AS active_clients";
         $result = $db->query($activeSql, [$startDate, $endDate, $startDate, $endDate]);
         $stats['activeClients'] = (int)($result['count'] ?? 0);
