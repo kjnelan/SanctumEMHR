@@ -12,7 +12,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Mail, Server, Bell, Save, TestTube, CheckCircle, XCircle } from 'lucide-react';
-import { PrimaryButton, SecondaryButton } from '../PrimaryButton';
+import { PrimaryButton } from '../PrimaryButton';
+import { SecondaryButton } from '../SecondaryButton';
 import { FormLabel } from '../FormLabel';
 import { ErrorMessage } from '../ErrorMessage';
 
