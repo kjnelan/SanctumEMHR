@@ -125,7 +125,10 @@ try {
     ];
 
     // Fields that should be converted to NULL if empty (decimal/numeric/integer types)
-    $nullableFields = ['custom_session_fee', 'primary_provider_id', 'allow_patient_portal'];
+    $nullableFields = ['custom_session_fee', 'primary_provider_id'];
+
+    // Fields that should be converted to boolean (0/1)
+    $booleanFields = ['allow_patient_portal'];
 
     // Build the SET clause
     foreach ($allowedFields as $field => $column) {
@@ -135,6 +138,15 @@ try {
             // Convert empty strings to NULL for numeric/nullable fields
             if (in_array($field, $nullableFields) && $value === '') {
                 $value = null;
+            }
+
+            // Convert YES/NO/true/false to 0/1 for boolean fields
+            if (in_array($field, $booleanFields)) {
+                if ($value === 'YES' || $value === 'yes' || $value === true || $value === 1 || $value === '1') {
+                    $value = 1;
+                } else {
+                    $value = 0;
+                }
             }
 
             $updateFields[] = "$column = ?";
