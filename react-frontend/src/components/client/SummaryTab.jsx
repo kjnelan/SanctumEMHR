@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getProviders, getCurrentUser } from '../../utils/api';
+import { getProviders } from '../../utils/api';
+import { getCurrentUser } from '../../services/AuthService';
 import AssignedProviders from './AssignedProviders';
 
 function SummaryTab({ data }) {

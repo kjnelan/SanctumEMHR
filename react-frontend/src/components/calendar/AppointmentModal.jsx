@@ -12,7 +12,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { createAppointment, updateAppointment, deleteAppointment, getAppointmentCategories, searchPatients, getRooms, getSupervisees } from '../../utils/api';
+import { createAppointment, updateAppointment, deleteAppointment, getAppointmentCategories, getRooms } from '../../services/CalendarService';
+import { searchClients } from '../../services/ClientService';
+import { getSupervisees } from '../../utils/api';
 import { FormLabel } from '../FormLabel';
 import { RequiredAsterisk } from '../RequiredAsterisk';
 import { ErrorMessage } from '../ErrorMessage';
@@ -244,7 +246,7 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
     }
 
     try {
-      const results = await searchPatients(query);
+      const results = await searchClients(query);
       setPatientSearchResults(results || []);
       setShowPatientDropdown(true);
     } catch (err) {

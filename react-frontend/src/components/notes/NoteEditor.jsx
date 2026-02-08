@@ -15,7 +15,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   createNote, updateNote, autosaveNote, signNote, deleteNote, getNote, getDraft, getClinicalSettings
 } from '../../services/NoteService';
-import { getClientDetail, getCurrentUser } from '../../utils/api';
+import { getClientDetail } from '../../services/ClientService';
+import { getCurrentUser } from '../../services/AuthService';
 import BIRPTemplate from './BIRPTemplate';
 import PIRPTemplate from './PIRPTemplate';
 import SOAPTemplate from './SOAPTemplate';

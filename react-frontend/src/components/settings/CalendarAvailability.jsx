@@ -12,7 +12,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getAppointments, getAppointmentCategories, createAppointment, getCurrentUser, getCalendarSettings } from '../../utils/api';
+import { getAppointments, getAppointmentCategories, createAppointment, getCalendarSettings } from '../../services/CalendarService';
+import { getCurrentUser } from '../../services/AuthService';
 import BlockTimeModal from './BlockTimeModal';
 
 function CalendarAvailability() {

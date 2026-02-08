@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { createAppointment, updateAppointment, deleteAppointment } from '../../utils/api';
+import { createAppointment, updateAppointment, deleteAppointment } from '../../services/CalendarService';
 import { useAuth } from '../../hooks/useAuth';
 import { FormLabel } from '../FormLabel';
 import { RequiredAsterisk } from '../RequiredAsterisk';

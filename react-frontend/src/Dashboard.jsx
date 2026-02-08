@@ -12,8 +12,11 @@ import Settings from './pages/Settings';
 import NewClientModal from './components/client/NewClientModal';
 import AppointmentModal from './components/calendar/AppointmentModal';
 import { useAuth } from './hooks/useAuth';
-import { logout, getClientStats, getProviders } from './utils/api';
+import { getProviders } from './utils/api';
+import { logout } from './services/AuthService';
+import { getClientStats } from './services/ClientService';
 import { getPendingReviews, getMyPendingNotes } from './services/DashboardService';
+import SupervisionWidget from './components/dashboard/SupervisionWidget';
 
 function Dashboard() {
   const location = useLocation();
@@ -189,8 +192,13 @@ function Dashboard() {
           />
           {/* Pending Notes Card + Today's Appointments */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Pending Notes Card - Your Notes + Supervisor Reviews */}
-            <div className="card-main">
+            {/* Left Column: Supervision + Pending Notes */}
+            <div className="space-y-6">
+              {/* Supervision Widget - Shows supervisees (if supervisor) and/or supervisors */}
+              <SupervisionWidget userId={user.id} isSupervisor={user?.isSupervisor} />
+
+              {/* Pending Notes Card - Your Notes + Supervisor Reviews */}
+              <div className="card-main">
               {/* Your Pending Notes Section */}
               <div className={user?.isSupervisor ? 'pb-4 border-b border-gray-200 mb-4' : ''}>
                 <div className="flex items-center justify-between mb-4">
@@ -271,6 +279,7 @@ function Dashboard() {
                   )}
                 </div>
               )}
+            </div>
             </div>
 
             {/* Today's Appointments */}

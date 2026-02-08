@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { getBilling } from '../../utils/api';
+import { getBilling } from '../../services/ClientService';
 import EncounterDetailModal from './EncounterDetailModal';
 import ComingSoon from '../../pages/ComingSoon';
 

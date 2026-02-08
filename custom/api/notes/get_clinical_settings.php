@@ -46,14 +46,14 @@ try {
     $db = Database::getInstance();
 
     $sql = "SELECT
-        setting_key,
-        setting_value,
-        setting_type,
-        updated_at,
+        s.setting_key,
+        s.setting_value,
+        s.setting_type,
+        s.updated_at,
         CONCAT(u.first_name, ' ', u.last_name) AS updated_by_name
     FROM clinical_settings s
     LEFT JOIN users u ON u.id = s.updated_by
-    ORDER BY setting_key";
+    ORDER BY s.setting_key";
 
     $rows = $db->queryAll($sql);
     $settings = [];

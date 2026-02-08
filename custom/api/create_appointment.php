@@ -16,6 +16,7 @@ require_once(__DIR__ . '/../init.php');
 
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
+use Custom\Lib\Services\EmailService;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -496,6 +497,61 @@ try {
         ];
     }
 
+    // Send email notifications for client appointments (first occurrence only for recurring)
+    $emailNotificationsSent = ['client' => false, 'provider' => false];
+
+    if ($patientId > 0 && !empty($createdAppointments)) {
+        try {
+            $emailService = new EmailService($db);
+
+            if ($emailService->isEnabled()) {
+                // Get client details
+                $clientResult = $db->query(
+                    "SELECT id, first_name, last_name, email FROM clients WHERE id = ?",
+                    [$patientId]
+                );
+
+                // Get provider details
+                $providerResult = $db->query(
+                    "SELECT id, first_name, last_name, email, title FROM users WHERE id = ?",
+                    [$providerId]
+                );
+
+                if ($clientResult && $providerResult) {
+                    // Prepare appointment data for email
+                    $firstAppointment = $createdAppointments[0];
+                    $appointmentData = [
+                        'eventDate' => $firstAppointment['eventDate'],
+                        'startTime' => $firstAppointment['startTime'],
+                        'duration' => $firstAppointment['duration'],
+                        'categoryName' => $firstAppointment['categoryName'] ?? 'Appointment'
+                    ];
+
+                    // Send to client
+                    $emailNotificationsSent['client'] = $emailService->sendClientAppointmentNotification(
+                        $appointmentData,
+                        $clientResult,
+                        $providerResult
+                    );
+
+                    // Send to provider
+                    $emailNotificationsSent['provider'] = $emailService->sendProviderAppointmentNotification(
+                        $appointmentData,
+                        $clientResult,
+                        $providerResult
+                    );
+
+                    error_log("Create appointment: Email notifications sent - client: " .
+                        ($emailNotificationsSent['client'] ? 'yes' : 'no') .
+                        ", provider: " . ($emailNotificationsSent['provider'] ? 'yes' : 'no'));
+                }
+            }
+        } catch (Exception $emailError) {
+            // Don't fail the appointment creation if email fails
+            error_log("Create appointment: Email notification error - " . $emailError->getMessage());
+        }
+    }
+
     http_response_code(201);
     echo json_encode([
         'success' => true,
@@ -508,7 +564,8 @@ try {
         'appointmentId' => $appointmentIds[0], // First appointment ID for backwards compatibility
         'appointmentIds' => $appointmentIds,
         'appointments' => $createdAppointments,
-        'appointment' => $createdAppointments[0] ?? null // First appointment for backwards compatibility
+        'appointment' => $createdAppointments[0] ?? null, // First appointment for backwards compatibility
+        'notifications' => $emailNotificationsSent
     ]);
 
 } catch (Exception $e) {

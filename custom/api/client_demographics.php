@@ -85,7 +85,7 @@ try {
     try {
         // SanctumEMHR stores gender_identity as list option codes, join with settings_lists
         $genderSql = "SELECT
-                        COALESCE(sl.option_title, 'Not Specified') as gender,
+                        COALESCE(sl.title, 'Not Specified') as gender,
                         COUNT(*) as count
                       FROM clients c
                       LEFT JOIN settings_lists sl ON sl.option_id = c.gender_identity
@@ -114,7 +114,7 @@ try {
     try {
         // Race is stored as list option codes too
         $raceSql = "SELECT
-                      COALESCE(sl.option_title, 'Not Specified') as race,
+                      COALESCE(sl.title, 'Not Specified') as race,
                       COUNT(*) as count
                     FROM clients c
                     LEFT JOIN settings_lists sl ON sl.option_id = c.race
@@ -143,7 +143,7 @@ try {
     try {
         // Ethnicity is also stored as list option codes
         $ethnicitySql = "SELECT
-                          COALESCE(sl.option_title, 'Not Specified') as ethnicity,
+                          COALESCE(sl.title, 'Not Specified') as ethnicity,
                           COUNT(*) as count
                         FROM clients c
                         LEFT JOIN settings_lists sl ON sl.option_id = c.ethnicity

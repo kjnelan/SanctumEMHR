@@ -19,8 +19,10 @@ import Facilities from '../components/admin/Facilities';
 import SecuritySettings from '../components/admin/SecuritySettings';
 import CPTCodes from '../components/admin/CPTCodes';
 import BillingModifiers from '../components/admin/BillingModifiers';
+import InsuranceProviders from '../components/admin/InsuranceProviders';
 import ICD10Import from './ICD10Import';
 import ClinicalSettings from '../components/admin/ClinicalSettings';
+import EmailSettings from '../components/admin/EmailSettings';
 import About from '../components/admin/About';
 
 function Admin() {
@@ -72,6 +74,7 @@ function Admin() {
       sections: [
         { id: 'cpt-codes', label: 'CPT Codes', available: true },
         { id: 'billing-modifiers', label: 'Billing Modifiers', available: true },
+        { id: 'insurance-providers', label: 'Insurance Providers', available: true },
         { id: 'billing-settings', label: 'Billing Settings', available: false },
         { id: 'payment-methods', label: 'Payment Methods', available: false },
       ]
@@ -82,7 +85,7 @@ function Admin() {
       icon: '💬',
       sections: [
         { id: 'sms-settings', label: 'SMS Settings', available: false },
-        { id: 'email-settings', label: 'Email Settings', available: false },
+        { id: 'email-settings', label: 'Email Settings', available: true },
       ]
     },
     {
@@ -195,12 +198,14 @@ function Admin() {
           {activeSection === 'clinical-settings' && <ClinicalSettings />}
           {activeSection === 'cpt-codes' && <CPTCodes />}
           {activeSection === 'billing-modifiers' && <BillingModifiers />}
+          {activeSection === 'insurance-providers' && <InsuranceProviders />}
           {activeSection === 'facilities' && <Facilities />}
           {activeSection === 'users' && <UserManagement />}
+          {activeSection === 'email-settings' && <EmailSettings />}
           {activeSection === 'about' && <About />}
 
           {/* Coming Soon for unavailable sections */}
-          {!['security', 'calendar-settings', 'reference-lists', 'document-categories', 'icd10-codes', 'clinical-settings', 'cpt-codes', 'billing-modifiers', 'facilities', 'users', 'about'].includes(activeSection) && (
+          {!['security', 'calendar-settings', 'reference-lists', 'document-categories', 'icd10-codes', 'clinical-settings', 'cpt-codes', 'billing-modifiers', 'insurance-providers', 'facilities', 'users', 'email-settings', 'about'].includes(activeSection) && (
             <div className="glass-card p-12 text-center">
               <div className="text-gray-700 text-lg font-semibold">
                 {sectionGroups.flatMap(g => g.sections).find(s => s.id === activeSection)?.label}

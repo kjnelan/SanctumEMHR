@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { updateInsurance, getInsuranceCompanies, getListOptions } from '../../utils/api';
+import { updateInsurance, getInsuranceCompanies } from '../../services/ClientService';
+import { getListOptions } from '../../utils/api';
 
 function InsuranceTab({ data, onDataUpdate }) {
   const [showSecondary, setShowSecondary] = useState(false);
