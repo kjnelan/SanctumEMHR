@@ -26,8 +26,14 @@ function CalendarSettings() {
   const [mainTab, setMainTab] = useState('general');
 
   return (
-    <div className="glass-card p-6">
-      {/* Main Tab Navigation */}
+    <div className="w-full">
+      {/* Header */}
+      <div className="glass-card p-6 mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">Calendar Settings</h1>
+        <p className="text-gray-600 mt-2">Configure calendar display, categories, and appointment options</p>
+      </div>
+
+      {/* Tab Navigation */}
       <GlassyTabs className="mb-6">
         <GlassyTab
           active={mainTab === 'general'}
@@ -56,10 +62,12 @@ function CalendarSettings() {
       </GlassyTabs>
 
       {/* Tab Content */}
-      {mainTab === 'general' && <GeneralSettingsTab />}
-      {mainTab === 'categories' && <CalendarCategoriesTab />}
-      {mainTab === 'statuses' && <SettingsListTab listId="appointment_statuses" title="Appointment Statuses" description="Define the status options for appointments" itemLabel="Status" />}
-      {mainTab === 'reasons' && <SettingsListTab listId="cancellation_reasons" title="Cancellation Reasons" description="Define reasons for appointment cancellations (including no-shows)" itemLabel="Reason" />}
+      <div className="glass-card p-6">
+        {mainTab === 'general' && <GeneralSettingsTab />}
+        {mainTab === 'categories' && <CalendarCategoriesTab />}
+        {mainTab === 'statuses' && <SettingsListTab listId="appointment_statuses" title="Appointment Statuses" description="Define the status options for appointments" itemLabel="Status" />}
+        {mainTab === 'reasons' && <SettingsListTab listId="cancellation_reasons" title="Cancellation Reasons" description="Define reasons for appointment cancellations (including no-shows)" itemLabel="Reason" />}
+      </div>
     </div>
   );
 }

@@ -193,18 +193,24 @@ function EmailSettings() {
 
   if (loading) {
     return (
-      <div className="glass-card p-6">
-        <div className="text-center text-gray-700 py-8">Loading email settings...</div>
+      <div className="w-full">
+        <div className="glass-card p-6 mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Email Settings</h1>
+          <p className="text-gray-600 mt-2">Configure email notifications for appointments</p>
+        </div>
+        <div className="glass-card p-6">
+          <div className="text-center text-gray-700 py-8">Loading email settings...</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="glass-card p-6">
+    <div className="w-full">
       {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Email Settings</h2>
-        <p className="text-gray-600 mt-1">Configure email notifications for appointments</p>
+      <div className="glass-card p-6 mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">Email Settings</h1>
+        <p className="text-gray-600 mt-2">Configure email notifications for appointments</p>
       </div>
 
       {/* Tabs */}
@@ -223,19 +229,21 @@ function EmailSettings() {
         </GlassyTab>
       </GlassyTabs>
 
-      {message && (
-        <div className={`mb-6 px-4 py-3 rounded-lg ${
-          message.type === 'success'
-            ? 'bg-green-100/60 border-green-300/50 text-green-700'
-            : 'bg-red-100/60 border-red-300/50 text-red-700'
-        } border`}>
-          {message.text}
-        </div>
-      )}
+      {/* Content */}
+      <div className="glass-card p-6">
+        {message && (
+          <div className={`mb-6 px-4 py-3 rounded-lg ${
+            message.type === 'success'
+              ? 'bg-green-100/60 border-green-300/50 text-green-700'
+              : 'bg-red-100/60 border-red-300/50 text-red-700'
+          } border`}>
+            {message.text}
+          </div>
+        )}
 
-      {/* Settings Tab */}
-      {activeTab === 'settings' && (
-      <div className="space-y-6">
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
+        <div className="space-y-6">
         {/* Enable Toggle */}
         <div>
           <label className="flex items-center">
@@ -533,7 +541,8 @@ function EmailSettings() {
             </PrimaryButton>
           </div>
         </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
