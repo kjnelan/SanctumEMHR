@@ -92,7 +92,11 @@ try {
             'smtp_password' => 'string',
             'smtp_encryption' => 'string',
             'notify_client_on_appointment' => 'boolean',
-            'notify_provider_on_appointment' => 'boolean'
+            'notify_provider_on_appointment' => 'boolean',
+            'notify_client_on_cancelled' => 'boolean',
+            'notify_provider_on_cancelled' => 'boolean',
+            'notify_client_on_modified' => 'boolean',
+            'notify_provider_on_modified' => 'boolean'
         ];
 
         $updated = [];

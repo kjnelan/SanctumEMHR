@@ -42,7 +42,11 @@ class EmailService
             'from_name' => 'SanctumEMHR',
             'enabled' => false,
             'notify_client_on_appointment' => true,
-            'notify_provider_on_appointment' => true
+            'notify_provider_on_appointment' => true,
+            'notify_client_on_cancelled' => true,
+            'notify_provider_on_cancelled' => true,
+            'notify_client_on_modified' => true,
+            'notify_provider_on_modified' => true
         ];
 
         try {
@@ -71,12 +75,6 @@ class EmailService
 
     /**
      * Send an email
-     *
-     * @param string $to Recipient email address
-     * @param string $subject Email subject
-     * @param string $htmlBody HTML body content
-     * @param string|null $textBody Plain text body (optional)
-     * @return bool Success
      */
     public function send(string $to, string $subject, string $htmlBody, ?string $textBody = null): bool
     {
@@ -91,10 +89,8 @@ class EmailService
         }
 
         try {
-            // Build headers
             $fromEmail = $this->settings['from_email'];
             $fromName = $this->settings['from_name'];
-
             $boundary = md5(time());
 
             $headers = [
@@ -105,7 +101,6 @@ class EmailService
                 'X-Mailer: SanctumEMHR'
             ];
 
-            // Build body with text and HTML parts
             $body = "--$boundary\r\n";
             $body .= "Content-Type: text/plain; charset=UTF-8\r\n";
             $body .= "Content-Transfer-Encoding: 8bit\r\n\r\n";
@@ -118,13 +113,11 @@ class EmailService
 
             $body .= "--$boundary--";
 
-            // Configure SMTP if settings provided
             if (!empty($this->settings['smtp_host'])) {
                 ini_set('SMTP', $this->settings['smtp_host']);
                 ini_set('smtp_port', $this->settings['smtp_port']);
             }
 
-            // Send the email
             $result = mail($to, $subject, $body, implode("\r\n", $headers));
 
             if ($result) {
@@ -142,23 +135,16 @@ class EmailService
     }
 
     /**
-     * Send appointment notification to client
-     *
-     * @param array $appointment Appointment data
-     * @param array $client Client data
-     * @param array $provider Provider data
-     * @return bool Success
+     * Send new appointment notification to client
      */
     public function sendClientAppointmentNotification(array $appointment, array $client, array $provider): bool
     {
         if (!filter_var($this->settings['notify_client_on_appointment'] ?? true, FILTER_VALIDATE_BOOLEAN)) {
-            error_log("EmailService: Client appointment notifications are disabled");
             return false;
         }
 
         $clientEmail = $client['email'] ?? '';
         if (empty($clientEmail)) {
-            error_log("EmailService: Client has no email address");
             return false;
         }
 
@@ -166,76 +152,158 @@ class EmailService
         $providerName = trim(($provider['first_name'] ?? '') . ' ' . ($provider['last_name'] ?? ''));
         $providerTitle = $provider['title'] ?? '';
 
-        // Format date and time
         $appointmentDate = date('l, F j, Y', strtotime($appointment['eventDate']));
         $appointmentTime = date('g:i A', strtotime($appointment['startTime']));
-        $duration = intval($appointment['duration'] / 60); // Convert seconds to minutes if needed
+        $duration = intval($appointment['duration'] / 60);
 
         $subject = "Appointment Confirmation - $appointmentDate";
-
-        $htmlBody = $this->getAppointmentEmailTemplate(
-            $clientName,
-            $providerName,
-            $providerTitle,
-            $appointmentDate,
-            $appointmentTime,
-            $duration,
-            $appointment['categoryName'] ?? 'Appointment',
-            'client'
-        );
+        $htmlBody = $this->getEmailTemplate('confirmation', $clientName, $providerName, $providerTitle, $appointmentDate, $appointmentTime, $duration, $appointment['categoryName'] ?? 'Appointment', 'client');
 
         return $this->send($clientEmail, $subject, $htmlBody);
     }
 
     /**
-     * Send appointment notification to provider/clinician
-     *
-     * @param array $appointment Appointment data
-     * @param array $client Client data
-     * @param array $provider Provider data
-     * @return bool Success
+     * Send new appointment notification to provider
      */
     public function sendProviderAppointmentNotification(array $appointment, array $client, array $provider): bool
     {
         if (!filter_var($this->settings['notify_provider_on_appointment'] ?? true, FILTER_VALIDATE_BOOLEAN)) {
-            error_log("EmailService: Provider appointment notifications are disabled");
             return false;
         }
 
         $providerEmail = $provider['email'] ?? '';
         if (empty($providerEmail)) {
-            error_log("EmailService: Provider has no email address");
             return false;
         }
 
         $clientName = trim(($client['first_name'] ?? '') . ' ' . ($client['last_name'] ?? ''));
         $providerName = trim(($provider['first_name'] ?? '') . ' ' . ($provider['last_name'] ?? ''));
 
-        // Format date and time
         $appointmentDate = date('l, F j, Y', strtotime($appointment['eventDate']));
         $appointmentTime = date('g:i A', strtotime($appointment['startTime']));
         $duration = intval($appointment['duration'] / 60);
 
         $subject = "New Appointment Scheduled - $clientName on $appointmentDate";
-
-        $htmlBody = $this->getAppointmentEmailTemplate(
-            $clientName,
-            $providerName,
-            '',
-            $appointmentDate,
-            $appointmentTime,
-            $duration,
-            $appointment['categoryName'] ?? 'Appointment',
-            'provider'
-        );
+        $htmlBody = $this->getEmailTemplate('confirmation', $clientName, $providerName, '', $appointmentDate, $appointmentTime, $duration, $appointment['categoryName'] ?? 'Appointment', 'provider');
 
         return $this->send($providerEmail, $subject, $htmlBody);
     }
 
     /**
-     * Get HTML email template for appointment notifications
+     * Send cancellation notification to client
      */
-    private function getAppointmentEmailTemplate(
+    public function sendClientCancellationNotification(array $appointment, array $client, array $provider, string $reason = ''): bool
+    {
+        if (!filter_var($this->settings['notify_client_on_cancelled'] ?? true, FILTER_VALIDATE_BOOLEAN)) {
+            return false;
+        }
+
+        $clientEmail = $client['email'] ?? '';
+        if (empty($clientEmail)) {
+            return false;
+        }
+
+        $clientName = trim(($client['first_name'] ?? '') . ' ' . ($client['last_name'] ?? ''));
+        $providerName = trim(($provider['first_name'] ?? '') . ' ' . ($provider['last_name'] ?? ''));
+        $providerTitle = $provider['title'] ?? '';
+
+        $appointmentDate = date('l, F j, Y', strtotime($appointment['eventDate']));
+        $appointmentTime = date('g:i A', strtotime($appointment['startTime']));
+        $duration = intval($appointment['duration'] / 60);
+
+        $subject = "Appointment Cancelled - $appointmentDate";
+        $htmlBody = $this->getEmailTemplate('cancellation', $clientName, $providerName, $providerTitle, $appointmentDate, $appointmentTime, $duration, $appointment['categoryName'] ?? 'Appointment', 'client', $reason);
+
+        return $this->send($clientEmail, $subject, $htmlBody);
+    }
+
+    /**
+     * Send cancellation notification to provider
+     */
+    public function sendProviderCancellationNotification(array $appointment, array $client, array $provider, string $reason = ''): bool
+    {
+        if (!filter_var($this->settings['notify_provider_on_cancelled'] ?? true, FILTER_VALIDATE_BOOLEAN)) {
+            return false;
+        }
+
+        $providerEmail = $provider['email'] ?? '';
+        if (empty($providerEmail)) {
+            return false;
+        }
+
+        $clientName = trim(($client['first_name'] ?? '') . ' ' . ($client['last_name'] ?? ''));
+        $providerName = trim(($provider['first_name'] ?? '') . ' ' . ($provider['last_name'] ?? ''));
+
+        $appointmentDate = date('l, F j, Y', strtotime($appointment['eventDate']));
+        $appointmentTime = date('g:i A', strtotime($appointment['startTime']));
+        $duration = intval($appointment['duration'] / 60);
+
+        $subject = "Appointment Cancelled - $clientName on $appointmentDate";
+        $htmlBody = $this->getEmailTemplate('cancellation', $clientName, $providerName, '', $appointmentDate, $appointmentTime, $duration, $appointment['categoryName'] ?? 'Appointment', 'provider', $reason);
+
+        return $this->send($providerEmail, $subject, $htmlBody);
+    }
+
+    /**
+     * Send modification notification to client
+     */
+    public function sendClientModificationNotification(array $appointment, array $client, array $provider): bool
+    {
+        if (!filter_var($this->settings['notify_client_on_modified'] ?? true, FILTER_VALIDATE_BOOLEAN)) {
+            return false;
+        }
+
+        $clientEmail = $client['email'] ?? '';
+        if (empty($clientEmail)) {
+            return false;
+        }
+
+        $clientName = trim(($client['first_name'] ?? '') . ' ' . ($client['last_name'] ?? ''));
+        $providerName = trim(($provider['first_name'] ?? '') . ' ' . ($provider['last_name'] ?? ''));
+        $providerTitle = $provider['title'] ?? '';
+
+        $appointmentDate = date('l, F j, Y', strtotime($appointment['eventDate']));
+        $appointmentTime = date('g:i A', strtotime($appointment['startTime']));
+        $duration = intval($appointment['duration'] / 60);
+
+        $subject = "Appointment Updated - $appointmentDate";
+        $htmlBody = $this->getEmailTemplate('modification', $clientName, $providerName, $providerTitle, $appointmentDate, $appointmentTime, $duration, $appointment['categoryName'] ?? 'Appointment', 'client');
+
+        return $this->send($clientEmail, $subject, $htmlBody);
+    }
+
+    /**
+     * Send modification notification to provider
+     */
+    public function sendProviderModificationNotification(array $appointment, array $client, array $provider): bool
+    {
+        if (!filter_var($this->settings['notify_provider_on_modified'] ?? true, FILTER_VALIDATE_BOOLEAN)) {
+            return false;
+        }
+
+        $providerEmail = $provider['email'] ?? '';
+        if (empty($providerEmail)) {
+            return false;
+        }
+
+        $clientName = trim(($client['first_name'] ?? '') . ' ' . ($client['last_name'] ?? ''));
+        $providerName = trim(($provider['first_name'] ?? '') . ' ' . ($provider['last_name'] ?? ''));
+
+        $appointmentDate = date('l, F j, Y', strtotime($appointment['eventDate']));
+        $appointmentTime = date('g:i A', strtotime($appointment['startTime']));
+        $duration = intval($appointment['duration'] / 60);
+
+        $subject = "Appointment Updated - $clientName on $appointmentDate";
+        $htmlBody = $this->getEmailTemplate('modification', $clientName, $providerName, '', $appointmentDate, $appointmentTime, $duration, $appointment['categoryName'] ?? 'Appointment', 'provider');
+
+        return $this->send($providerEmail, $subject, $htmlBody);
+    }
+
+    /**
+     * Get HTML email template
+     */
+    private function getEmailTemplate(
+        string $templateType,
         string $clientName,
         string $providerName,
         string $providerTitle,
@@ -243,19 +311,54 @@ class EmailService
         string $appointmentTime,
         int $duration,
         string $appointmentType,
-        string $recipientType
+        string $recipientType,
+        string $cancellationReason = ''
     ): string {
         $providerDisplay = $providerName;
         if (!empty($providerTitle)) {
             $providerDisplay .= ", $providerTitle";
         }
 
-        if ($recipientType === 'client') {
-            $greeting = "Dear $clientName,";
-            $intro = "Your appointment has been scheduled with $providerDisplay.";
-        } else {
-            $greeting = "Dear $providerName,";
-            $intro = "A new appointment has been scheduled with $clientName.";
+        // Set colors and titles based on template type
+        switch ($templateType) {
+            case 'cancellation':
+                $headerColor = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+                $headerTitle = 'Appointment Cancelled';
+                if ($recipientType === 'client') {
+                    $greeting = "Dear $clientName,";
+                    $intro = "Your appointment with $providerDisplay has been cancelled.";
+                } else {
+                    $greeting = "Dear $providerName,";
+                    $intro = "The appointment with $clientName has been cancelled.";
+                }
+                $footerNote = $cancellationReason ? "Reason: $cancellationReason" : "Please contact us if you have any questions.";
+                break;
+
+            case 'modification':
+                $headerColor = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+                $headerTitle = 'Appointment Updated';
+                if ($recipientType === 'client') {
+                    $greeting = "Dear $clientName,";
+                    $intro = "Your appointment with $providerDisplay has been updated. Please see the new details below.";
+                } else {
+                    $greeting = "Dear $providerName,";
+                    $intro = "The appointment with $clientName has been updated. Please see the new details below.";
+                }
+                $footerNote = "If you need to reschedule or cancel, please contact us as soon as possible.";
+                break;
+
+            default: // confirmation
+                $headerColor = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                $headerTitle = 'Appointment Confirmation';
+                if ($recipientType === 'client') {
+                    $greeting = "Dear $clientName,";
+                    $intro = "Your appointment has been scheduled with $providerDisplay.";
+                } else {
+                    $greeting = "Dear $providerName,";
+                    $intro = "A new appointment has been scheduled with $clientName.";
+                }
+                $footerNote = "If you need to reschedule or cancel this appointment, please contact us as soon as possible.";
+                break;
         }
 
         return <<<HTML
@@ -264,76 +367,40 @@ class EmailService
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Appointment Confirmation</title>
+    <title>$headerTitle</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
     <table role="presentation" style="width: 100%; border-collapse: collapse;">
         <tr>
             <td style="padding: 40px 20px;">
                 <table role="presentation" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                    <!-- Header -->
                     <tr>
-                        <td style="padding: 32px 40px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 12px 12px 0 0;">
-                            <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">Appointment Confirmation</h1>
+                        <td style="padding: 32px 40px; background: $headerColor; border-radius: 12px 12px 0 0;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">$headerTitle</h1>
                         </td>
                     </tr>
-
-                    <!-- Body -->
                     <tr>
                         <td style="padding: 40px;">
-                            <p style="margin: 0 0 24px 0; color: #374151; font-size: 16px; line-height: 1.6;">
-                                $greeting
-                            </p>
-                            <p style="margin: 0 0 32px 0; color: #374151; font-size: 16px; line-height: 1.6;">
-                                $intro
-                            </p>
-
-                            <!-- Appointment Details Card -->
+                            <p style="margin: 0 0 24px 0; color: #374151; font-size: 16px; line-height: 1.6;">$greeting</p>
+                            <p style="margin: 0 0 32px 0; color: #374151; font-size: 16px; line-height: 1.6;">$intro</p>
                             <table role="presentation" style="width: 100%; background-color: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
                                 <tr>
                                     <td style="padding: 24px;">
                                         <table role="presentation" style="width: 100%;">
-                                            <tr>
-                                                <td style="padding: 8px 0;">
-                                                    <span style="color: #6b7280; font-size: 14px;">Date</span><br>
-                                                    <strong style="color: #111827; font-size: 16px;">$appointmentDate</strong>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding: 8px 0;">
-                                                    <span style="color: #6b7280; font-size: 14px;">Time</span><br>
-                                                    <strong style="color: #111827; font-size: 16px;">$appointmentTime</strong>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding: 8px 0;">
-                                                    <span style="color: #6b7280; font-size: 14px;">Duration</span><br>
-                                                    <strong style="color: #111827; font-size: 16px;">$duration minutes</strong>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding: 8px 0;">
-                                                    <span style="color: #6b7280; font-size: 14px;">Appointment Type</span><br>
-                                                    <strong style="color: #111827; font-size: 16px;">$appointmentType</strong>
-                                                </td>
-                                            </tr>
+                                            <tr><td style="padding: 8px 0;"><span style="color: #6b7280; font-size: 14px;">Date</span><br><strong style="color: #111827; font-size: 16px;">$appointmentDate</strong></td></tr>
+                                            <tr><td style="padding: 8px 0;"><span style="color: #6b7280; font-size: 14px;">Time</span><br><strong style="color: #111827; font-size: 16px;">$appointmentTime</strong></td></tr>
+                                            <tr><td style="padding: 8px 0;"><span style="color: #6b7280; font-size: 14px;">Duration</span><br><strong style="color: #111827; font-size: 16px;">$duration minutes</strong></td></tr>
+                                            <tr><td style="padding: 8px 0;"><span style="color: #6b7280; font-size: 14px;">Appointment Type</span><br><strong style="color: #111827; font-size: 16px;">$appointmentType</strong></td></tr>
                                         </table>
                                     </td>
                                 </tr>
                             </table>
-
-                            <p style="margin: 32px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
-                                If you need to reschedule or cancel this appointment, please contact us as soon as possible.
-                            </p>
+                            <p style="margin: 32px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6;">$footerNote</p>
                         </td>
                     </tr>
-
-                    <!-- Footer -->
                     <tr>
                         <td style="padding: 24px 40px; background-color: #f9fafb; border-radius: 0 0 12px 12px; border-top: 1px solid #e5e7eb;">
-                            <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">
-                                This is an automated message from SanctumEMHR. Please do not reply directly to this email.
-                            </p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">This is an automated message from SanctumEMHR. Please do not reply directly to this email.</p>
                         </td>
                     </tr>
                 </table>
@@ -358,7 +425,11 @@ HTML;
             'smtp_port' => $this->settings['smtp_port'] ?? '587',
             'smtp_encryption' => $this->settings['smtp_encryption'] ?? 'tls',
             'notify_client_on_appointment' => filter_var($this->settings['notify_client_on_appointment'] ?? true, FILTER_VALIDATE_BOOLEAN),
-            'notify_provider_on_appointment' => filter_var($this->settings['notify_provider_on_appointment'] ?? true, FILTER_VALIDATE_BOOLEAN)
+            'notify_provider_on_appointment' => filter_var($this->settings['notify_provider_on_appointment'] ?? true, FILTER_VALIDATE_BOOLEAN),
+            'notify_client_on_cancelled' => filter_var($this->settings['notify_client_on_cancelled'] ?? true, FILTER_VALIDATE_BOOLEAN),
+            'notify_provider_on_cancelled' => filter_var($this->settings['notify_provider_on_cancelled'] ?? true, FILTER_VALIDATE_BOOLEAN),
+            'notify_client_on_modified' => filter_var($this->settings['notify_client_on_modified'] ?? true, FILTER_VALIDATE_BOOLEAN),
+            'notify_provider_on_modified' => filter_var($this->settings['notify_provider_on_modified'] ?? true, FILTER_VALIDATE_BOOLEAN)
         ];
     }
 }
