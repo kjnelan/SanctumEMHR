@@ -44,8 +44,8 @@ try {
     $db = Database::getInstance();
     $userId = $session->getUserId();
 
-    $userResult = $db->query("SELECT is_admin FROM users WHERE id = ?", [$userId]);
-    if (!$userResult || !$userResult['is_admin']) {
+    $userResult = $db->query("SELECT user_type FROM users WHERE id = ?", [$userId]);
+    if (!$userResult || $userResult['user_type'] !== 'admin') {
         http_response_code(403);
         echo json_encode(['error' => 'Admin access required']);
         exit;
