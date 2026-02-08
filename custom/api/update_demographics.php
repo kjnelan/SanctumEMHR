@@ -124,8 +124,8 @@ try {
         'cmsportal_login' => 'portal_username'
     ];
 
-    // Fields that should be converted to NULL if empty (decimal/numeric/integer types)
-    $nullableFields = ['custom_session_fee', 'primary_provider_id'];
+    // Fields that should be converted to NULL if empty (decimal/numeric/integer types or unique constraints)
+    $nullableFields = ['custom_session_fee', 'primary_provider_id', 'cmsportal_login'];
 
     // Fields that should be converted to boolean (0/1)
     $booleanFields = ['allow_patient_portal'];
