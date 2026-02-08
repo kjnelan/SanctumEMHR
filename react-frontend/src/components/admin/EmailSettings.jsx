@@ -448,7 +448,6 @@ function EmailSettings() {
             </div>
           </div>
         </div>
-      </div>
 
         {/* Save Button */}
         <div className="mt-8 pt-6 border-t border-gray-200">
