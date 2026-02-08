@@ -67,10 +67,37 @@ try {
             $settings['smtp_password_set'] = true;
         }
 
+        // Get email templates
+        $templates = [];
+        $defaultTemplates = [];
+        $templateRows = $db->queryAll(
+            "SELECT setting_key, setting_value FROM system_settings WHERE setting_key LIKE 'email.template_%'"
+        );
+        foreach ($templateRows as $row) {
+            $key = str_replace('email.template_', '', $row['setting_key']);
+            $templates[$key] = $row['setting_value'];
+        }
+
+        // Get default templates
+        $defaultRows = $db->queryAll(
+            "SELECT setting_key, setting_value FROM system_settings WHERE setting_key LIKE 'email.default_template_%'"
+        );
+        foreach ($defaultRows as $row) {
+            $key = str_replace('email.default_template_', '', $row['setting_key']);
+            $defaultTemplates[$key] = $row['setting_value'];
+        }
+
+        // If templates not customized, use defaults
+        if (empty($templates)) {
+            $templates = $defaultTemplates;
+        }
+
         http_response_code(200);
         echo json_encode([
             'success' => true,
-            'settings' => $settings
+            'settings' => $settings,
+            'templates' => $templates,
+            'defaultTemplates' => $defaultTemplates
         ]);
 
     } elseif ($method === 'POST') {
@@ -79,6 +106,58 @@ try {
 
         if (!$input) {
             throw new Exception('Invalid JSON input');
+        }
+
+        $updated = [];
+
+        // Handle templates if provided
+        if (isset($input['templates']) && is_array($input['templates'])) {
+            $allowedTemplateKeys = [
+                'client_confirmation_subject', 'client_confirmation_body',
+                'provider_confirmation_subject', 'provider_confirmation_body',
+                'client_cancellation_subject', 'client_cancellation_body',
+                'provider_cancellation_subject', 'provider_cancellation_body',
+                'client_modification_subject', 'client_modification_body',
+                'provider_modification_subject', 'provider_modification_body'
+            ];
+
+            foreach ($input['templates'] as $key => $value) {
+                if (!in_array($key, $allowedTemplateKeys)) {
+                    continue;
+                }
+
+                $settingKey = 'email.template_' . $key;
+                $value = trim((string)$value);
+
+                // Check if setting exists
+                $existing = $db->query(
+                    "SELECT id FROM system_settings WHERE setting_key = ?",
+                    [$settingKey]
+                );
+
+                if ($existing) {
+                    $db->execute(
+                        "UPDATE system_settings SET setting_value = ?, updated_at = NOW() WHERE setting_key = ?",
+                        [$value, $settingKey]
+                    );
+                } else {
+                    $db->insert(
+                        "INSERT INTO system_settings (setting_key, setting_value, category, setting_type, description, is_editable, created_at, updated_at)
+                         VALUES (?, ?, 'email', 'string', ?, 1, NOW(), NOW())",
+                        [$settingKey, $value, "Email template: $key"]
+                    );
+                }
+
+                $updated[] = "template_$key";
+            }
+
+            http_response_code(200);
+            echo json_encode([
+                'success' => true,
+                'message' => 'Email templates updated',
+                'updated' => $updated
+            ]);
+            exit;
         }
 
         // Settings that can be updated
@@ -98,8 +177,6 @@ try {
             'notify_client_on_modified' => 'boolean',
             'notify_provider_on_modified' => 'boolean'
         ];
-
-        $updated = [];
 
         foreach ($allowedSettings as $key => $type) {
             if (isset($input[$key])) {

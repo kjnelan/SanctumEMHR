@@ -12,9 +12,31 @@
 
 import { useState, useEffect } from 'react';
 import { PrimaryButton } from '../PrimaryButton';
+import { SecondaryButton } from '../SecondaryButton';
 import { FormLabel } from '../FormLabel';
 
+const templateTypes = [
+  { key: 'client_confirmation', label: 'New Appointment - Client', description: 'Sent to clients when a new appointment is created' },
+  { key: 'provider_confirmation', label: 'New Appointment - Provider', description: 'Sent to providers when a new appointment is created' },
+  { key: 'client_cancellation', label: 'Cancellation - Client', description: 'Sent to clients when an appointment is cancelled' },
+  { key: 'provider_cancellation', label: 'Cancellation - Provider', description: 'Sent to providers when an appointment is cancelled' },
+  { key: 'client_modification', label: 'Modification - Client', description: 'Sent to clients when an appointment is modified' },
+  { key: 'provider_modification', label: 'Modification - Provider', description: 'Sent to providers when an appointment is modified' }
+];
+
+const availableVariables = [
+  { var: '{{client_name}}', desc: 'Client full name' },
+  { var: '{{provider_name}}', desc: 'Provider full name' },
+  { var: '{{appointment_date}}', desc: 'Formatted date (e.g., Monday, January 15, 2026)' },
+  { var: '{{appointment_time}}', desc: 'Formatted time (e.g., 2:30 PM)' },
+  { var: '{{duration}}', desc: 'Appointment duration in minutes' },
+  { var: '{{appointment_type}}', desc: 'Type of appointment' },
+  { var: '{{practice_name}}', desc: 'Practice name (from email settings)' },
+  { var: '{{cancellation_reason}}', desc: 'Reason for cancellation (cancellation emails only)' }
+];
+
 function EmailSettings() {
+  const [activeTab, setActiveTab] = useState('settings');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
@@ -36,6 +58,9 @@ function EmailSettings() {
     notify_provider_on_modified: true
   });
 
+  const [templates, setTemplates] = useState({});
+  const [defaultTemplates, setDefaultTemplates] = useState({});
+  const [selectedTemplate, setSelectedTemplate] = useState('client_confirmation');
   const [passwordSet, setPasswordSet] = useState(false);
 
   useEffect(() => {
@@ -65,6 +90,13 @@ function EmailSettings() {
         }));
         setPasswordSet(result.settings.smtp_password_set || false);
       }
+
+      if (result.templates) {
+        setTemplates(result.templates);
+      }
+      if (result.defaultTemplates) {
+        setDefaultTemplates(result.defaultTemplates);
+      }
     } catch (err) {
       console.error('Error loading email settings:', err);
       setMessage({ type: 'error', text: err.message });
@@ -73,7 +105,7 @@ function EmailSettings() {
     }
   };
 
-  const handleSave = async () => {
+  const handleSaveSettings = async () => {
     try {
       setSaving(true);
       setMessage(null);
@@ -109,8 +141,53 @@ function EmailSettings() {
     }
   };
 
+  const handleSaveTemplates = async () => {
+    try {
+      setSaving(true);
+      setMessage(null);
+
+      const response = await fetch('/custom/api/email_settings.php', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ templates })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to save templates');
+      }
+
+      setMessage({ type: 'success', text: 'Email templates saved successfully!' });
+      setTimeout(() => setMessage(null), 3000);
+
+    } catch (err) {
+      console.error('Error saving email templates:', err);
+      setMessage({ type: 'error', text: err.message });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleResetTemplate = (templateKey) => {
+    if (defaultTemplates[`${templateKey}_subject`] && defaultTemplates[`${templateKey}_body`]) {
+      setTemplates(prev => ({
+        ...prev,
+        [`${templateKey}_subject`]: defaultTemplates[`${templateKey}_subject`],
+        [`${templateKey}_body`]: defaultTemplates[`${templateKey}_body`]
+      }));
+    }
+  };
+
   const handleChange = (field, value) => {
     setSettings(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleTemplateChange = (field, value) => {
+    setTemplates(prev => ({ ...prev, [field]: value }));
   };
 
   if (loading) {
@@ -129,6 +206,32 @@ function EmailSettings() {
         <p className="text-gray-600 mt-1">Configure email notifications for appointments</p>
       </div>
 
+      {/* Tabs */}
+      <div className="mb-6 border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'settings'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Settings
+          </button>
+          <button
+            onClick={() => setActiveTab('templates')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'templates'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Email Templates
+          </button>
+        </nav>
+      </div>
+
       {message && (
         <div className={`mb-6 px-4 py-3 rounded-lg ${
           message.type === 'success'
@@ -139,6 +242,8 @@ function EmailSettings() {
         </div>
       )}
 
+      {/* Settings Tab */}
+      {activeTab === 'settings' && (
       <div className="space-y-6">
         {/* Enable Toggle */}
         <div>
@@ -345,12 +450,100 @@ function EmailSettings() {
         </div>
       </div>
 
-      {/* Save Button */}
-      <div className="mt-8 pt-6 border-t border-gray-200">
-        <PrimaryButton onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving...' : 'Save Settings'}
-        </PrimaryButton>
+        {/* Save Button */}
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <PrimaryButton onClick={handleSaveSettings} disabled={saving}>
+            {saving ? 'Saving...' : 'Save Settings'}
+          </PrimaryButton>
+        </div>
       </div>
+      )}
+
+      {/* Templates Tab */}
+      {activeTab === 'templates' && (
+        <div className="space-y-6">
+          {/* Template Selector */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="md:col-span-1">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Template Type</h3>
+              <div className="space-y-1">
+                {templateTypes.map((type) => (
+                  <button
+                    key={type.key}
+                    onClick={() => setSelectedTemplate(type.key)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                      selectedTemplate === type.key
+                        ? 'bg-blue-100 text-blue-700 font-medium'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Template Editor */}
+            <div className="md:col-span-3">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {templateTypes.find(t => t.key === selectedTemplate)?.label}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {templateTypes.find(t => t.key === selectedTemplate)?.description}
+                  </p>
+                </div>
+                <SecondaryButton onClick={() => handleResetTemplate(selectedTemplate)}>
+                  Reset to Default
+                </SecondaryButton>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <FormLabel>Subject Line</FormLabel>
+                  <input
+                    type="text"
+                    value={templates[`${selectedTemplate}_subject`] || ''}
+                    onChange={(e) => handleTemplateChange(`${selectedTemplate}_subject`, e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50"
+                  />
+                </div>
+
+                <div>
+                  <FormLabel>Email Body</FormLabel>
+                  <textarea
+                    value={templates[`${selectedTemplate}_body`] || ''}
+                    onChange={(e) => handleTemplateChange(`${selectedTemplate}_body`, e.target.value)}
+                    rows={12}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 font-mono text-sm"
+                  />
+                </div>
+
+                {/* Available Variables */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Available Variables</h4>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {availableVariables.map((v) => (
+                      <div key={v.var} className="flex items-start">
+                        <code className="bg-gray-200 px-1 py-0.5 rounded text-blue-700 mr-2 whitespace-nowrap">{v.var}</code>
+                        <span className="text-gray-600">{v.desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Save Button */}
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <PrimaryButton onClick={handleSaveTemplates} disabled={saving}>
+              {saving ? 'Saving...' : 'Save Templates'}
+            </PrimaryButton>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

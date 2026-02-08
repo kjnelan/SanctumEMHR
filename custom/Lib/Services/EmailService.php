@@ -19,6 +19,7 @@ class EmailService
 {
     private Database $db;
     private array $settings;
+    private array $templates;
     private bool $enabled;
 
     public function __construct(?Database $db = null)
@@ -49,13 +50,30 @@ class EmailService
             'notify_provider_on_modified' => true
         ];
 
+        $this->templates = [];
+
         try {
             $sql = "SELECT setting_key, setting_value FROM system_settings WHERE setting_key LIKE 'email.%'";
             $rows = $this->db->queryAll($sql);
 
             foreach ($rows as $row) {
-                $key = str_replace('email.', '', $row['setting_key']);
-                $this->settings[$key] = $row['setting_value'];
+                $key = $row['setting_key'];
+
+                // Handle templates (custom templates take priority over defaults)
+                if (strpos($key, 'email.template_') === 0) {
+                    $templateKey = str_replace('email.template_', '', $key);
+                    $this->templates[$templateKey] = $row['setting_value'];
+                } elseif (strpos($key, 'email.default_template_') === 0) {
+                    $templateKey = str_replace('email.default_template_', '', $key);
+                    // Only use default if custom not already set
+                    if (!isset($this->templates[$templateKey])) {
+                        $this->templates[$templateKey] = $row['setting_value'];
+                    }
+                } else {
+                    // Regular settings
+                    $settingKey = str_replace('email.', '', $key);
+                    $this->settings[$settingKey] = $row['setting_value'];
+                }
             }
 
             $this->enabled = filter_var($this->settings['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
@@ -63,6 +81,69 @@ class EmailService
             error_log("EmailService: Failed to load settings - " . $e->getMessage());
             $this->enabled = false;
         }
+    }
+
+    /**
+     * Get template with variable substitution
+     */
+    private function getTemplateContent(string $templateKey, array $variables): array
+    {
+        $subject = $this->templates[$templateKey . '_subject'] ?? '';
+        $body = $this->templates[$templateKey . '_body'] ?? '';
+
+        // Substitute variables
+        foreach ($variables as $key => $value) {
+            $placeholder = '{{' . $key . '}}';
+            $subject = str_replace($placeholder, $value, $subject);
+            $body = str_replace($placeholder, $value, $body);
+        }
+
+        return ['subject' => $subject, 'body' => $body];
+    }
+
+    /**
+     * Convert plain text body to HTML email
+     */
+    private function textToHtml(string $text, string $headerTitle, string $headerColor): string
+    {
+        // Escape HTML entities and convert newlines to <br>
+        $htmlBody = nl2br(htmlspecialchars($text, ENT_QUOTES, 'UTF-8'));
+
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>$headerTitle</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 40px 20px;">
+                <table role="presentation" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    <tr>
+                        <td style="padding: 32px 40px; background: $headerColor; border-radius: 12px 12px 0 0;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">$headerTitle</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 40px;">
+                            <div style="color: #374151; font-size: 16px; line-height: 1.8;">$htmlBody</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 24px 40px; background-color: #f9fafb; border-radius: 0 0 12px 12px; border-top: 1px solid #e5e7eb;">
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">This is an automated message from SanctumEMHR. Please do not reply directly to this email.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+HTML;
     }
 
     /**
@@ -135,6 +216,28 @@ class EmailService
     }
 
     /**
+     * Build variables array for template substitution
+     */
+    private function buildTemplateVariables(array $appointment, array $client, array $provider, string $cancellationReason = ''): array
+    {
+        $providerName = trim(($provider['first_name'] ?? '') . ' ' . ($provider['last_name'] ?? ''));
+        if (!empty($provider['title'])) {
+            $providerName .= ', ' . $provider['title'];
+        }
+
+        return [
+            'client_name' => trim(($client['first_name'] ?? '') . ' ' . ($client['last_name'] ?? '')),
+            'provider_name' => $providerName,
+            'appointment_date' => date('l, F j, Y', strtotime($appointment['eventDate'])),
+            'appointment_time' => date('g:i A', strtotime($appointment['startTime'])),
+            'duration' => (string)intval($appointment['duration'] / 60),
+            'appointment_type' => $appointment['categoryName'] ?? 'Appointment',
+            'practice_name' => $this->settings['from_name'] ?? 'SanctumEMHR',
+            'cancellation_reason' => $cancellationReason ? "Reason: $cancellationReason" : ''
+        ];
+    }
+
+    /**
      * Send new appointment notification to client
      */
     public function sendClientAppointmentNotification(array $appointment, array $client, array $provider): bool
@@ -148,18 +251,13 @@ class EmailService
             return false;
         }
 
-        $clientName = trim(($client['first_name'] ?? '') . ' ' . ($client['last_name'] ?? ''));
-        $providerName = trim(($provider['first_name'] ?? '') . ' ' . ($provider['last_name'] ?? ''));
-        $providerTitle = $provider['title'] ?? '';
+        $variables = $this->buildTemplateVariables($appointment, $client, $provider);
+        $template = $this->getTemplateContent('client_confirmation', $variables);
 
-        $appointmentDate = date('l, F j, Y', strtotime($appointment['eventDate']));
-        $appointmentTime = date('g:i A', strtotime($appointment['startTime']));
-        $duration = intval($appointment['duration'] / 60);
+        $headerColor = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+        $htmlBody = $this->textToHtml($template['body'], 'Appointment Confirmation', $headerColor);
 
-        $subject = "Appointment Confirmation - $appointmentDate";
-        $htmlBody = $this->getEmailTemplate('confirmation', $clientName, $providerName, $providerTitle, $appointmentDate, $appointmentTime, $duration, $appointment['categoryName'] ?? 'Appointment', 'client');
-
-        return $this->send($clientEmail, $subject, $htmlBody);
+        return $this->send($clientEmail, $template['subject'], $htmlBody, $template['body']);
     }
 
     /**
@@ -176,17 +274,13 @@ class EmailService
             return false;
         }
 
-        $clientName = trim(($client['first_name'] ?? '') . ' ' . ($client['last_name'] ?? ''));
-        $providerName = trim(($provider['first_name'] ?? '') . ' ' . ($provider['last_name'] ?? ''));
+        $variables = $this->buildTemplateVariables($appointment, $client, $provider);
+        $template = $this->getTemplateContent('provider_confirmation', $variables);
 
-        $appointmentDate = date('l, F j, Y', strtotime($appointment['eventDate']));
-        $appointmentTime = date('g:i A', strtotime($appointment['startTime']));
-        $duration = intval($appointment['duration'] / 60);
+        $headerColor = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+        $htmlBody = $this->textToHtml($template['body'], 'New Appointment', $headerColor);
 
-        $subject = "New Appointment Scheduled - $clientName on $appointmentDate";
-        $htmlBody = $this->getEmailTemplate('confirmation', $clientName, $providerName, '', $appointmentDate, $appointmentTime, $duration, $appointment['categoryName'] ?? 'Appointment', 'provider');
-
-        return $this->send($providerEmail, $subject, $htmlBody);
+        return $this->send($providerEmail, $template['subject'], $htmlBody, $template['body']);
     }
 
     /**
@@ -203,18 +297,13 @@ class EmailService
             return false;
         }
 
-        $clientName = trim(($client['first_name'] ?? '') . ' ' . ($client['last_name'] ?? ''));
-        $providerName = trim(($provider['first_name'] ?? '') . ' ' . ($provider['last_name'] ?? ''));
-        $providerTitle = $provider['title'] ?? '';
+        $variables = $this->buildTemplateVariables($appointment, $client, $provider, $reason);
+        $template = $this->getTemplateContent('client_cancellation', $variables);
 
-        $appointmentDate = date('l, F j, Y', strtotime($appointment['eventDate']));
-        $appointmentTime = date('g:i A', strtotime($appointment['startTime']));
-        $duration = intval($appointment['duration'] / 60);
+        $headerColor = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+        $htmlBody = $this->textToHtml($template['body'], 'Appointment Cancelled', $headerColor);
 
-        $subject = "Appointment Cancelled - $appointmentDate";
-        $htmlBody = $this->getEmailTemplate('cancellation', $clientName, $providerName, $providerTitle, $appointmentDate, $appointmentTime, $duration, $appointment['categoryName'] ?? 'Appointment', 'client', $reason);
-
-        return $this->send($clientEmail, $subject, $htmlBody);
+        return $this->send($clientEmail, $template['subject'], $htmlBody, $template['body']);
     }
 
     /**
@@ -231,17 +320,13 @@ class EmailService
             return false;
         }
 
-        $clientName = trim(($client['first_name'] ?? '') . ' ' . ($client['last_name'] ?? ''));
-        $providerName = trim(($provider['first_name'] ?? '') . ' ' . ($provider['last_name'] ?? ''));
+        $variables = $this->buildTemplateVariables($appointment, $client, $provider, $reason);
+        $template = $this->getTemplateContent('provider_cancellation', $variables);
 
-        $appointmentDate = date('l, F j, Y', strtotime($appointment['eventDate']));
-        $appointmentTime = date('g:i A', strtotime($appointment['startTime']));
-        $duration = intval($appointment['duration'] / 60);
+        $headerColor = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+        $htmlBody = $this->textToHtml($template['body'], 'Appointment Cancelled', $headerColor);
 
-        $subject = "Appointment Cancelled - $clientName on $appointmentDate";
-        $htmlBody = $this->getEmailTemplate('cancellation', $clientName, $providerName, '', $appointmentDate, $appointmentTime, $duration, $appointment['categoryName'] ?? 'Appointment', 'provider', $reason);
-
-        return $this->send($providerEmail, $subject, $htmlBody);
+        return $this->send($providerEmail, $template['subject'], $htmlBody, $template['body']);
     }
 
     /**
@@ -258,18 +343,13 @@ class EmailService
             return false;
         }
 
-        $clientName = trim(($client['first_name'] ?? '') . ' ' . ($client['last_name'] ?? ''));
-        $providerName = trim(($provider['first_name'] ?? '') . ' ' . ($provider['last_name'] ?? ''));
-        $providerTitle = $provider['title'] ?? '';
+        $variables = $this->buildTemplateVariables($appointment, $client, $provider);
+        $template = $this->getTemplateContent('client_modification', $variables);
 
-        $appointmentDate = date('l, F j, Y', strtotime($appointment['eventDate']));
-        $appointmentTime = date('g:i A', strtotime($appointment['startTime']));
-        $duration = intval($appointment['duration'] / 60);
+        $headerColor = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+        $htmlBody = $this->textToHtml($template['body'], 'Appointment Updated', $headerColor);
 
-        $subject = "Appointment Updated - $appointmentDate";
-        $htmlBody = $this->getEmailTemplate('modification', $clientName, $providerName, $providerTitle, $appointmentDate, $appointmentTime, $duration, $appointment['categoryName'] ?? 'Appointment', 'client');
-
-        return $this->send($clientEmail, $subject, $htmlBody);
+        return $this->send($clientEmail, $template['subject'], $htmlBody, $template['body']);
     }
 
     /**
@@ -286,130 +366,13 @@ class EmailService
             return false;
         }
 
-        $clientName = trim(($client['first_name'] ?? '') . ' ' . ($client['last_name'] ?? ''));
-        $providerName = trim(($provider['first_name'] ?? '') . ' ' . ($provider['last_name'] ?? ''));
+        $variables = $this->buildTemplateVariables($appointment, $client, $provider);
+        $template = $this->getTemplateContent('provider_modification', $variables);
 
-        $appointmentDate = date('l, F j, Y', strtotime($appointment['eventDate']));
-        $appointmentTime = date('g:i A', strtotime($appointment['startTime']));
-        $duration = intval($appointment['duration'] / 60);
+        $headerColor = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+        $htmlBody = $this->textToHtml($template['body'], 'Appointment Updated', $headerColor);
 
-        $subject = "Appointment Updated - $clientName on $appointmentDate";
-        $htmlBody = $this->getEmailTemplate('modification', $clientName, $providerName, '', $appointmentDate, $appointmentTime, $duration, $appointment['categoryName'] ?? 'Appointment', 'provider');
-
-        return $this->send($providerEmail, $subject, $htmlBody);
-    }
-
-    /**
-     * Get HTML email template
-     */
-    private function getEmailTemplate(
-        string $templateType,
-        string $clientName,
-        string $providerName,
-        string $providerTitle,
-        string $appointmentDate,
-        string $appointmentTime,
-        int $duration,
-        string $appointmentType,
-        string $recipientType,
-        string $cancellationReason = ''
-    ): string {
-        $providerDisplay = $providerName;
-        if (!empty($providerTitle)) {
-            $providerDisplay .= ", $providerTitle";
-        }
-
-        // Set colors and titles based on template type
-        switch ($templateType) {
-            case 'cancellation':
-                $headerColor = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
-                $headerTitle = 'Appointment Cancelled';
-                if ($recipientType === 'client') {
-                    $greeting = "Dear $clientName,";
-                    $intro = "Your appointment with $providerDisplay has been cancelled.";
-                } else {
-                    $greeting = "Dear $providerName,";
-                    $intro = "The appointment with $clientName has been cancelled.";
-                }
-                $footerNote = $cancellationReason ? "Reason: $cancellationReason" : "Please contact us if you have any questions.";
-                break;
-
-            case 'modification':
-                $headerColor = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
-                $headerTitle = 'Appointment Updated';
-                if ($recipientType === 'client') {
-                    $greeting = "Dear $clientName,";
-                    $intro = "Your appointment with $providerDisplay has been updated. Please see the new details below.";
-                } else {
-                    $greeting = "Dear $providerName,";
-                    $intro = "The appointment with $clientName has been updated. Please see the new details below.";
-                }
-                $footerNote = "If you need to reschedule or cancel, please contact us as soon as possible.";
-                break;
-
-            default: // confirmation
-                $headerColor = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-                $headerTitle = 'Appointment Confirmation';
-                if ($recipientType === 'client') {
-                    $greeting = "Dear $clientName,";
-                    $intro = "Your appointment has been scheduled with $providerDisplay.";
-                } else {
-                    $greeting = "Dear $providerName,";
-                    $intro = "A new appointment has been scheduled with $clientName.";
-                }
-                $footerNote = "If you need to reschedule or cancel this appointment, please contact us as soon as possible.";
-                break;
-        }
-
-        return <<<HTML
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>$headerTitle</title>
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
-    <table role="presentation" style="width: 100%; border-collapse: collapse;">
-        <tr>
-            <td style="padding: 40px 20px;">
-                <table role="presentation" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                    <tr>
-                        <td style="padding: 32px 40px; background: $headerColor; border-radius: 12px 12px 0 0;">
-                            <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">$headerTitle</h1>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 40px;">
-                            <p style="margin: 0 0 24px 0; color: #374151; font-size: 16px; line-height: 1.6;">$greeting</p>
-                            <p style="margin: 0 0 32px 0; color: #374151; font-size: 16px; line-height: 1.6;">$intro</p>
-                            <table role="presentation" style="width: 100%; background-color: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
-                                <tr>
-                                    <td style="padding: 24px;">
-                                        <table role="presentation" style="width: 100%;">
-                                            <tr><td style="padding: 8px 0;"><span style="color: #6b7280; font-size: 14px;">Date</span><br><strong style="color: #111827; font-size: 16px;">$appointmentDate</strong></td></tr>
-                                            <tr><td style="padding: 8px 0;"><span style="color: #6b7280; font-size: 14px;">Time</span><br><strong style="color: #111827; font-size: 16px;">$appointmentTime</strong></td></tr>
-                                            <tr><td style="padding: 8px 0;"><span style="color: #6b7280; font-size: 14px;">Duration</span><br><strong style="color: #111827; font-size: 16px;">$duration minutes</strong></td></tr>
-                                            <tr><td style="padding: 8px 0;"><span style="color: #6b7280; font-size: 14px;">Appointment Type</span><br><strong style="color: #111827; font-size: 16px;">$appointmentType</strong></td></tr>
-                                        </table>
-                                    </td>
-                                </tr>
-                            </table>
-                            <p style="margin: 32px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6;">$footerNote</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 24px 40px; background-color: #f9fafb; border-radius: 0 0 12px 12px; border-top: 1px solid #e5e7eb;">
-                            <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">This is an automated message from SanctumEMHR. Please do not reply directly to this email.</p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>
-HTML;
+        return $this->send($providerEmail, $template['subject'], $htmlBody, $template['body']);
     }
 
     /**
