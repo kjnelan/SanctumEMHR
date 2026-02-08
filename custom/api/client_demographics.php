@@ -112,13 +112,11 @@ try {
 
     // Get race distribution
     try {
-        // Race is stored as reference_lists IDs (uses ethnicity list_type)
+        // Race is stored as plain text in the clients table
         $raceSql = "SELECT
-                      COALESCE(rl.name, 'Not Specified') as race,
+                      COALESCE(NULLIF(TRIM(c.race), ''), 'Not Specified') as race,
                       COUNT(*) as count
                     FROM clients c
-                    LEFT JOIN reference_lists rl ON rl.id = c.race
-                        AND rl.list_type = 'ethnicity'
                     WHERE c.status = 'active'
                     GROUP BY race
                     ORDER BY count DESC
