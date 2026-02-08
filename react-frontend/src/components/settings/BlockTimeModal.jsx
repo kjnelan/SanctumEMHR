@@ -15,7 +15,7 @@ import { createPortal } from 'react-dom';
 import { createAppointment, updateAppointment, deleteAppointment } from '../../services/CalendarService';
 import { useAuth } from '../../hooks/useAuth';
 import { FormLabel } from '../FormLabel';
-import { RequiredAsterisk } from '../RequiredAsterisk';
+import { RequiredAsterisk } from '../shared/RequiredAsterisk';
 import { ErrorMessage } from '../ErrorMessage';
 
 function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, categories, block }) {

@@ -16,7 +16,7 @@ import { FormLabel } from '../FormLabel';
 import { GlassyTabs, GlassyTab } from '../shared/GlassyTabs';
 import { PrimaryButton } from '../PrimaryButton';
 import { SecondaryButton } from '../SecondaryButton';
-import { RequiredAsterisk } from '../RequiredAsterisk';
+import { RequiredAsterisk } from '../shared/RequiredAsterisk';
 import { ErrorMessage } from '../ErrorMessage';
 import { DangerButton } from '../DangerButton';
 

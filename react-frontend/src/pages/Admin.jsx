@@ -12,7 +12,7 @@
 
 import { useState } from 'react';
 import CalendarSettings from '../components/admin/CalendarSettings';
-import DocumentCategories from '../components/settings/DocumentCategories';
+import DocumentCategories from '../components/admin/DocumentCategories';
 import ReferenceLists from '../components/admin/ReferenceLists';
 import UserManagement from '../components/admin/UserManagement';
 import Facilities from '../components/admin/Facilities';

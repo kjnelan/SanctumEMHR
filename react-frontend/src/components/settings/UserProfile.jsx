@@ -15,7 +15,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { PrimaryButton } from '../PrimaryButton';
 import { FormLabel } from '../FormLabel';
-import { RequiredAsterisk } from '../RequiredAsterisk';
+import { RequiredAsterisk } from '../shared/RequiredAsterisk';
 import { ErrorMessage } from '../ErrorMessage';
 
 function UserProfile() {

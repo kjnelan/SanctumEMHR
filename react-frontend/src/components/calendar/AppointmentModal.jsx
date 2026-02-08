@@ -16,7 +16,7 @@ import { createAppointment, updateAppointment, deleteAppointment, getAppointment
 import { searchClients } from '../../services/ClientService';
 import { getSupervisees } from '../../utils/api';
 import { FormLabel } from '../FormLabel';
-import { RequiredAsterisk } from '../RequiredAsterisk';
+import { RequiredAsterisk } from '../shared/RequiredAsterisk';
 import { ErrorMessage } from '../ErrorMessage';
 import { DangerButton } from '../DangerButton';
 import { PrimaryButton } from '../PrimaryButton';

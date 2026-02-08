@@ -12,7 +12,7 @@
  */
 
 import React, { useState } from 'react';
-import { RequiredAsterisk } from '../RequiredAsterisk';
+import { RequiredAsterisk } from '../shared/RequiredAsterisk';
 
 /**
  * Props:

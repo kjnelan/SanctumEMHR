@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createClient } from '../../services/ClientService';
 import { FormLabel } from '../FormLabel';
-import { RequiredAsterisk } from '../RequiredAsterisk';
+import { RequiredAsterisk } from '../shared/RequiredAsterisk';
 
 function NewClientModal({ onClose, onClientCreated }) {
   const [formData, setFormData] = useState({

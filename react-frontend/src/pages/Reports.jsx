@@ -12,8 +12,7 @@
 
 import { useState, useEffect } from 'react';
 import { Calendar, FileText, Users, TrendingUp, UserPlus, CheckCircle, XCircle, Clock } from 'lucide-react';
-import { getClientDemographics } from '../services/ClientService';
-import { getAllReports } from '../services/ReportService';
+import { getClientDemographics, getAllReports } from '../services/ReportService';
 
 function Reports() {
   const [demographics, setDemographics] = useState({

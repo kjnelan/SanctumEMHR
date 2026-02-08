@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Meh, ChevronRight, Plus, Users } from 'lucide-react';
 import { searchClients, getClientStats, getClients } from '../services/ClientService';
-import PendingNotes from './dashboard/PendingNotes';
-import NewClientModal from './client/NewClientModal';
+import PendingNotes from '../components/dashboard/PendingNotes';
+import NewClientModal from '../components/client/NewClientModal';
 
 function Clients() {
   const navigate = useNavigate();

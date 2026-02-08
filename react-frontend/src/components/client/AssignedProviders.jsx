@@ -16,7 +16,7 @@ import { PrimaryButton } from '../PrimaryButton';
 import { SecondaryButton } from '../SecondaryButton';
 import { DangerButton } from '../DangerButton';
 import { FormLabel } from '../FormLabel';
-import { RequiredAsterisk } from '../RequiredAsterisk';
+import { RequiredAsterisk } from '../shared/RequiredAsterisk';
 import { ErrorMessage } from '../ErrorMessage';
 
 const ROLE_LABELS = {

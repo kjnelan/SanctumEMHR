@@ -16,7 +16,7 @@ import { Modal } from '../Modal';
 import { PrimaryButton } from '../PrimaryButton';
 import { SecondaryButton } from '../SecondaryButton';
 import { FormLabel } from '../FormLabel';
-import { RequiredAsterisk } from '../RequiredAsterisk';
+import { RequiredAsterisk } from '../shared/RequiredAsterisk';
 import { ErrorInline } from '../ErrorInline';
 import { ErrorMessage } from '../ErrorMessage';
 import { DangerButton } from '../DangerButton';

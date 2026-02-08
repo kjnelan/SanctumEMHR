@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AppShell from './components/layout/AppShell';
 import Greeting from './components/dashboard/Greeting';
 import StatsGrid from './components/dashboard/StatsGrid';
 import AppointmentsList from './components/dashboard/AppointmentsList';
-import Clients from './components/Clients';
-import Reports from './components/Reports';
-import Calendar from './pages/Calendar';
-import Admin from './pages/Admin';
-import Settings from './pages/Settings';
+const Clients = lazy(() => import('./pages/Clients'));
+const Reports = lazy(() => import('./pages/Reports'));
+const Calendar = lazy(() => import('./pages/Calendar'));
+const Admin = lazy(() => import('./pages/Admin'));
+const Settings = lazy(() => import('./pages/Settings'));
 import NewClientModal from './components/client/NewClientModal';
 import AppointmentModal from './components/calendar/AppointmentModal';
 import { useAuth } from './hooks/useAuth';
@@ -293,6 +293,7 @@ function Dashboard() {
         </>
       )}
 
+      <Suspense fallback={<div className="p-10 text-center text-gray-500">Loading component...</div>}>
       {activeNav === 'clients' && <Clients />}
 
       {activeNav === 'calendar' && <Calendar />}
@@ -303,6 +304,7 @@ function Dashboard() {
 
       {activeNav === 'settings' && <Settings />}
 
+      </Suspense>
       {activeNav !== 'dashboard' && activeNav !== 'clients' && activeNav !== 'calendar' && activeNav !== 'reports' && activeNav !== 'admin' && activeNav !== 'settings' && (
         <div className="backdrop-blur-2xl bg-white/40 rounded-3xl shadow-2xl border border-white/50 p-8 text-center">
           <p className="text-gray-700 text-lg font-semibold">
