@@ -83,13 +83,13 @@ try {
 
     // Get gender identity distribution
     try {
-        // SanctumEMHR stores gender_identity as list option codes, join with settings_lists
+        // SanctumEMHR stores gender_identity as reference_lists IDs
         $genderSql = "SELECT
-                        COALESCE(sl.title, 'Not Specified') as gender,
+                        COALESCE(rl.name, 'Not Specified') as gender,
                         COUNT(*) as count
                       FROM clients c
-                      LEFT JOIN settings_lists sl ON sl.option_id = c.gender_identity
-                          AND sl.list_id = 'gender_identity'
+                      LEFT JOIN reference_lists rl ON rl.id = c.gender_identity
+                          AND rl.list_type = 'gender-identity'
                       WHERE c.status = 'active'
                       GROUP BY gender
                       ORDER BY count DESC
@@ -112,13 +112,13 @@ try {
 
     // Get race distribution
     try {
-        // Race is stored as list option codes too
+        // Race is stored as reference_lists IDs (uses ethnicity list_type)
         $raceSql = "SELECT
-                      COALESCE(sl.title, 'Not Specified') as race,
+                      COALESCE(rl.name, 'Not Specified') as race,
                       COUNT(*) as count
                     FROM clients c
-                    LEFT JOIN settings_lists sl ON sl.option_id = c.race
-                        AND sl.list_id = 'race'
+                    LEFT JOIN reference_lists rl ON rl.id = c.race
+                        AND rl.list_type = 'ethnicity'
                     WHERE c.status = 'active'
                     GROUP BY race
                     ORDER BY count DESC
@@ -141,13 +141,13 @@ try {
 
     // Get ethnicity distribution
     try {
-        // Ethnicity is also stored as list option codes
+        // Ethnicity is stored as reference_lists IDs
         $ethnicitySql = "SELECT
-                          COALESCE(sl.title, 'Not Specified') as ethnicity,
+                          COALESCE(rl.name, 'Not Specified') as ethnicity,
                           COUNT(*) as count
                         FROM clients c
-                        LEFT JOIN settings_lists sl ON sl.option_id = c.ethnicity
-                            AND sl.list_id = 'ethnicity'
+                        LEFT JOIN reference_lists rl ON rl.id = c.ethnicity
+                            AND rl.list_type = 'ethnicity'
                         WHERE c.status = 'active'
                         GROUP BY ethnicity
                         ORDER BY count DESC
