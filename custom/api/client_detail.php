@@ -121,7 +121,9 @@ try {
         NULL AS name_history,
         c.preferred_name,
         c.race,
+        rl_race.name AS race_text,
         c.ethnicity,
+        rl_ethnicity.name AS ethnicity_text,
         c.primary_language AS language,
         c.needs_interpreter AS interpreter_required,
         NULL AS hipaa_notice,
@@ -155,6 +157,8 @@ try {
     LEFT JOIN reference_lists rl_gender ON rl_gender.id = c.gender_identity
     LEFT JOIN reference_lists rl_orientation ON rl_orientation.id = c.sexual_orientation
     LEFT JOIN reference_lists rl_marital ON rl_marital.id = c.marital_status
+    LEFT JOIN reference_lists rl_ethnicity ON rl_ethnicity.id = c.ethnicity AND rl_ethnicity.list_type = 'ethnicity'
+    LEFT JOIN reference_lists rl_race ON rl_race.id = c.race AND rl_race.list_type = 'ethnicity'
     WHERE c.id = ?";
 
     $patient = $db->query($patientSql, [$clientId]);

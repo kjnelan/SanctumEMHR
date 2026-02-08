@@ -426,7 +426,7 @@ function DemographicsTab({ data, onDataUpdate }) {
                     {renderField('Gender Identity', patient.gender_identity_text || patient.gender_identity)}
                     {renderField('Sexual Orientation', patient.sexual_orientation_text || patient.sexual_orientation)}
                     {renderField('Marital Status', patient.marital_status_text || patient.marital_status)}
-                    {renderField('Ethnicity', patient.ethnicity)}
+                    {renderField('Ethnicity', patient.ethnicity_text || patient.ethnicity)}
                     <div className="form-field">
                       <div className="form-field-label">S.S.</div>
                       <div className="form-field-value">{patient.ss ? '***-**-' + patient.ss.slice(-4) : ''}</div>
