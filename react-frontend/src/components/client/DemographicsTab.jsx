@@ -122,6 +122,7 @@ function DemographicsTab({ data, onDataUpdate }) {
       sexual_orientation: patient.sexual_orientation || '',
       marital_status: patient.marital_status || '',
       ethnicity: patient.ethnicity || '',
+      race: patient.race || '',
       ss: patient.ss || '',
 
       // Contact Information
@@ -401,6 +402,11 @@ function DemographicsTab({ data, onDataUpdate }) {
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.ethnicity]
                         : null
                     )}
+                    {renderField('Race', formData.race, 'race', 'text',
+                      dropdownOptions.ethnicity && dropdownOptions.ethnicity.length > 0
+                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.ethnicity]
+                        : null
+                    )}
                     <div className="form-field">
                       <div className="form-field-label">S.S.</div>
                       <input
@@ -427,6 +433,7 @@ function DemographicsTab({ data, onDataUpdate }) {
                     {renderField('Sexual Orientation', patient.sexual_orientation_text || patient.sexual_orientation)}
                     {renderField('Marital Status', patient.marital_status_text || patient.marital_status)}
                     {renderField('Ethnicity', patient.ethnicity_text || patient.ethnicity)}
+                    {renderField('Race', patient.race_text || patient.race)}
                     <div className="form-field">
                       <div className="form-field-label">S.S.</div>
                       <div className="form-field-value">{patient.ss ? '***-**-' + patient.ss.slice(-4) : ''}</div>

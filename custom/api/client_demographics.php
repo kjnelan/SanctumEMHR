@@ -112,13 +112,12 @@ try {
 
     // Get race distribution
     try {
-        // Race data is stored in the ethnicity column alongside ethnicity,
-        // using reference_lists IDs with list_type 'ethnicity'
+        // Race is stored as reference_lists IDs in clients.race column
         $raceSql = "SELECT
                       COALESCE(rl.name, 'Not Specified') as race,
                       COUNT(*) as count
                     FROM clients c
-                    LEFT JOIN reference_lists rl ON rl.id = c.ethnicity
+                    LEFT JOIN reference_lists rl ON rl.id = c.race
                         AND rl.list_type = 'ethnicity'
                     WHERE c.status = 'active'
                     GROUP BY race

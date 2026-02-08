@@ -87,6 +87,7 @@ try {
         'sexual_orientation' => 'sexual_orientation',
         'marital_status' => 'marital_status',
         'ethnicity' => 'ethnicity',
+        'race' => 'race',
         'ss' => 'ssn_encrypted',
 
         // Contact Information - Address
