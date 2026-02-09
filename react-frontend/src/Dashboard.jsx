@@ -165,7 +165,7 @@ function Dashboard() {
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-mental">
-        <div className="rounded-3xl p-8" style={{ backdropFilter: 'blur(60px) saturate(180%)', background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.4) 100%)', boxShadow: '0 8px 32px rgba(107, 154, 196, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8)', border: '1px solid rgba(255, 255, 255, 0.6)' }}>
+        <div className="sanctum-glass-main p-8">
           <div className="animate-spin rounded-full h-16 w-16 mx-auto" style={{ border: '3px solid rgba(107, 154, 196, 0.3)', borderTopColor: 'rgba(107, 154, 196, 0.9)' }}></div>
           <p className="text-label mt-4 text-center">Loading dashboard...</p>
         </div>
@@ -198,7 +198,7 @@ function Dashboard() {
               <SupervisionWidget userId={user.id} isSupervisor={user?.isSupervisor} />
 
               {/* Pending Notes Card - Your Notes + Supervisor Reviews */}
-              <div className="card-main">
+              <div className="sanctum-glass-main p-6">
               {/* Your Pending Notes Section */}
               <div className={user?.isSupervisor ? 'pb-4 border-b border-gray-200 mb-4' : ''}>
                 <div className="flex items-center justify-between mb-4">
@@ -306,7 +306,7 @@ function Dashboard() {
 
       </Suspense>
       {activeNav !== 'dashboard' && activeNav !== 'clients' && activeNav !== 'calendar' && activeNav !== 'reports' && activeNav !== 'admin' && activeNav !== 'settings' && (
-        <div className="backdrop-blur-2xl bg-white/40 rounded-3xl shadow-2xl border border-white/50 p-8 text-center">
+        <div className="sanctum-glass-main p-8 text-center">
           <p className="text-gray-700 text-lg font-semibold">
             {activeNav.charAt(0).toUpperCase() + activeNav.slice(1)} - Coming Soon
           </p>

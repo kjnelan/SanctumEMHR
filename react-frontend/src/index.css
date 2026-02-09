@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  /* --- ADD THESE THREE LINES TO YOUR THEME --- */
+  --background-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.4) 100%);
+  --blur-glass: blur(60px) saturate(180%);
+  --shadow-glass: 0 8px 32px rgba(107, 154, 196, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
 :root {
   --mental-blue: #6B9AC4;
   --mental-sage: #A8C5A5;
@@ -259,4 +268,31 @@
   .section-header-orange { @apply text-lg font-semibold mb-4 text-orange-700; }
   .section-header-red { @apply text-lg font-semibold mb-4 text-red-700; }
   .section-header-purple { @apply text-lg font-semibold mb-4 text-purple-700; }
+}
+
+/* --- NEW STUFF AT THE VERY END --- */
+
+@layer components {
+  /* LEVEL 1: Main Containers (Login Box / Dashboard Main) */
+  .sanctum-glass-main {
+    backdrop-filter: blur(60px) saturate(180%);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.4) 100%);
+    box-shadow: 0 8px 32px rgba(107, 154, 196, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    @apply border border-white/60 rounded-3xl;
+  }
+
+  /* LEVEL 2: Inner Elements (HIPAA Badge / Form Cards) */
+  .sanctum-glass-card {
+    backdrop-filter: blur(40px);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.6) 100%);
+    box-shadow: 0 4px 16px rgba(107, 154, 196, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    @apply border border-white/70 rounded-2xl;
+  }
+
+  /* LEVEL 3: Interactive Elements (Username/Password Inputs) */
+  .sanctum-glass-input {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.4);
+    @apply border border-white/50 rounded-xl focus:bg-white/60 transition-all;
+  }
 }

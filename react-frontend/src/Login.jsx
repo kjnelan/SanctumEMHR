@@ -86,12 +86,12 @@ function Login() {
 
       <div className="relative z-10 w-full max-w-6xl mx-4">
         {/* Two-column layout */}
-        <div className="rounded-3xl overflow-hidden" style={{ backdropFilter: 'blur(60px) saturate(180%)', background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.4) 100%)', boxShadow: '0 8px 32px rgba(107, 154, 196, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8)', border: '1px solid rgba(255, 255, 255, 0.6)' }}>
+        <div className="rounded-3xl overflow-hidden sanctum-glass-main" >
           <div className="grid md:grid-cols-2 gap-8 items-center">
 
             {/* Left side - Logo and branding */}
             <div className="p-8 flex flex-col items-center justify-center">
-              <div className="w-full max-w-lg rounded-2xl p-6" style={{ backdropFilter: 'blur(40px)', background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%)', boxShadow: '0 4px 16px rgba(107, 154, 196, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)', border: '1px solid rgba(255, 255, 255, 0.3)' }}>
+              <div className="w-full max-w-lg rounded-2xl p-6 sanctum-glass-card">
                 {branding.logoUrl ? (
                   <img src={branding.logoUrl} alt={`${branding.companyName} logo`} className="w-full h-auto object-contain" />
                 ) : (
@@ -148,7 +148,7 @@ function Login() {
           </form>
 
               <div className="mt-6 text-center">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border" style={{ background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.6) 100%)', backdropFilter: 'blur(40px)', borderColor: 'rgba(255, 255, 255, 0.7)', boxShadow: '0 2px 8px rgba(107, 154, 196, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9)' }}>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border sanctum-glass-card">
                   <svg className="w-4 h-4 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                   </svg>
@@ -158,16 +158,13 @@ function Login() {
 
               <div className="mt-4 text-center">
                 <p className="text-gray-600 text-xs">Version 0.3.0-alpha</p>
+<footer className="mt-8 text-center">
+  <p className="text-blue-900/60 text-sm font-medium mb-4">
+    © {new Date().getFullYear()} SanctumEMHR. All rights reserved.<br />Proprietary and Confidential
+  </p>
+</footer>
               </div>
 
-              <div className="mt-6 text-center border-t border-white/30 pt-4">
-                <p className="text-gray-600 text-xs">
-                  SanctumEMHR is Copyright © 2026 Sacred Wandering
-                </p>
-                <p className="text-gray-500 text-xs mt-1">
-                  Proprietary and Confidential
-                </p>
-              </div>
             </div>
             {/* End right side */}
 
