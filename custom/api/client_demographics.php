@@ -118,7 +118,7 @@ try {
                       COUNT(*) as count
                     FROM clients c
                     LEFT JOIN reference_lists rl ON rl.id = c.race
-                        AND rl.list_type = 'ethnicity'
+                        AND rl.list_type = 'race'
                     WHERE c.status = 'active'
                     GROUP BY race
                     ORDER BY count DESC

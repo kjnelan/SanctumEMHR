@@ -102,6 +102,7 @@ try {
         'marital-status',
         'client-status',
         'ethnicity',
+        'race',
         'insurance-type',
         'referral-source',
         'treatment-modality',

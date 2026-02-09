@@ -158,7 +158,7 @@ try {
     LEFT JOIN reference_lists rl_orientation ON rl_orientation.id = c.sexual_orientation
     LEFT JOIN reference_lists rl_marital ON rl_marital.id = c.marital_status
     LEFT JOIN reference_lists rl_ethnicity ON rl_ethnicity.id = c.ethnicity AND rl_ethnicity.list_type = 'ethnicity'
-    LEFT JOIN reference_lists rl_race ON rl_race.id = c.race AND rl_race.list_type = 'ethnicity'
+    LEFT JOIN reference_lists rl_race ON rl_race.id = c.race AND rl_race.list_type = 'race'
     WHERE c.id = ?";
 
     $patient = $db->query($patientSql, [$clientId]);

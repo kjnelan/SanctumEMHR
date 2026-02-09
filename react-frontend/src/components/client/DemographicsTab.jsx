@@ -21,7 +21,8 @@ function DemographicsTab({ data, onDataUpdate }) {
     'gender-identity',
     'marital-status',
     'client-status',
-    'ethnicity'
+    'ethnicity',
+    'race'
   ]);
 
   // Load reference lists into dropdown options when they're available
@@ -33,7 +34,8 @@ function DemographicsTab({ data, onDataUpdate }) {
         gender_identity: referenceLists['gender-identity'] || [],
         marital_status: referenceLists['marital-status'] || [],
         status: referenceLists['client-status'] || [],
-        ethnicity: referenceLists['ethnicity'] || []
+        ethnicity: referenceLists['ethnicity'] || [],
+        race: referenceLists['race'] || []
       });
     }
   }, [referenceLists, listsLoading]);
@@ -403,8 +405,8 @@ function DemographicsTab({ data, onDataUpdate }) {
                         : null
                     )}
                     {renderField('Race', formData.race, 'race', 'text',
-                      dropdownOptions.ethnicity && dropdownOptions.ethnicity.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.ethnicity]
+                      dropdownOptions.race && dropdownOptions.race.length > 0
+                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.race]
                         : null
                     )}
                     <div className="form-field">
