@@ -608,7 +608,7 @@ function CounselingRoomsTab() {
       setFormError('');
 
       const method = showEditModal ? 'PUT' : 'POST';
-      const response = await fetch('/custom/api/rooms.php', {
+      const response = await fetch('/custom/api/settings_lists.php?list_id=rooms', {
         method,
         headers: {
           'Content-Type': 'application/json'
@@ -641,7 +641,7 @@ function CounselingRoomsTab() {
     }
 
     try {
-      const response = await fetch(`/custom/api/rooms.php?option_id=${optionId}`, {
+      const response = await fetch(`/custom/api/settings_lists.php?list_id=rooms&option_id=${optionId}`, {
         method: 'DELETE',
         credentials: 'include'
       });
