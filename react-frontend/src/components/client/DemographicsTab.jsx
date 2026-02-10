@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { updateDemographics, getRelatedPersons, saveRelatedPerson, deleteRelatedPerson } from '../../services/ClientService';
 import { getListOptions, getProviders } from '../../utils/api';
+import { portalAdminEnable, portalAdminResetPassword, portalAdminRevoke } from '../../services/PortalService';
 import useReferenceLists from '../../hooks/useReferenceLists';
 import { RequiredAsterisk } from '../shared/RequiredAsterisk';
 
@@ -616,28 +617,12 @@ function DemographicsTab({ data, onDataUpdate }) {
 
 
           {/* Portal Settings Section */}
-          <div className="card-main">
-            <h2 className="card-header">Portal Settings</h2>
-            <div className="card-inner">
-              <div className="grid grid-cols-2 gap-3">
-                {isEditing ? (
-                  <>
-                    {renderField('Allow Client Portal', formData.allow_patient_portal, 'allow_patient_portal', 'text', [
-                      { value: '', label: 'Select...' },
-                      { value: 'NO', label: 'NO' },
-                      { value: 'YES', label: 'YES' }
-                    ])}
-                    {renderField('CMS Portal Login', formData.cmsportal_login, 'cmsportal_login')}
-                  </>
-                ) : (
-                  <>
-                    {renderField('Allow Client Portal', patient.allow_patient_portal)}
-                    {renderField('CMS Portal Login', patient.cmsportal_login)}
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
+          <PortalSettingsCard
+            clientId={patient.id}
+            portalAccess={patient.allow_patient_portal}
+            portalUsername={patient.cmsportal_login}
+            onUpdate={onDataUpdate}
+          />
 
         </div>
       </div>
@@ -869,6 +854,192 @@ function GuardianModal({ guardian, stateOptions, onSave, onCancel }) {
             </div>
           </form>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Portal Settings Card - Manages client portal access from staff side
+function PortalSettingsCard({ clientId, portalAccess, portalUsername, onUpdate }) {
+  const [showSetup, setShowSetup] = useState(false);
+  const [showReset, setShowReset] = useState(false);
+  const [username, setUsername] = useState(portalUsername || '');
+  const [tempPassword, setTempPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const isEnabled = portalAccess === 'YES' || portalAccess === '1' || portalAccess === 1;
+
+  const handleEnable = async () => {
+    if (!username.trim() || !tempPassword.trim()) {
+      setError('Username and temporary password are required');
+      return;
+    }
+    if (tempPassword.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      await portalAdminEnable(clientId, username.trim(), tempPassword);
+      setSuccess('Portal access enabled. Client can log in at /mycare with the credentials provided.');
+      setShowSetup(false);
+      setTempPassword('');
+      if (onUpdate) onUpdate();
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!tempPassword.trim() || tempPassword.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      await portalAdminResetPassword(clientId, tempPassword);
+      setSuccess('Portal password has been reset. Client will be required to change it on next login.');
+      setShowReset(false);
+      setTempPassword('');
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRevoke = async () => {
+    if (!confirm('Are you sure you want to revoke portal access for this client? They will no longer be able to log in.')) return;
+    setLoading(true);
+    setError('');
+    try {
+      await portalAdminRevoke(clientId);
+      setSuccess('Portal access has been revoked.');
+      if (onUpdate) onUpdate();
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="card-main">
+      <h2 className="card-header">Client Portal</h2>
+
+      {success && <div className="success-message">{success}</div>}
+      {error && <div className="error-message">{error}</div>}
+
+      <div className="card-inner">
+        {isEnabled ? (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="badge-sm badge-light-success">Portal Enabled</span>
+                <p className="text-sm text-gray-600 mt-2">Username: <span className="font-mono font-semibold">{portalUsername}</span></p>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setShowReset(true); setShowSetup(false); setError(''); setTempPassword(''); }}
+                className="btn-solid btn-solid-blue text-xs px-3 py-1.5"
+                disabled={loading}
+              >
+                Reset Password
+              </button>
+              <button
+                onClick={handleRevoke}
+                className="btn-solid btn-solid-gray text-xs px-3 py-1.5"
+                disabled={loading}
+              >
+                Revoke Access
+              </button>
+            </div>
+
+            {showReset && (
+              <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm font-semibold text-gray-700 mb-2">Set New Temporary Password</p>
+                <input
+                  type="text"
+                  value={tempPassword}
+                  onChange={(e) => setTempPassword(e.target.value)}
+                  placeholder="Temporary password (min 8 chars)"
+                  className="input-md mb-2"
+                />
+                <p className="text-xs text-gray-500 mb-2">Client will be required to change this on next login.</p>
+                <div className="flex gap-2">
+                  <button onClick={handleResetPassword} disabled={loading} className="btn-solid btn-solid-blue text-xs px-3 py-1.5">
+                    {loading ? 'Saving...' : 'Reset Password'}
+                  </button>
+                  <button onClick={() => setShowReset(false)} className="btn-solid btn-solid-gray text-xs px-3 py-1.5">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <span className="badge-sm badge-light-neutral">Portal Not Enabled</span>
+              <p className="text-sm text-gray-500 mt-2">Enable portal access to allow this client to view appointments and update their profile online.</p>
+            </div>
+
+            {!showSetup ? (
+              <button
+                onClick={() => { setShowSetup(true); setError(''); }}
+                className="btn-solid btn-solid-green text-xs px-3 py-1.5"
+              >
+                Enable Portal Access
+              </button>
+            ) : (
+              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-sm font-semibold text-gray-700 mb-3">Set Up Portal Credentials</p>
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600">Portal Username</label>
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="e.g. jsmith or client's email"
+                      className="input-md"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600">Temporary Password</label>
+                    <input
+                      type="text"
+                      value={tempPassword}
+                      onChange={(e) => setTempPassword(e.target.value)}
+                      placeholder="Min 8 characters"
+                      className="input-md"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Client will be required to change this on first login.</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <button onClick={handleEnable} disabled={loading} className="btn-solid btn-solid-green text-xs px-3 py-1.5">
+                    {loading ? 'Enabling...' : 'Enable Access'}
+                  </button>
+                  <button onClick={() => setShowSetup(false)} className="btn-solid btn-solid-gray text-xs px-3 py-1.5">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
