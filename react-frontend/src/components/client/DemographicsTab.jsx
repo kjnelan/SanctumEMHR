@@ -618,7 +618,7 @@ function DemographicsTab({ data, onDataUpdate }) {
 
           {/* Portal Settings Section */}
           <PortalSettingsCard
-            clientId={patient.id}
+            clientId={patient.pid}
             portalAccess={patient.allow_patient_portal}
             portalUsername={patient.cmsportal_login}
             onUpdate={onDataUpdate}
