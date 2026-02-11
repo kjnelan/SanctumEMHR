@@ -38,7 +38,7 @@ function SummaryTab({ data }) {
     );
   }
 
-  const { patient, upcomingAppointments, recentAppointments, problems, medications, encounters } = data;
+  const { client, upcomingAppointments, recentAppointments, problems, medications, encounters } = data;
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
@@ -86,33 +86,33 @@ function SummaryTab({ data }) {
               <div className="space-y-3">
                 <div>
                   <span className="field-label">Email:</span>
-                  <div className="field-value">{patient.email || 'Not provided'}</div>
+                  <div className="field-value">{client.email || 'Not provided'}</div>
                 </div>
                 <div>
                   <span className="field-label">Cell Phone:</span>
-                  <div className="field-value">{patient.phone_cell || 'Not provided'}</div>
+                  <div className="field-value">{client.phone_cell || 'Not provided'}</div>
                 </div>
                 <div>
                   <span className="field-label">Home Phone:</span>
-                  <div className="field-value">{patient.phone_home || 'Not provided'}</div>
+                  <div className="field-value">{client.phone_home || 'Not provided'}</div>
                 </div>
                 <div>
                   <span className="field-label">Address:</span>
                   <div className="field-value">
-                    {patient.street && patient.city ? (
+                    {client.street && client.city ? (
                       <>
-                        {patient.street}<br />
-                        {patient.city}, {patient.state} {patient.postal_code}
+                        {client.street}<br />
+                        {client.city}, {client.state} {client.postal_code}
                       </>
                     ) : (
                       'Not provided'
                     )}
                   </div>
                 </div>
-                {patient.contact_relationship && (
+                {client.contact_relationship && (
                   <div>
                     <span className="field-label">Emergency Contact:</span>
-                    <div className="field-value">{patient.contact_relationship}</div>
+                    <div className="field-value">{client.contact_relationship}</div>
                   </div>
                 )}
               </div>
@@ -166,7 +166,7 @@ function SummaryTab({ data }) {
           <div className="card-main">
             <h2 className="card-header">Care Team</h2>
             <AssignedProviders
-              clientId={patient.pid}
+              clientId={client.pid}
               isAdmin={currentUser?.admin}
               providers={providers}
             />
@@ -264,7 +264,7 @@ function SummaryTab({ data }) {
           <div className="space-y-4">
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <p className="alert-header text-gray-700">Portal Status</p>
-              <p className="text-caption text-gray-600">Patient Portal Not Enabled. Admin Can Enable Patient Portal.</p>
+              <p className="text-caption text-gray-600">Client Portal Not Enabled. Admin Can Enable Client Portal.</p>
             </div>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="alert-header text-gray-700 mb-2">Credentials</p>

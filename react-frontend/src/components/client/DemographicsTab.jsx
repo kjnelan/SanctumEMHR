@@ -79,9 +79,9 @@ function DemographicsTab({ data, onDataUpdate }) {
   // Load guardians for minors
   useEffect(() => {
     const loadGuardians = async () => {
-      if (data && data.patient && data.patient.age < 18) {
+      if (data && data.client && data.client.age < 18) {
         try {
-          const response = await getRelatedPersons(data.patient.pid);
+          const response = await getRelatedPersons(data.client.pid);
           setGuardians(response.related_persons || []);
         } catch (err) {
           console.error('Failed to load guardians:', err);
@@ -108,53 +108,53 @@ function DemographicsTab({ data, onDataUpdate }) {
     );
   }
 
-  const { patient } = data;
+  const { client } = data;
 
   const handleEdit = () => {
-    // Initialize form data with current patient data
+    // Initialize form data with current client data
     // Only include fields that exist in the SanctumEMHR database schema
     setFormData({
       // Personal Information
-      fname: patient.fname || '',
-      mname: patient.mname || '',
-      lname: patient.lname || '',
-      preferred_name: patient.preferred_name || '',
-      DOB: patient.DOB || '',
-      sex: patient.sex || '',
-      gender_identity: patient.gender_identity || '',
-      sexual_orientation: patient.sexual_orientation || '',
-      marital_status: patient.marital_status || '',
-      ethnicity: patient.ethnicity || '',
-      race: patient.race || '',
-      ss: patient.ss || '',
+      fname: client.fname || '',
+      mname: client.mname || '',
+      lname: client.lname || '',
+      preferred_name: client.preferred_name || '',
+      DOB: client.DOB || '',
+      sex: client.sex || '',
+      gender_identity: client.gender_identity || '',
+      sexual_orientation: client.sexual_orientation || '',
+      marital_status: client.marital_status || '',
+      ethnicity: client.ethnicity || '',
+      race: client.race || '',
+      ss: client.ss || '',
 
       // Contact Information
-      street: patient.street || '',
-      street_line_2: patient.street_line_2 || '',
-      city: patient.city || '',
-      state: patient.state || '',
-      postal_code: patient.postal_code || '',
-      county: patient.county || '',
-      contact_relationship: patient.contact_relationship || '',
-      phone_contact: patient.phone_contact || '',
-      phone_home: patient.phone_home || '',
-      phone_cell: patient.phone_cell || '',
-      phone_biz: patient.phone_biz || '',
-      email: patient.email || '',
+      street: client.street || '',
+      street_line_2: client.street_line_2 || '',
+      city: client.city || '',
+      state: client.state || '',
+      postal_code: client.postal_code || '',
+      county: client.county || '',
+      contact_relationship: client.contact_relationship || '',
+      phone_contact: client.phone_contact || '',
+      phone_home: client.phone_home || '',
+      phone_cell: client.phone_cell || '',
+      phone_biz: client.phone_biz || '',
+      email: client.email || '',
 
       // Client Status
-      status: patient.status || patient.care_team_status || 'active',
+      status: client.status || client.care_team_status || 'active',
 
       // Payment Type
-      payment_type: patient.payment_type || 'insurance',
-      custom_session_fee: patient.custom_session_fee || '',
+      payment_type: client.payment_type || 'insurance',
+      custom_session_fee: client.custom_session_fee || '',
 
       // Clinician Information
-      provider_id: patient.provider_id || patient.providerID || '',
+      provider_id: client.provider_id || client.providerID || '',
 
       // Portal Settings
-      allow_patient_portal: patient.allow_patient_portal || '',
-      cmsportal_login: patient.cmsportal_login || ''
+      portal_access: client.portal_access || '',
+      portal_username: client.portal_username || ''
     });
     setIsEditing(true);
     setError(null);
@@ -204,7 +204,7 @@ function DemographicsTab({ data, onDataUpdate }) {
       }
 
       // Call API to update demographics
-      await updateDemographics(patient.pid, formData);
+      await updateDemographics(client.pid, formData);
 
       // Refresh the data
       if (onDataUpdate) {
@@ -239,7 +239,7 @@ function DemographicsTab({ data, onDataUpdate }) {
     try {
       await deleteRelatedPerson(guardian.relation_id);
       // Reload guardians
-      const response = await getRelatedPersons(patient.pid);
+      const response = await getRelatedPersons(client.pid);
       setGuardians(response.related_persons || []);
     } catch (err) {
       setError(err.message || 'Failed to delete guardian');
@@ -249,12 +249,12 @@ function DemographicsTab({ data, onDataUpdate }) {
   const handleSaveGuardian = async (guardianData) => {
     try {
       await saveRelatedPerson({
-        patient_id: patient.pid,
+        client_id: client.pid,
         person_id: editingGuardian?.id,
         ...guardianData
       });
       // Reload guardians
-      const response = await getRelatedPersons(patient.pid);
+      const response = await getRelatedPersons(client.pid);
       setGuardians(response.related_persons || []);
       setShowGuardianModal(false);
       setEditingGuardian(null);
@@ -424,22 +424,22 @@ function DemographicsTab({ data, onDataUpdate }) {
                   </>
                 ) : (
                   <>
-                    {renderField('First Name', patient.fname)}
-                    {renderField('Middle Name', patient.mname)}
-                    {renderField('Last Name', patient.lname)}
-                    {renderField('Preferred Name', patient.preferred_name)}
-                    {renderField('DOB', formatDate(patient.DOB))}
-                    {renderField('Legal Sex (For billing purposes ONLY)', patient.sex, null, 'text',
+                    {renderField('First Name', client.fname)}
+                    {renderField('Middle Name', client.mname)}
+                    {renderField('Last Name', client.lname)}
+                    {renderField('Preferred Name', client.preferred_name)}
+                    {renderField('DOB', formatDate(client.DOB))}
+                    {renderField('Legal Sex (For billing purposes ONLY)', client.sex, null, 'text',
                       [{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }, { value: 'other', label: 'Other' }, { value: 'unknown', label: 'Unknown' }]
                     )}
-                    {renderField('Gender Identity', patient.gender_identity_text || patient.gender_identity)}
-                    {renderField('Sexual Orientation', patient.sexual_orientation_text || patient.sexual_orientation)}
-                    {renderField('Marital Status', patient.marital_status_text || patient.marital_status)}
-                    {renderField('Ethnicity', patient.ethnicity_text || patient.ethnicity)}
-                    {renderField('Race', patient.race_text || patient.race)}
+                    {renderField('Gender Identity', client.gender_identity_text || client.gender_identity)}
+                    {renderField('Sexual Orientation', client.sexual_orientation_text || client.sexual_orientation)}
+                    {renderField('Marital Status', client.marital_status_text || client.marital_status)}
+                    {renderField('Ethnicity', client.ethnicity_text || client.ethnicity)}
+                    {renderField('Race', client.race_text || client.race)}
                     <div className="form-field">
                       <div className="form-field-label">S.S.</div>
-                      <div className="form-field-value">{patient.ss ? '***-**-' + patient.ss.slice(-4) : ''}</div>
+                      <div className="form-field-value">{client.ss ? '***-**-' + client.ss.slice(-4) : ''}</div>
                     </div>
                   </>
                 )}
@@ -448,7 +448,7 @@ function DemographicsTab({ data, onDataUpdate }) {
           </div>
 
           {/* Guardian Information Section - Only for minors */}
-          {patient.age < 18 && (
+          {client.age < 18 && (
             <div className="card-main">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="card-header">Guardian Information</h2>
@@ -524,27 +524,27 @@ function DemographicsTab({ data, onDataUpdate }) {
             <div className="card-inner">
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2">
-                  {renderField('Address', patient.street, 'street')}
+                  {renderField('Address', client.street, 'street')}
                 </div>
-                {renderField('Address Line 2', patient.street_line_2, 'street_line_2')}
-                {renderField('City', patient.city, 'city')}
-                {renderField('State', patient.state, 'state', 'text',
+                {renderField('Address Line 2', client.street_line_2, 'street_line_2')}
+                {renderField('City', client.city, 'city')}
+                {renderField('State', client.state, 'state', 'text',
                   dropdownOptions.state && dropdownOptions.state.length > 0
                     ? [{ value: '', label: 'Select...' }, ...dropdownOptions.state]
                     : null
                 )}
-                {renderField('Postal Code', patient.postal_code, 'postal_code')}
-                {renderField('County', patient.county, 'county')}
-                {renderField('Emergency Contact', patient.contact_relationship, 'contact_relationship')}
-                {renderField('Emergency Phone', patient.phone_contact, 'phone_contact', 'tel')}
-                {renderField('Home Phone', patient.phone_home, 'phone_home', 'tel')}
-                {renderField('Mobile Phone', patient.phone_cell, 'phone_cell', 'tel', null, true)}
-                {renderField('Work Phone', patient.phone_biz, 'phone_biz', 'tel')}
-                {renderField('Trusted Email', patient.email, 'email', 'email', null, true)}
-                {!isEditing && patient.additional_addresses && (
+                {renderField('Postal Code', client.postal_code, 'postal_code')}
+                {renderField('County', client.county, 'county')}
+                {renderField('Emergency Contact', client.contact_relationship, 'contact_relationship')}
+                {renderField('Emergency Phone', client.phone_contact, 'phone_contact', 'tel')}
+                {renderField('Home Phone', client.phone_home, 'phone_home', 'tel')}
+                {renderField('Mobile Phone', client.phone_cell, 'phone_cell', 'tel', null, true)}
+                {renderField('Work Phone', client.phone_biz, 'phone_biz', 'tel')}
+                {renderField('Trusted Email', client.email, 'email', 'email', null, true)}
+                {!isEditing && client.additional_addresses && (
                   <div className="col-span-2 form-field">
                     <div className="form-field-label">Additional Addresses</div>
-                    <div className="form-field-value">{patient.additional_addresses}</div>
+                    <div className="form-field-value">{client.additional_addresses}</div>
                   </div>
                 )}
               </div>
@@ -589,7 +589,7 @@ function DemographicsTab({ data, onDataUpdate }) {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {renderField('Client Status', patient.status, null, 'text',
+                  {renderField('Client Status', client.status, null, 'text',
                     [
                       { value: 'active', label: 'Active' },
                       { value: 'inactive', label: 'Inactive' },
@@ -597,17 +597,17 @@ function DemographicsTab({ data, onDataUpdate }) {
                       { value: 'deceased', label: 'Deceased' }
                     ]
                   )}
-                  {renderField('Payment Type', patient.payment_type, null, 'text',
+                  {renderField('Payment Type', client.payment_type, null, 'text',
                     [
                       { value: 'insurance', label: 'Insurance' },
                       { value: 'self-pay', label: 'Self-Pay' },
                       { value: 'pro-bono', label: 'Pro Bono' }
                     ]
                   )}
-                  {patient.payment_type === 'self-pay' && patient.custom_session_fee && (
+                  {client.payment_type === 'self-pay' && client.custom_session_fee && (
                     <div className="form-field">
                       <div className="form-field-label">Custom Session Fee</div>
-                      <div className="form-field-value">${parseFloat(patient.custom_session_fee).toFixed(2)}</div>
+                      <div className="form-field-value">${parseFloat(client.custom_session_fee).toFixed(2)}</div>
                     </div>
                   )}
                 </div>
@@ -618,9 +618,9 @@ function DemographicsTab({ data, onDataUpdate }) {
 
           {/* Portal Settings Section */}
           <PortalSettingsCard
-            clientId={patient.pid}
-            portalAccess={patient.allow_patient_portal}
-            portalUsername={patient.cmsportal_login}
+            clientId={client.pid}
+            portalAccess={client.portal_access}
+            portalUsername={client.portal_username}
             onUpdate={onDataUpdate}
           />
 

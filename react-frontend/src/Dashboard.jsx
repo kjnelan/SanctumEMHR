@@ -97,8 +97,8 @@ function Dashboard() {
     .filter(appt => appt.categoryType !== 1) // Exclude availability blocks
     .map(appt => {
       // For client appointments, show patient name; for clinic/supervision, show clinician
-      const displayName = appt.patientName
-        ? appt.patientName
+      const displayName = appt.clientName
+        ? appt.clientName
         : (appt.providerFirstName
           ? `${appt.providerFirstName} ${appt.providerLastName || ''}`.trim()
           : appt.categoryName || 'Appointment');
@@ -225,7 +225,7 @@ function Dashboard() {
                           <span className={`text-xs px-2 py-0.5 rounded-full ${item.type === 'draft' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
                             {item.type === 'draft' ? 'Draft' : 'Missing'}
                           </span>
-                          <span className="font-medium text-gray-800 text-sm truncate">{item.patientName}</span>
+                          <span className="font-medium text-gray-800 text-sm truncate">{item.clientName}</span>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
                           {new Date(item.serviceDate).toLocaleDateString()}
@@ -264,7 +264,7 @@ function Dashboard() {
                       </div>
                       {pendingReviews.notes?.slice(0, 3).map((note, idx) => (
                         <div key={idx} className="p-2 bg-white/60 rounded-lg border border-gray-200">
-                          <p className="font-medium text-gray-800 text-sm truncate">{note.patientName}</p>
+                          <p className="font-medium text-gray-800 text-sm truncate">{note.clientName}</p>
                           <p className="text-xs text-gray-500">
                             {note.providerName} • {new Date(note.serviceDate).toLocaleDateString()}
                           </p>

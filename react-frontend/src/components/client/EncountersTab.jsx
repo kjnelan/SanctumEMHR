@@ -14,7 +14,7 @@ function EncountersTab({ data }) {
     );
   }
 
-  const { encounters, patient } = data;
+  const { encounters, client } = data;
 
   // Format date helper
   const formatDate = (dateStr) => {

@@ -16,7 +16,7 @@ import { apiRequest } from '../utils/api';
 // ========================================
 
 /**
- * Search for patients/clients by name
+ * Search for clients by name
  * @param {string} query - Search term (name, DOB, etc.)
  * @returns {Promise<Array>} Array of matching clients
  */
@@ -38,7 +38,7 @@ export async function searchClients(query) {
     searchParams.append('lname', parts[parts.length - 1]);
   }
 
-  return apiRequest(`/custom/api/patient_search.php?${searchParams.toString()}`);
+  return apiRequest(`/custom/api/client_search.php?${searchParams.toString()}`);
 }
 
 /**
@@ -70,7 +70,7 @@ export async function getClients(status = 'all') {
 /**
  * Get detailed client information
  * Handles access denied responses with accessInfo for UI display
- * @param {string} clientId - The patient ID
+ * @param {string} clientId - The client ID
  * @returns {Promise<Object>} Client detail object
  */
 export async function getClientDetail(clientId) {
@@ -110,7 +110,7 @@ export async function getClientDetail(clientId) {
 // ========================================
 
 /**
- * Create a new client/patient
+ * Create a new client
  * @param {Object} data - The client data (fname, lname, DOB, etc.)
  * @returns {Promise<Object>} Created client with ID
  */
@@ -124,16 +124,16 @@ export async function createClient(data) {
 
 /**
  * Update client demographics
- * @param {string} patientId - The patient ID
+ * @param {string} clientId - The client ID
  * @param {Object} data - The demographic data to update
  * @returns {Promise<Object>} Update result
  */
-export async function updateDemographics(patientId, data) {
-  console.log('ClientService: Updating demographics for patient ID:', patientId);
+export async function updateDemographics(clientId, data) {
+  console.log('ClientService: Updating demographics for client ID:', clientId);
   return apiRequest('/custom/api/update_demographics.php', {
     method: 'POST',
     body: JSON.stringify({
-      patient_id: patientId,
+      client_id: clientId,
       ...data
     })
   });
@@ -144,18 +144,18 @@ export async function updateDemographics(patientId, data) {
 // ========================================
 
 /**
- * Get all related persons (guardians) for a patient
- * @param {number} patientId - The patient ID
+ * Get all related persons (guardians) for a client
+ * @param {number} clientId - The client ID
  * @returns {Promise<Array>} Array of related persons
  */
-export async function getRelatedPersons(patientId) {
-  console.log('ClientService: Fetching related persons for patient:', patientId);
-  return apiRequest(`/custom/api/get_related_persons.php?patient_id=${patientId}`);
+export async function getRelatedPersons(clientId) {
+  console.log('ClientService: Fetching related persons for client:', clientId);
+  return apiRequest(`/custom/api/get_related_persons.php?client_id=${clientId}`);
 }
 
 /**
- * Save a related person (guardian) for a patient
- * @param {Object} data - The related person data including patient_id, first_name, last_name, role, etc.
+ * Save a related person (guardian) for a client
+ * @param {Object} data - The related person data including client_id, first_name, last_name, role, etc.
  * @returns {Promise<Object>} Save result
  */
 export async function saveRelatedPerson(data) {
@@ -184,17 +184,17 @@ export async function deleteRelatedPerson(relationId) {
 // ========================================
 
 /**
- * Get all billing information for a patient
- * @param {string} patientId - The patient ID
+ * Get all billing information for a client
+ * @param {string} clientId - The client ID
  * @returns {Promise<Object>} Billing data
  */
-export async function getBilling(patientId) {
-  console.log('ClientService: Fetching billing for patient ID:', patientId);
-  return apiRequest(`/custom/api/billing.php?patient_id=${patientId}`);
+export async function getBilling(clientId) {
+  console.log('ClientService: Fetching billing for client ID:', clientId);
+  return apiRequest(`/custom/api/billing.php?client_id=${clientId}`);
 }
 
 /**
- * Update insurance data for a patient
+ * Update insurance data for a client
  * @param {number} insuranceId - The insurance record ID
  * @param {Object} data - The insurance data to update
  * @returns {Promise<Object>} Update result

@@ -1,7 +1,7 @@
 <?php
 /**
  * Billing API - Session-based (MIGRATED TO SanctumEMHR)
- * Returns all billing/charges and payments for a patient
+ * Returns all billing/charges and payments for a client
  */
 
 require_once(__DIR__ . '/../init.php');

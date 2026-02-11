@@ -1,7 +1,7 @@
 <?php
 /**
  * Update Demographics API - Session-based (MIGRATED TO SanctumEMHR)
- * Updates patient demographic information with audit trail
+ * Updates client demographic information with audit trail
  */
 
 require_once(__DIR__ . '/../init.php');
@@ -55,16 +55,17 @@ try {
         exit;
     }
 
-    // Validate patient ID
-    if (!isset($data['patient_id']) || empty($data['patient_id'])) {
-        error_log("Update demographics: Missing patient_id");
+    // Validate client ID
+    $rawClientId = $data['client_id'] ?? $data['patient_id'] ?? null;
+    if (!isset($rawClientId) || empty($rawClientId)) {
+        error_log("Update demographics: Missing client_id");
         http_response_code(400);
-        echo json_encode(['error' => 'Patient ID is required']);
+        echo json_encode(['error' => 'Client ID is required']);
         exit;
     }
 
-    $patientId = intval($data['patient_id']);
-    error_log("Update demographics: Updating patient ID: " . $patientId);
+    $clientId = intval($rawClientId);
+    error_log("Update demographics: Updating client ID: " . $clientId);
 
     // Initialize database
     $db = Database::getInstance();
@@ -165,8 +166,8 @@ try {
     // Add updated_at timestamp
     $updateFields[] = "updated_at = NOW()";
 
-    // Add patient ID to params for WHERE clause
-    $params[] = $patientId;
+    // Add client ID to params for WHERE clause
+    $params[] = $clientId;
 
     // Build and execute update query
     $sql = "UPDATE clients SET " . implode(', ', $updateFields) . " WHERE id = ?";
@@ -194,7 +195,7 @@ try {
     $changedFields = array_keys(array_intersect_key($data, $allowedFields));
     $auditDescription = "Demographics updated: " . implode(', ', $changedFields);
 
-    $db->execute($auditSql, [$userId, $patientId, $auditDescription]);
+    $db->execute($auditSql, [$userId, $clientId, $auditDescription]);
     error_log("Update demographics: Audit trail created - " . $auditDescription);
 
     // Return success
@@ -205,7 +206,7 @@ try {
         'updated_fields' => count($changedFields)
     ]);
 
-    error_log("Update demographics: Successfully updated patient " . $patientId);
+    error_log("Update demographics: Successfully updated client " . $clientId);
 
 } catch (Exception $e) {
     error_log("Update demographics: Database error - " . $e->getMessage());

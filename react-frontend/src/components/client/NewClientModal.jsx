@@ -53,8 +53,8 @@ function NewClientModal({ onClose, onClientCreated }) {
       const result = await createClient(formData);
 
       // Call callback with new client ID
-      if (onClientCreated && result.patient_id) {
-        onClientCreated(result.patient_id);
+      if (onClientCreated && result.client_id) {
+        onClientCreated(result.client_id);
       }
 
       onClose();

@@ -18,13 +18,13 @@ import { ErrorMessage } from '../ErrorMessage';
 /**
  * Props:
  * - noteType: string - 'noshow' or 'cancel'
- * - patientId: number - Patient ID
+ * - clientId: number - Patient ID
  * - appointmentId: number - Optional appointment ID
  * - serviceDate: string - Service date (YYYY-MM-DD)
  * - onSave: function - Callback after save
  * - onCancel: function - Callback to cancel
  */
-function QuickNoteForm({ noteType, patientId, appointmentId = null, serviceDate, onSave, onCancel }) {
+function QuickNoteForm({ noteType, clientId, appointmentId = null, serviceDate, onSave, onCancel }) {
   const [reason, setReason] = useState('');
   const [attemptedContact, setAttemptedContact] = useState(false);
   const [contactMethod, setContactMethod] = useState('');
@@ -65,7 +65,7 @@ function QuickNoteForm({ noteType, patientId, appointmentId = null, serviceDate,
 
       // Create note
       const noteData = {
-        patientId,
+        clientId,
         appointmentId,
         noteType: noteType,
         serviceDate,

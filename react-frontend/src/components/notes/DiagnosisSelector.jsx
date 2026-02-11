@@ -17,21 +17,21 @@ import { ErrorInline } from '../ErrorInline';
 
 /**
  * Props:
- * - patientId: number - Patient ID
+ * - clientId: number - Patient ID
  * - serviceDate: string - Date of service (YYYY-MM-DD)
  * - selectedDiagnoses: array - Currently selected diagnosis codes
  * - onChange: function(diagnoses) - Callback when selection changes
  */
-function DiagnosisSelector({ patientId, serviceDate, selectedDiagnoses = [], onChange }) {
+function DiagnosisSelector({ clientId, serviceDate, selectedDiagnoses = [], onChange }) {
   const [availableDiagnoses, setAvailableDiagnoses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (patientId) {
+    if (clientId) {
       loadDiagnoses();
     }
-  }, [patientId, serviceDate]);
+  }, [clientId, serviceDate]);
 
   const loadDiagnoses = async () => {
     try {
@@ -39,7 +39,7 @@ function DiagnosisSelector({ patientId, serviceDate, selectedDiagnoses = [], onC
       setError(null);
 
       // Fetch active diagnoses as of the service date
-      const data = await getPatientDiagnoses(patientId, {
+      const data = await getPatientDiagnoses(clientId, {
         activeAsOf: serviceDate,
         includeRetired: false
       });

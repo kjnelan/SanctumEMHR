@@ -67,10 +67,10 @@ function InsuranceTab({ data, onDataUpdate }) {
     );
   }
 
-  const { patient, insurances } = data;
+  const { client, insurances } = data;
 
   // Determine if client is NOT on insurance (self-pay or pro-bono)
-  const isNotInsurance = patient.payment_type === 'self-pay' || patient.payment_type === 'pro-bono';
+  const isNotInsurance = client.payment_type === 'self-pay' || client.payment_type === 'pro-bono';
 
   // Get insurance by type with placeholders - memoized to prevent re-render loops
   const { primaryInsurance, secondaryInsurance, tertiaryInsurance } = useMemo(() => {
@@ -206,17 +206,17 @@ function InsuranceTab({ data, onDataUpdate }) {
     if (field === 'subscriber_relationship' && value.toLowerCase() === 'self') {
       const autoPopulatedData = {
         [field]: value,
-        subscriber_fname: patient.fname || '',
-        subscriber_mname: patient.mname || '',
-        subscriber_lname: patient.lname || '',
-        subscriber_DOB: patient.DOB || '',
-        subscriber_sex: patient.sex || '',
-        subscriber_ss: patient.ss || '',
-        subscriber_street: patient.street || '',
-        subscriber_street_line_2: patient.street_line_2 || '',
-        subscriber_city: patient.city || '',
-        subscriber_state: patient.state || '',
-        subscriber_postal_code: patient.postal_code || ''
+        subscriber_fname: client.fname || '',
+        subscriber_mname: client.mname || '',
+        subscriber_lname: client.lname || '',
+        subscriber_DOB: client.DOB || '',
+        subscriber_sex: client.sex || '',
+        subscriber_ss: client.ss || '',
+        subscriber_street: client.street || '',
+        subscriber_street_line_2: client.street_line_2 || '',
+        subscriber_city: client.city || '',
+        subscriber_state: client.state || '',
+        subscriber_postal_code: client.postal_code || ''
       };
 
       if (insuranceType === 'primary') {
@@ -283,10 +283,10 @@ function InsuranceTab({ data, onDataUpdate }) {
       // Validate required fields
       validateFormData(formData);
 
-      // If creating a new insurance (id is null), include patient_id and type
+      // If creating a new insurance (id is null), include client_id and type
       const dataToSave = { ...formData };
       if (!insurance.id) {
-        dataToSave.patient_id = patient.pid;
+        dataToSave.client_id = client.pid;
         dataToSave.type = insuranceType;
       }
 
@@ -509,8 +509,8 @@ function InsuranceTab({ data, onDataUpdate }) {
   };
 
   // Check if employer section has any data
-  const hasEmployerData = patient.employer || patient.employer_street || patient.employer_city ||
-                         patient.employer_state || patient.employer_postal_code || patient.employer_occupation;
+  const hasEmployerData = client.employer || client.employer_street || client.employer_city ||
+                         client.employer_state || client.employer_postal_code || client.employer_occupation;
 
   // Payment type label for display
   const paymentTypeLabels = {
@@ -518,7 +518,7 @@ function InsuranceTab({ data, onDataUpdate }) {
     'self-pay': 'Self-Pay',
     'pro-bono': 'Pro Bono'
   };
-  const paymentTypeLabel = paymentTypeLabels[patient.payment_type] || patient.payment_type;
+  const paymentTypeLabel = paymentTypeLabels[client.payment_type] || client.payment_type;
 
   // Determine if we should show insurance sections
   const showInsuranceSections = !isNotInsurance || showInsuranceWhenSelfPay;
@@ -571,50 +571,50 @@ function InsuranceTab({ data, onDataUpdate }) {
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                   <div className="col-span-2 form-field">
                     <div className="form-field-label">Employer Name</div>
-                    <div className="form-field-value">{patient.employer || ''}</div>
+                    <div className="form-field-value">{client.employer || ''}</div>
                   </div>
                   <div className="form-field">
                     <div className="form-field-label">Start Date</div>
                     <div className="form-field-value">
-                      {patient.employer_start_date ? new Date(patient.employer_start_date).toLocaleDateString() : ''}
+                      {client.employer_start_date ? new Date(client.employer_start_date).toLocaleDateString() : ''}
                     </div>
                   </div>
                   <div className="form-field">
                     <div className="form-field-label">End Date</div>
                     <div className="form-field-value">
-                      {patient.employer_end_date ? new Date(patient.employer_end_date).toLocaleDateString() : ''}
+                      {client.employer_end_date ? new Date(client.employer_end_date).toLocaleDateString() : ''}
                     </div>
                   </div>
                   <div className="col-span-2 form-field">
                     <div className="form-field-label">Address</div>
                     <div className="form-field-value">
-                      {patient.employer_street || ''}
-                      {patient.employer_street_line_2 && `, ${patient.employer_street_line_2}`}
+                      {client.employer_street || ''}
+                      {client.employer_street_line_2 && `, ${client.employer_street_line_2}`}
                     </div>
                   </div>
                   <div className="form-field">
                     <div className="form-field-label">City</div>
-                    <div className="form-field-value">{patient.employer_city || ''}</div>
+                    <div className="form-field-value">{client.employer_city || ''}</div>
                   </div>
                   <div className="form-field">
                     <div className="form-field-label">State</div>
-                    <div className="form-field-value">{patient.employer_state || ''}</div>
+                    <div className="form-field-value">{client.employer_state || ''}</div>
                   </div>
                   <div className="form-field">
                     <div className="form-field-label">Postal Code</div>
-                    <div className="form-field-value">{patient.employer_postal_code || ''}</div>
+                    <div className="form-field-value">{client.employer_postal_code || ''}</div>
                   </div>
                   <div className="form-field">
                     <div className="form-field-label">Country</div>
-                    <div className="form-field-value">{patient.employer_country || ''}</div>
+                    <div className="form-field-value">{client.employer_country || ''}</div>
                   </div>
                   <div className="form-field">
                     <div className="form-field-label">Occupation</div>
-                    <div className="form-field-value">{patient.employer_occupation || ''}</div>
+                    <div className="form-field-value">{client.employer_occupation || ''}</div>
                   </div>
                   <div className="form-field">
                     <div className="form-field-label">Industry</div>
-                    <div className="form-field-value">{patient.employer_industry || ''}</div>
+                    <div className="form-field-value">{client.employer_industry || ''}</div>
                   </div>
                 </div>
               </div>

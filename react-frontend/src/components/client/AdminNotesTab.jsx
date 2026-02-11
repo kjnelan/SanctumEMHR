@@ -19,28 +19,28 @@ function AdminNotesTab({ data }) {
     );
   }
 
-  const { patient } = data;
+  const { client } = data;
 
   // Initialize edit data
   const handleEditDemo = () => {
     setDemoData({
-      language: patient.language || '',
-      ethnicity: patient.ethnicity || '',
-      race: patient.race || '',
-      nationality: patient.nationality || '',
-      religion: patient.religion || '',
-      referral_source: patient.referral_source || '',
-      tribal_affiliations: patient.tribal_affiliations || ''
+      language: client.language || '',
+      ethnicity: client.ethnicity || '',
+      race: client.race || '',
+      nationality: client.nationality || '',
+      religion: client.religion || '',
+      referral_source: client.referral_source || '',
+      tribal_affiliations: client.tribal_affiliations || ''
     });
     setEditingDemo(true);
   };
 
   const handleEditFinancial = () => {
     setFinancialData({
-      homeless_status: patient.homeless_status || '',
-      financial_review_date: patient.financial_review_date || '',
-      family_size: patient.family_size || '',
-      monthly_income: patient.monthly_income || ''
+      homeless_status: client.homeless_status || '',
+      financial_review_date: client.financial_review_date || '',
+      family_size: client.family_size || '',
+      monthly_income: client.monthly_income || ''
     });
     setEditingFinancial(true);
   };
@@ -87,7 +87,7 @@ function AdminNotesTab({ data }) {
   if (view === 'create') {
     return (
       <NoteEditor
-        patientId={patient.pid}
+        clientId={client.pid}
         noteType="admin"
         onSave={handleNoteSaved}
         onClose={handleClose}
@@ -99,7 +99,7 @@ function AdminNotesTab({ data }) {
     return (
       <NoteEditor
         noteId={selectedNoteId}
-        patientId={patient.pid}
+        clientId={client.pid}
         noteType="admin"
         onSave={handleNoteSaved}
         onClose={handleClose}
@@ -145,7 +145,7 @@ function AdminNotesTab({ data }) {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 ) : (
-                  <div className="form-field-value">{patient.language || ''}</div>
+                  <div className="form-field-value">{client.language || ''}</div>
                 )}
               </div>
               <div className="form-field">
@@ -158,7 +158,7 @@ function AdminNotesTab({ data }) {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 ) : (
-                  <div className="form-field-value">{patient.ethnicity || ''}</div>
+                  <div className="form-field-value">{client.ethnicity || ''}</div>
                 )}
               </div>
               <div className="form-field">
@@ -171,7 +171,7 @@ function AdminNotesTab({ data }) {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 ) : (
-                  <div className="form-field-value">{patient.race || ''}</div>
+                  <div className="form-field-value">{client.race || ''}</div>
                 )}
               </div>
               <div className="form-field">
@@ -184,7 +184,7 @@ function AdminNotesTab({ data }) {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 ) : (
-                  <div className="form-field-value">{patient.nationality || ''}</div>
+                  <div className="form-field-value">{client.nationality || ''}</div>
                 )}
               </div>
               <div className="form-field">
@@ -197,7 +197,7 @@ function AdminNotesTab({ data }) {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 ) : (
-                  <div className="form-field-value">{patient.religion || ''}</div>
+                  <div className="form-field-value">{client.religion || ''}</div>
                 )}
               </div>
               <div className="form-field">
@@ -210,7 +210,7 @@ function AdminNotesTab({ data }) {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 ) : (
-                  <div className="form-field-value">{patient.referral_source || ''}</div>
+                  <div className="form-field-value">{client.referral_source || ''}</div>
                 )}
               </div>
               <div className="col-span-2 form-field">
@@ -223,7 +223,7 @@ function AdminNotesTab({ data }) {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 ) : (
-                  <div className="form-field-value">{patient.tribal_affiliations || ''}</div>
+                  <div className="form-field-value">{client.tribal_affiliations || ''}</div>
                 )}
               </div>
             </div>
@@ -272,7 +272,7 @@ function AdminNotesTab({ data }) {
                     <option value="At Risk">At Risk</option>
                   </select>
                 ) : (
-                  <div className="form-field-value">{patient.homeless_status || ''}</div>
+                  <div className="form-field-value">{client.homeless_status || ''}</div>
                 )}
               </div>
               <div className="form-field">
@@ -286,7 +286,7 @@ function AdminNotesTab({ data }) {
                   />
                 ) : (
                   <div className="form-field-value">
-                    {patient.financial_review_date ? new Date(patient.financial_review_date).toLocaleDateString() : ''}
+                    {client.financial_review_date ? new Date(client.financial_review_date).toLocaleDateString() : ''}
                   </div>
                 )}
               </div>
@@ -300,7 +300,7 @@ function AdminNotesTab({ data }) {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 ) : (
-                  <div className="form-field-value">{patient.family_size || ''}</div>
+                  <div className="form-field-value">{client.family_size || ''}</div>
                 )}
               </div>
               <div className="form-field">
@@ -314,7 +314,7 @@ function AdminNotesTab({ data }) {
                     placeholder="0.00"
                   />
                 ) : (
-                  <div className="form-field-value">{patient.monthly_income ? `$${patient.monthly_income}` : ''}</div>
+                  <div className="form-field-value">{client.monthly_income ? `$${client.monthly_income}` : ''}</div>
                 )}
               </div>
             </div>

@@ -47,7 +47,7 @@ export async function getTodaysAppointments() {
 /**
  * Create a new appointment
  * @param {Object} data - Appointment data
- * @param {number} data.patientId - Patient ID
+ * @param {number} data.clientId - Client ID
  * @param {number} data.providerId - Provider ID
  * @param {number} data.categoryId - Appointment category/type ID
  * @param {string} data.eventDate - Appointment date (YYYY-MM-DD)
@@ -103,7 +103,7 @@ export async function deleteAppointment(appointmentId, seriesData = null) {
 /**
  * Get appointment categories/types
  * @param {number} type - Optional category type filter
- *   0 = Patient/Client appointments (default)
+ *   0 = Client appointments (default)
  *   1 = Provider availability/blocking
  *   2 = Group therapy
  *   3 = Clinic/Facility events

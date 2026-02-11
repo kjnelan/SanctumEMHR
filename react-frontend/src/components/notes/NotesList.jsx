@@ -17,11 +17,11 @@ import { ErrorInline } from '../ErrorInline';
 
 /**
  * Props:
- * - patientId: number - Patient ID
+ * - clientId: number - Patient ID
  * - onNoteClick: function(noteId, isDraft) - Callback when note is clicked
  * - onCreateNote: function - Callback to create new note
  */
-function NotesList({ patientId, onNoteClick, onCreateNote }) {
+function NotesList({ clientId, onNoteClick, onCreateNote }) {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -34,14 +34,14 @@ function NotesList({ patientId, onNoteClick, onCreateNote }) {
 
   useEffect(() => {
     loadNotes();
-  }, [patientId, filters]);
+  }, [clientId, filters]);
 
   const loadNotes = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const data = await getPatientNotes(patientId, filters);
+      const data = await getPatientNotes(clientId, filters);
       setNotes(data.notes || []);
     } catch (err) {
       console.error('Error loading notes:', err);

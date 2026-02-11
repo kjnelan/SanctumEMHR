@@ -76,8 +76,8 @@ try {
     error_log("Client detail: User authenticated - " . $session->getUserId() . ", fetching client ID: " . $clientId .
               ", role: " . ($userRole ?? 'supervisor/admin') . ", can_view_notes: " . ($canViewClinicalNotes ? 'yes' : 'no'));
 
-    // Fetch patient demographics - mapped to SanctumEMHR schema
-    $patientSql = "SELECT
+    // Fetch client demographics - mapped to SanctumEMHR schema
+    $clientSql = "SELECT
         c.id AS pid,
         c.first_name AS fname,
         c.last_name AS lname,
@@ -131,15 +131,15 @@ try {
         NULL AS hipaa_voice,
         NULL AS hipaa_mail,
         NULL AS hipaa_allowemail,
-        c.portal_access AS allow_patient_portal,
-        c.portal_username AS cmsportal_login,
+        c.portal_access,
+        c.portal_username,
         NULL AS publicity_code,
         NULL AS publicity_code_text,
         NULL AS protect_indicator,
         NULL AS protect_indicator_text,
         NULL AS deceased_date,
         NULL AS deceased_reason,
-        NULL AS patient_groups,
+        NULL AS client_groups,
         NULL AS userlist1,
         c.emergency_contact_name,
         c.emergency_contact_relation AS emergency_contact_relationship,
@@ -161,16 +161,16 @@ try {
     LEFT JOIN reference_lists rl_race ON rl_race.id = c.race AND rl_race.list_type = 'race'
     WHERE c.id = ?";
 
-    $patient = $db->query($patientSql, [$clientId]);
+    $client = $db->query($clientSql, [$clientId]);
 
-    if (!$patient) {
+    if (!$client) {
         error_log("Client detail: Client not found - " . $clientId);
         http_response_code(404);
         echo json_encode(['error' => 'Client not found']);
         exit;
     }
 
-    error_log("Client detail: Found client " . $patient['fname'] . " " . $patient['lname']);
+    error_log("Client detail: Found client " . $client['fname'] . " " . $client['lname']);
 
     // Fetch employer data - mapped to SanctumEMHR schema
     $employerSql = "SELECT
@@ -407,7 +407,7 @@ try {
 
     // Build comprehensive response
     $response = [
-        'patient' => $patient,
+        'client' => $client,
         'employer' => $employer,
         'insurance' => $insurance,
         'upcoming_appointments' => $upcomingAppointments,

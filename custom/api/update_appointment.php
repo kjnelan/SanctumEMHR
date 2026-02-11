@@ -63,7 +63,7 @@ try {
 
     error_log("Update appointment input: " . print_r($input, true));
 
-    // Validate required fields (patientId is conditionally required based on category type)
+    // Validate required fields (clientId is conditionally required based on category type)
     $required = ['appointmentId', 'providerId', 'categoryId', 'eventDate', 'startTime', 'duration'];
     foreach ($required as $field) {
         if (!isset($input[$field]) || $input[$field] === '') {
@@ -73,7 +73,7 @@ try {
 
     // Extract and validate inputs
     $appointmentId = intval($input['appointmentId']);
-    $patientId = isset($input['patientId']) && $input['patientId'] !== '' ? intval($input['patientId']) : null;
+    $clientId = isset($input['patientId']) && $input['patientId'] !== '' ? intval($input['patientId']) : null;
     $providerId = intval($input['providerId']);
     $categoryId = intval($input['categoryId']);
     $eventDate = $input['eventDate']; // YYYY-MM-DD format

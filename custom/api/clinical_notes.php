@@ -42,13 +42,13 @@ try {
         exit;
     }
 
-    // Get patient ID from query parameter
-    $patientId = $_GET['patient_id'] ?? null;
+    // Get client ID from query parameter
+    $clientId = $_GET['client_id'] ?? $_GET['patient_id'] ?? null;
 
-    if (!$patientId) {
-        error_log("Clinical notes: No patient ID provided");
+    if (!$clientId) {
+        error_log("Clinical notes: No client ID provided");
         http_response_code(400);
-        echo json_encode(['error' => 'Patient ID is required']);
+        echo json_encode(['error' => 'Client ID is required']);
         exit;
     }
 

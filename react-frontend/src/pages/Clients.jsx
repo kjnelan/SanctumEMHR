@@ -79,26 +79,26 @@ function Clients() {
       setSearchResults(results || []);
     } catch (err) {
       console.error('Search error:', err);
-      setError('Failed to search patients. Please try again.');
+      setError('Failed to search clients. Please try again.');
       setSearchResults([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePatientClick = (patientId) => {
+  const handleClientClick = (clientId) => {
     // Navigate to custom SanctumEMHR client detail view
     console.log('=== CLICKING CLIENT ===');
-    console.log('Patient ID:', patientId);
-    console.log('About to navigate to:', `/clients/${patientId}`);
-    navigate(`/clients/${patientId}`);
+    console.log('Client ID:', clientId);
+    console.log('About to navigate to:', `/clients/${clientId}`);
+    navigate(`/clients/${clientId}`);
     console.log('Navigate called');
   };
 
-  const handleNewClientCreated = (patientId) => {
-    console.log('New client created with ID:', patientId);
+  const handleNewClientCreated = (clientId) => {
+    console.log('New client created with ID:', clientId);
     // Navigate to the new client's detail page
-    navigate(`/clients/${patientId}`);
+    navigate(`/clients/${clientId}`);
   };
 
   const formatDate = (dateString) => {
@@ -258,24 +258,24 @@ function Clients() {
                 Found {searchResults.length} client{searchResults.length !== 1 ? 's' : ''}
               </p>
             </div>
-            {searchResults.map((patient) => (
+            {searchResults.map((result) => (
               <div
-                key={patient.id || patient.pid}
-                onClick={() => handlePatientClick(patient.id || patient.pid)}
+                key={result.id || result.pid}
+                onClick={() => handleClientClick(result.id || result.pid)}
                 className="card-item"
               >
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <h3 className="text-lg font-bold text-gray-800 mb-1">
-                      {patient.fname} {patient.lname}
+                      {result.fname} {result.lname}
                     </h3>
                     <div className="flex gap-6 text-sm text-gray-600">
                       <div>
-                        <span className="font-semibold">DOB:</span> {formatDate(patient.DOB)}
+                        <span className="font-semibold">DOB:</span> {formatDate(result.DOB)}
                       </div>
-                      {patient.phone_cell && (
+                      {result.phone_cell && (
                         <div>
-                          <span className="font-semibold">Phone:</span> {patient.phone_cell}
+                          <span className="font-semibold">Phone:</span> {result.phone_cell}
                         </div>
                       )}
                     </div>
@@ -372,7 +372,7 @@ function Clients() {
               {clients.map((client) => (
                 <div
                   key={client.pid}
-                  onClick={() => handlePatientClick(client.pid)}
+                  onClick={() => handleClientClick(client.pid)}
                   className="card-item"
                 >
                   <div className="flex justify-between items-start mb-2">

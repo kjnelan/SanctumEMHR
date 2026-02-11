@@ -17,18 +17,18 @@ import { apiRequest } from '../utils/api';
 // ========================================
 
 /**
- * Get all clinical notes for a patient (legacy format)
- * @param {number|string} patientId - Patient ID
+ * Get all clinical notes for a client (legacy format)
+ * @param {number|string} clientId - Client ID
  * @returns {Promise<Object>} Notes response
  */
-export async function getClinicalNotes(patientId) {
-  console.log('NoteService: Fetching clinical notes for patient ID:', patientId);
-  return apiRequest(`/custom/api/clinical_notes.php?patient_id=${patientId}`);
+export async function getClinicalNotes(clientId) {
+  console.log('NoteService: Fetching clinical notes for client ID:', clientId);
+  return apiRequest(`/custom/api/clinical_notes.php?client_id=${clientId}`);
 }
 
 /**
  * Create a new clinical note
- * @param {Object} data - Note data (patientId, noteType, templateType, serviceDate, etc.)
+ * @param {Object} data - Note data (clientId, noteType, templateType, serviceDate, etc.)
  * @returns {Promise<Object>} Created note with ID and UUID
  */
 export async function createNote(data) {
@@ -40,22 +40,25 @@ export async function createNote(data) {
 }
 
 /**
- * Get all clinical notes for a patient (new system with filters)
- * @param {number|string} patientId - Patient ID
+ * Get all clinical notes for a client (new system with filters)
+ * @param {number|string} clientId - Client ID
  * @param {Object} filters - Optional filters (note_type, status, start_date, end_date)
  * @returns {Promise<Object>} Notes response
  */
-export async function getPatientNotes(patientId, filters = {}) {
-  console.log('NoteService: Fetching patient notes for ID:', patientId);
-  const params = new URLSearchParams({ patient_id: patientId });
+export async function getClientNotes(clientId, filters = {}) {
+  console.log('NoteService: Fetching client notes for ID:', clientId);
+  const params = new URLSearchParams({ client_id: clientId });
 
   if (filters.note_type) params.append('note_type', filters.note_type);
   if (filters.status) params.append('status', filters.status);
   if (filters.start_date) params.append('start_date', filters.start_date);
   if (filters.end_date) params.append('end_date', filters.end_date);
 
-  return apiRequest(`/custom/api/notes/get_patient_notes.php?${params.toString()}`);
+  return apiRequest(`/custom/api/notes/get_client_notes.php?${params.toString()}`);
 }
+
+// Keep old name as alias for backwards compat during transition
+export const getPatientNotes = getClientNotes;
 
 /**
  * Get a specific clinical note by ID or UUID
@@ -129,7 +132,7 @@ export async function deleteNote(noteId) {
 
 /**
  * Get saved draft for a note
- * @param {Object} params - Query params (note_id, appointment_id, or patient_id)
+ * @param {Object} params - Query params (note_id, appointment_id, or client_id)
  * @returns {Promise<Object>} Draft data
  */
 export async function getDraft(params) {
@@ -138,7 +141,7 @@ export async function getDraft(params) {
 
   if (params.note_id) queryParams.append('note_id', params.note_id);
   if (params.appointment_id) queryParams.append('appointment_id', params.appointment_id);
-  if (params.patient_id) queryParams.append('patient_id', params.patient_id);
+  if (params.client_id) queryParams.append('client_id', params.client_id);
 
   return apiRequest(`/custom/api/notes/get_draft.php?${queryParams.toString()}`);
 }
@@ -184,14 +187,14 @@ export async function getInterventions(filters = {}) {
 }
 
 /**
- * Get treatment goals for a patient
- * @param {number|string} patientId - Patient ID
+ * Get treatment goals for a client
+ * @param {number|string} clientId - Client ID
  * @param {Object} filters - Optional filters (status, include_all)
  * @returns {Promise<Array>} Treatment goals list
  */
-export async function getTreatmentGoals(patientId, filters = {}) {
-  console.log('NoteService: Fetching treatment goals for patient:', patientId);
-  const params = new URLSearchParams({ patient_id: patientId });
+export async function getTreatmentGoals(clientId, filters = {}) {
+  console.log('NoteService: Fetching treatment goals for client:', clientId);
+  const params = new URLSearchParams({ client_id: clientId });
 
   if (filters.status) params.append('status', filters.status);
   if (filters.include_all) params.append('include_all', filters.include_all);
@@ -222,15 +225,15 @@ export async function searchCodes(searchTerm, codeType = 'ICD10', limit = 50) {
 }
 
 /**
- * Get patient diagnoses (active and/or historical)
- * @param {number|string} patientId - Patient ID
+ * Get client diagnoses (active and/or historical)
+ * @param {number|string} clientId - Client ID
  * @param {Object} options - Query options (activeAsOf, includeRetired)
- * @returns {Promise<Array>} Patient diagnoses
+ * @returns {Promise<Array>} Client diagnoses
  */
-export async function getPatientDiagnoses(patientId, options = {}) {
-  console.log('NoteService: Fetching patient diagnoses:', { patientId, options });
+export async function getClientDiagnoses(clientId, options = {}) {
+  console.log('NoteService: Fetching client diagnoses:', { clientId, options });
   const params = new URLSearchParams({
-    patient_id: patientId.toString()
+    client_id: clientId.toString()
   });
 
   if (options.activeAsOf) {
@@ -240,8 +243,11 @@ export async function getPatientDiagnoses(patientId, options = {}) {
     params.append('include_retired', options.includeRetired ? '1' : '0');
   }
 
-  return apiRequest(`/custom/api/get_patient_diagnoses.php?${params.toString()}`);
+  return apiRequest(`/custom/api/get_client_diagnoses.php?${params.toString()}`);
 }
+
+// Keep old name as alias for backwards compat during transition
+export const getPatientDiagnoses = getClientDiagnoses;
 
 // ========================================
 // SETTINGS

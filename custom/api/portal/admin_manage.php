@@ -121,7 +121,7 @@ try {
         // Audit
         $staffId = $_SESSION['user_id'];
         $db->execute(
-            "INSERT INTO audit_log (user_id, event_type, table_name, record_id, details, created_at)
+            "INSERT INTO audit_logs (user_id, event_type, entity_type, entity_id, action_description, created_at)
              VALUES (?, 'portal_access_enabled', 'clients', ?, ?, NOW())",
             [$staffId, $clientId, "Portal access enabled by user $staffId, username: $portalUsername"]
         );
@@ -163,7 +163,7 @@ try {
         // Audit
         $staffId = $_SESSION['user_id'];
         $db->execute(
-            "INSERT INTO audit_log (user_id, event_type, table_name, record_id, details, created_at)
+            "INSERT INTO audit_logs (user_id, event_type, entity_type, entity_id, action_description, created_at)
              VALUES (?, 'portal_password_reset', 'clients', ?, ?, NOW())",
             [$staffId, $clientId, "Portal password reset by user $staffId"]
         );
@@ -186,7 +186,7 @@ try {
         // Audit
         $staffId = $_SESSION['user_id'];
         $db->execute(
-            "INSERT INTO audit_log (user_id, event_type, table_name, record_id, details, created_at)
+            "INSERT INTO audit_logs (user_id, event_type, entity_type, entity_id, action_description, created_at)
              VALUES (?, 'portal_access_revoked', 'clients', ?, ?, NOW())",
             [$staffId, $clientId, "Portal access revoked by user $staffId"]
         );
