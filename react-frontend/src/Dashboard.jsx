@@ -96,7 +96,7 @@ function Dashboard() {
   const todaysAppointments = appointments
     .filter(appt => appt.categoryType !== 1) // Exclude availability blocks
     .map(appt => {
-      // For client appointments, show patient name; for clinic/supervision, show clinician
+      // For client appointments, show client name; for clinic/supervision, show clinician
       const displayName = appt.clientName
         ? appt.clientName
         : (appt.providerFirstName
@@ -132,11 +132,11 @@ function Dashboard() {
     setShowNewClientModal(true);
   };
 
-  const handleNewClientCreated = (patientId) => {
-    console.log('New client created with ID:', patientId);
+  const handleNewClientCreated = (clientId) => {
+    console.log('New client created with ID:', clientId);
     setShowNewClientModal(false);
     // Navigate to the new client's detail page
-    navigate(`/clients/${patientId}`);
+    navigate(`/clients/${clientId}`);
   };
 
   const handleNewAppointment = () => {

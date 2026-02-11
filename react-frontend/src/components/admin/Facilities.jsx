@@ -103,7 +103,7 @@ function FacilitiesTab() {
   const posCodeOptions = [
     { value: '11', label: '11: Office' },
     { value: '02', label: '02: Telehealth' },
-    { value: '10', label: '10: Telehealth (Patient Home)' },
+    { value: '10', label: '10: Telehealth (Client Home)' },
     { value: '12', label: '12: Home' },
     { value: '21', label: '21: Inpatient Hospital' },
     { value: '22', label: '22: Outpatient Hospital' },

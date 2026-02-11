@@ -3,7 +3,7 @@
  * Diagnosis Note Template
  *
  * Comprehensive diagnosis assessment form that serves as the source of truth
- * for patient diagnoses and automatically syncs to billing table.
+ * for client diagnoses and automatically syncs to billing table.
  *
  * Fields:
  * - ICD-10 code selection (multi-select with billable flags)

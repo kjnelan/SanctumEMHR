@@ -136,9 +136,9 @@ function BlockTimeModal({ isOpen, onClose, onSave, initialDate, initialTime, cat
     try {
       const formattedTime = startTime.includes(':') ? `${startTime}:00` : `${startTime}:00:00`;
 
-      // Create/update availability block (appointment without patient)
+      // Create/update availability block (no client)
       const blockData = {
-        patientId: null, // No patient for availability blocks
+        clientId: null, // No client for availability blocks
         providerId: user.id, // Current logged-in provider
         categoryId: parseInt(categoryId),
         eventDate: eventDate,

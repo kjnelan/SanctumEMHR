@@ -18,7 +18,7 @@ import { ErrorMessage } from '../ErrorMessage';
 /**
  * Props:
  * - noteType: string - 'noshow' or 'cancel'
- * - clientId: number - Patient ID
+ * - clientId: number - Client ID
  * - appointmentId: number - Optional appointment ID
  * - serviceDate: string - Service date (YYYY-MM-DD)
  * - onSave: function - Callback after save
@@ -161,7 +161,7 @@ function QuickNoteForm({ noteType, clientId, appointmentId = null, serviceDate, 
                           <option value="Phone">Phone</option>
                           <option value="Email">Email</option>
                           <option value="Text/SMS">Text/SMS</option>
-                          <option value="Patient Portal">Patient Portal</option>
+                          <option value="Client Portal">Client Portal</option>
                         </select>
                       </label>
                     </div>

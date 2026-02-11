@@ -23,7 +23,7 @@ import { getTreatmentGoals } from '../../services/NoteService';
  * Props:
  * - note: object - Current note data
  * - onChange: function(field, value) - Callback when field changes
- * - clientId: number - Patient ID for fetching goals
+ * - clientId: number - Client ID for fetching goals
  * - autoSave: function() - Trigger auto-save
  */
 function BIRPTemplate({ note, onChange, clientId, autoSave }) {

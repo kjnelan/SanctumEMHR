@@ -70,7 +70,7 @@ const getNoteTemplateType = (noteType, templateFormat = null) => {
 /**
  * Props:
  * - noteId: number - Existing note ID (for editing)
- * - clientId: number - Patient ID (required for new notes)
+ * - clientId: number - Client ID (required for new notes)
  * - appointmentId: number - Optional appointment ID
  * - noteType: string - Note type (from selector)
  * - templateFormat: string - Optional template format (BIRP, PIRP, SOAP) for progress notes
@@ -106,7 +106,7 @@ function NoteEditor({ noteId = null, clientId, appointmentId = null, noteType, t
   const [settings, setSettings] = useState(null);
 
   // Metadata for auto-population
-  const [patient, setPatient] = useState(null);
+  const [client, setClient] = useState(null);
   const [provider, setProvider] = useState(null);
   const [serviceInfo, setServiceInfo] = useState(null);
   const [diagnosis, setDiagnosis] = useState(null);
@@ -152,7 +152,7 @@ function NoteEditor({ noteId = null, clientId, appointmentId = null, noteType, t
         // Try to load draft
         const draftParams = {};
         if (appointmentId) draftParams.appointment_id = appointmentId;
-        else if (clientId) draftParams.patient_id = clientId;
+        else if (clientId) draftParams.client_id = clientId;
 
         try {
           const draftData = await getDraft(draftParams);
@@ -214,23 +214,23 @@ function NoteEditor({ noteId = null, clientId, appointmentId = null, noteType, t
 
   const loadMetadata = async () => {
     try {
-      // Fetch patient data
+      // Fetch client data
       if (clientId) {
         try {
-          const patientData = await getClientDetail(clientId);
-          console.log('✅ Patient data loaded:', patientData);
-          setPatient(patientData.patient);
+          const clientData = await getClientDetail(clientId);
+          console.log('✅ Client data loaded:', clientData);
+          setClient(clientData.client);
 
-          // Get primary diagnosis from patient's problems list
-          if (patientData.problems && patientData.problems.length > 0) {
+          // Get primary diagnosis from client's problems list
+          if (clientData.problems && clientData.problems.length > 0) {
             // Use the most recent active problem as primary diagnosis
-            const primaryProblem = patientData.problems[0];
+            const primaryProblem = clientData.problems[0];
             const diagnosisText = primaryProblem.title || primaryProblem.diagnosis || null;
             setDiagnosis(diagnosisText);
             console.log('✅ Primary diagnosis loaded:', diagnosisText);
           }
         } catch (err) {
-          console.error('❌ Error loading patient data:', err);
+          console.error('❌ Error loading client data:', err);
         }
       }
 
@@ -463,9 +463,9 @@ function NoteEditor({ noteId = null, clientId, appointmentId = null, noteType, t
       )}
 
       {/* Auto-populated Metadata */}
-      {(patient || provider) && (
+      {(client || provider) && (
         <NoteMetadata
-          patient={patient}
+          client={client}
           provider={provider}
           serviceInfo={serviceInfo}
           diagnosis={diagnosis}
