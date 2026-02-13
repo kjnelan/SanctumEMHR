@@ -49,36 +49,42 @@ try {
     $view = $_GET['view'] ?? 'upcoming'; // 'upcoming' or 'past'
 
     if ($view === 'upcoming') {
-        $sql = "SELECT a.id, a.appointment_date, a.start_time, a.end_time,
-                       a.appointment_type, a.status, a.notes,
+        $sql = "SELECT a.id,
+                       DATE(a.start_datetime) AS appointment_date,
+                       TIME(a.start_datetime) AS start_time,
+                       TIME(DATE_ADD(a.start_datetime, INTERVAL a.duration MINUTE)) AS end_time,
+                       ac.name AS appointment_type,
+                       a.status, a.notes,
                        CONCAT(u.first_name, ' ', u.last_name) AS provider_name,
-                       sl.title AS room_name,
+                       NULL AS room_name,
                        f.name AS facility_name
                 FROM appointments a
                 LEFT JOIN users u ON u.id = a.provider_id
-                LEFT JOIN settings_lists sl ON sl.option_id = a.room AND sl.list_id = 'rooms'
+                LEFT JOIN appointment_categories ac ON ac.id = a.category_id
                 LEFT JOIN facilities f ON f.id = a.facility_id
                 WHERE a.client_id = ?
-                  AND (a.appointment_date > CURDATE()
-                       OR (a.appointment_date = CURDATE() AND a.end_time >= CURTIME()))
-                  AND a.status NOT IN ('cancelled', 'deleted')
-                ORDER BY a.appointment_date ASC, a.start_time ASC
+                  AND a.start_datetime >= NOW()
+                  AND a.status NOT IN ('cancelled')
+                ORDER BY a.start_datetime ASC
                 LIMIT 20";
     } else {
-        $sql = "SELECT a.id, a.appointment_date, a.start_time, a.end_time,
-                       a.appointment_type, a.status, a.notes,
+        $sql = "SELECT a.id,
+                       DATE(a.start_datetime) AS appointment_date,
+                       TIME(a.start_datetime) AS start_time,
+                       TIME(DATE_ADD(a.start_datetime, INTERVAL a.duration MINUTE)) AS end_time,
+                       ac.name AS appointment_type,
+                       a.status, a.notes,
                        CONCAT(u.first_name, ' ', u.last_name) AS provider_name,
-                       sl.title AS room_name,
+                       NULL AS room_name,
                        f.name AS facility_name
                 FROM appointments a
                 LEFT JOIN users u ON u.id = a.provider_id
-                LEFT JOIN settings_lists sl ON sl.option_id = a.room AND sl.list_id = 'rooms'
+                LEFT JOIN appointment_categories ac ON ac.id = a.category_id
                 LEFT JOIN facilities f ON f.id = a.facility_id
                 WHERE a.client_id = ?
-                  AND (a.appointment_date < CURDATE()
-                       OR (a.appointment_date = CURDATE() AND a.end_time < CURTIME()))
-                  AND a.status NOT IN ('deleted')
-                ORDER BY a.appointment_date DESC, a.start_time DESC
+                  AND a.start_datetime < NOW()
+                  AND a.status NOT IN ('cancelled')
+                ORDER BY a.start_datetime DESC
                 LIMIT 50";
     }
 
