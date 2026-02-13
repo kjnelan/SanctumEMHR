@@ -38,7 +38,14 @@ function SummaryTab({ data }) {
     );
   }
 
-  const { client, upcomingAppointments, recentAppointments, problems, medications, encounters } = data;
+  const {
+    client,
+    upcoming_appointments: upcomingAppointments,
+    recent_appointments: recentAppointments,
+    diagnoses: problems,
+    medications,
+    encounters
+  } = data;
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
@@ -262,16 +269,33 @@ function SummaryTab({ data }) {
         <div className="card-main">
           <h2 className="card-header">Portal Access</h2>
           <div className="space-y-4">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="alert-header text-gray-700">Portal Status</p>
-              <p className="text-caption text-gray-600">Client Portal Not Enabled. Admin Can Enable Client Portal.</p>
-            </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="alert-header text-gray-700 mb-2">Credentials</p>
-              <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                + Create
-              </button>
-            </div>
+            {client.portal_access ? (
+              <>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <p className="alert-header text-gray-700">Portal Status</p>
+                  <span className="inline-block mt-1 px-2 py-0.5 bg-green-600 text-white text-xs font-semibold rounded">Portal Enabled</span>
+                </div>
+                {client.portal_username && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="alert-header text-gray-700 mb-1">Credentials</p>
+                    <p className="text-sm text-gray-700">Username: <span className="font-mono font-semibold">{client.portal_username}</span></p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <p className="alert-header text-gray-700">Portal Status</p>
+                  <p className="text-caption text-gray-600">Client Portal Not Enabled. Admin Can Enable Client Portal.</p>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="alert-header text-gray-700 mb-2">Credentials</p>
+                  <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                    + Create
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
