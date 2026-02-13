@@ -149,8 +149,24 @@ try {
     $note['supervisor_review_required'] = (bool)($note['supervisor_review_required'] ?? false);
     $note['is_addendum'] = (bool)($note['is_addendum'] ?? false);
 
-    // Addenda feature not yet implemented in Phase 4 schema
-    $note['addenda'] = [];
+    // Fetch addenda (child notes with is_addendum = 1)
+    $addendaSql = "SELECT
+        n.id,
+        n.note_uuid,
+        n.plan AS addendum_text,
+        n.addendum_reason,
+        n.created_by AS added_by,
+        n.created_at,
+        n.status AS addendum_status,
+        n.signed_at AS addendum_signed_at,
+        CONCAT(u.first_name, ' ', u.last_name) AS provider_name
+    FROM clinical_notes n
+    LEFT JOIN users u ON u.id = n.created_by
+    WHERE n.parent_note_id = ? AND n.is_addendum = 1
+    ORDER BY n.created_at ASC";
+
+    $addenda = $db->queryAll($addendaSql, [$note['id']]);
+    $note['addenda'] = $addenda ?: [];
 
     // Map snake_case to camelCase for frontend editing (NoteEditor expects camelCase)
     $note['patientId'] = $note['patient_id'];

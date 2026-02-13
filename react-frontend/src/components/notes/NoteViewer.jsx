@@ -14,6 +14,7 @@
 import React, { useState, useEffect } from 'react';
 import { getNote } from '../../services/NoteService';
 import { ErrorInline } from '../ErrorInline';
+import AddendumModal from './AddendumModal';
 
 /**
  * Props:
@@ -26,6 +27,7 @@ function NoteViewer({ noteId, onClose, onEdit, onAddendum }) {
   const [note, setNote] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showAddendumModal, setShowAddendumModal] = useState(false);
 
   useEffect(() => {
     loadNote();
@@ -375,15 +377,25 @@ function NoteViewer({ noteId, onClose, onEdit, onAddendum }) {
               {note.addenda.map((addendum, idx) => (
                 <div key={addendum.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-blue-200">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-semibold text-gray-800">
-                      Addendum {idx + 1}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-gray-800">
+                        Addendum {idx + 1}
+                      </span>
+                      {addendum.addendum_status === 'signed' ? (
+                        <span className="badge-sm badge-light-success">✓ Signed</span>
+                      ) : (
+                        <span className="badge-sm badge-light-warning">Draft</span>
+                      )}
+                    </div>
                     <span className="text-xs text-gray-600">
                       {formatDateTime(addendum.created_at)} • {addendum.provider_name}
                     </span>
                   </div>
                   <div className="text-sm text-gray-700 mb-2">
                     <span className="font-semibold">Reason:</span> {addendum.addendum_reason}
+                  </div>
+                  <div className="text-gray-800 whitespace-pre-wrap mt-3 pt-3 border-t border-blue-200">
+                    {addendum.addendum_text}
                   </div>
                 </div>
               ))}
@@ -419,12 +431,23 @@ function NoteViewer({ noteId, onClose, onEdit, onAddendum }) {
           </button>
         )}
 
-        {isLocked && onAddendum && (
-          <button onClick={() => onAddendum(note.id)} className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-purple-700 transition-all shadow-lg">
+        {isLocked && (
+          <button onClick={() => setShowAddendumModal(true)} className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-purple-700 transition-all shadow-lg">
             Add Addendum
           </button>
         )}
       </div>
+
+      {/* Addendum Modal */}
+      <AddendumModal
+        isOpen={showAddendumModal}
+        onClose={() => setShowAddendumModal(false)}
+        noteId={note.id}
+        onSuccess={() => {
+          setShowAddendumModal(false);
+          loadNote(); // Refresh note to show new addendum
+        }}
+      />
     </div>
   );
 }

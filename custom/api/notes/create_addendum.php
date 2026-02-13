@@ -87,6 +87,30 @@ try {
         throw new Exception("Can only create addenda for signed notes. Edit the note directly instead.");
     }
 
+    // Check permissions: original author, supervisor, or admin
+    $permissionSql = "SELECT
+        n.created_by,
+        u.supervisor_id,
+        currentUser.role AS current_user_role
+    FROM clinical_notes n
+    LEFT JOIN users u ON u.id = n.created_by
+    LEFT JOIN users currentUser ON currentUser.id = ?
+    WHERE n.id = ?";
+
+    $permissionData = $db->query($permissionSql, [$userId, $parentNoteId]);
+
+    if (!$permissionData) {
+        throw new Exception("Unable to verify permissions");
+    }
+
+    $isOriginalAuthor = ($userId === (int) $permissionData['created_by']);
+    $isSupervisor = ($userId === (int) $permissionData['supervisor_id']);
+    $isAdmin = in_array($permissionData['current_user_role'], ['Admin', 'Super Admin'], true);
+
+    if (!$isOriginalAuthor && !$isSupervisor && !$isAdmin) {
+        throw new Exception("You do not have permission to add addenda to this note");
+    }
+
     // Generate UUID for addendum
     $addendumUuid = sprintf(
         '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
