@@ -49,11 +49,15 @@ try {
                        c.emergency_contact_name, c.emergency_contact_relation,
                        c.emergency_contact_phone,
                        c.primary_provider_id, c.facility_id,
+                       c.pronouns, c.pronouns_visibility,
+                       rl_pronouns.name AS pronouns_text,
+                       YEAR(CURDATE()) - YEAR(c.date_of_birth) - (DATE_FORMAT(CURDATE(), '%m%d') < DATE_FORMAT(c.date_of_birth, '%m%d')) AS age,
                        CONCAT(u.first_name, ' ', u.last_name) AS provider_name,
                        f.name AS facility_name
                 FROM clients c
                 LEFT JOIN users u ON u.id = c.primary_provider_id
                 LEFT JOIN facilities f ON f.id = c.facility_id
+                LEFT JOIN reference_lists rl_pronouns ON rl_pronouns.id = c.pronouns AND rl_pronouns.list_type = 'pronouns'
                 WHERE c.id = ?
                 LIMIT 1";
         $client = $db->query($sql, [$clientId]);
@@ -64,29 +68,43 @@ try {
             exit;
         }
 
+        // Build profile response
+        $profile = [
+            'firstName' => $client['first_name'],
+            'lastName' => $client['last_name'],
+            'preferredName' => $client['preferred_name'],
+            'middleName' => $client['middle_name'],
+            'dateOfBirth' => $client['date_of_birth'],
+            'sex' => $client['sex'],
+            'email' => $client['email'],
+            'phoneMobile' => $client['phone_mobile'],
+            'phoneHome' => $client['phone_home'],
+            'addressLine1' => $client['address_line1'],
+            'addressLine2' => $client['address_line2'],
+            'city' => $client['city'],
+            'state' => $client['state'],
+            'zip' => $client['zip'],
+            'emergencyContactName' => $client['emergency_contact_name'],
+            'emergencyContactRelation' => $client['emergency_contact_relation'],
+            'emergencyContactPhone' => $client['emergency_contact_phone'],
+            'providerName' => $client['provider_name'],
+            'facilityName' => $client['facility_name']
+        ];
+
+        // Apply pronoun visibility rules for minor safety
+        // Only include pronouns if visibility allows
+        $isMinor = $client['age'] < 18;
+        $pronounsVisibility = $client['pronouns_visibility'] ?? 'clinician_only';
+
+        if ($pronounsVisibility === 'parent_visible' || !$isMinor) {
+            // Show pronouns if: explicitly shared OR client is adult
+            $profile['pronouns'] = $client['pronouns_text'] ?? null;
+        }
+        // If visibility is 'clinician_only' and client is minor, pronouns are omitted for safety
+
         echo json_encode([
             'success' => true,
-            'profile' => [
-                'firstName' => $client['first_name'],
-                'lastName' => $client['last_name'],
-                'preferredName' => $client['preferred_name'],
-                'middleName' => $client['middle_name'],
-                'dateOfBirth' => $client['date_of_birth'],
-                'sex' => $client['sex'],
-                'email' => $client['email'],
-                'phoneMobile' => $client['phone_mobile'],
-                'phoneHome' => $client['phone_home'],
-                'addressLine1' => $client['address_line1'],
-                'addressLine2' => $client['address_line2'],
-                'city' => $client['city'],
-                'state' => $client['state'],
-                'zip' => $client['zip'],
-                'emergencyContactName' => $client['emergency_contact_name'],
-                'emergencyContactRelation' => $client['emergency_contact_relation'],
-                'emergencyContactPhone' => $client['emergency_contact_phone'],
-                'providerName' => $client['provider_name'],
-                'facilityName' => $client['facility_name']
-            ]
+            'profile' => $profile
         ]);
         exit;
     }

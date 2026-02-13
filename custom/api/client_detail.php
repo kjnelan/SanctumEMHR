@@ -115,6 +115,9 @@ try {
         c.gender_identity,
         rl_gender.name AS gender_identity_text,
         rl_orientation.name AS sexual_orientation_text,
+        c.pronouns,
+        rl_pronouns.name AS pronouns_text,
+        c.pronouns_visibility,
         NULL AS birth_fname,
         NULL AS birth_lname,
         NULL AS birth_mname,
@@ -157,6 +160,7 @@ try {
     LEFT JOIN reference_lists rl_gender ON rl_gender.id = c.gender_identity
     LEFT JOIN reference_lists rl_orientation ON rl_orientation.id = c.sexual_orientation
     LEFT JOIN reference_lists rl_marital ON rl_marital.id = c.marital_status
+    LEFT JOIN reference_lists rl_pronouns ON rl_pronouns.id = c.pronouns AND rl_pronouns.list_type = 'pronouns'
     LEFT JOIN reference_lists rl_ethnicity ON rl_ethnicity.id = c.ethnicity AND rl_ethnicity.list_type = 'ethnicity'
     LEFT JOIN reference_lists rl_race ON rl_race.id = c.race AND rl_race.list_type = 'race'
     WHERE c.id = ?";

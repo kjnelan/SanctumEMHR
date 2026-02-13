@@ -86,6 +86,8 @@ try {
         'sex' => 'sex',
         'gender_identity' => 'gender_identity',
         'sexual_orientation' => 'sexual_orientation',
+        'pronouns' => 'pronouns',
+        'pronouns_visibility' => 'pronouns_visibility',
         'marital_status' => 'marital_status',
         'ethnicity' => 'ethnicity',
         'race' => 'race',
