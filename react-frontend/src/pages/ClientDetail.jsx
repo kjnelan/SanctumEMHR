@@ -161,7 +161,7 @@ function ClientDetail() {
       today={today}
       onLogout={handleLogout}
     >
-      <ClientHeader client={clientData?.patient} />
+      <ClientHeader client={clientData?.client} />
       <TabNavigation
         activeTab={activeTab}
         onTabChange={setActiveTab}

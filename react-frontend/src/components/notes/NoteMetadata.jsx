@@ -1,6 +1,6 @@
 /**
  * SanctumEMHR EMHR
- * NoteMetadata - Auto-populated note header with patient/provider/service info
+ * NoteMetadata - Auto-populated note header with client/provider/service info
  * Displays all non-clinical metadata in a clean, professional format
  *
  * Author: Kenneth J. Nelan
@@ -15,13 +15,13 @@ import React from 'react';
 
 /**
  * Props:
- * - patient: object - Patient demographics and info
+ * - client: object - Client demographics and info
  * - provider: object - Provider name, credentials, ID
  * - serviceInfo: object - Service type, location, duration
  * - diagnosis: string - Primary diagnosis from treatment plan
  * - serviceDate: string - Date of service
  */
-function NoteMetadata({ patient, provider, serviceInfo, diagnosis, serviceDate }) {
+function NoteMetadata({ client, provider, serviceInfo, diagnosis, serviceDate }) {
   const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A';
     const [year, month, day] = dateStr.split(/[-T]/);
@@ -57,33 +57,33 @@ function NoteMetadata({ patient, provider, serviceInfo, diagnosis, serviceDate }
   return (
     <div className="card-main mb-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Patient Information */}
+        {/* Client Information */}
         <div>
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-            Patient Information
+            Client Information
           </h3>
           <div className="space-y-2">
             <div className="flex items-baseline gap-2">
               <span className="text-sm font-medium text-gray-600">Name:</span>
               <span className="text-base font-semibold text-gray-900">
-                {patient?.fname} {patient?.mname} {patient?.lname}
+                {client?.fname} {client?.mname} {client?.lname}
               </span>
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-sm font-medium text-gray-600">DOB:</span>
               <span className="text-sm text-gray-800">
-                {patient?.DOB ? formatDate(patient.DOB) : 'N/A'}
-                {patient?.DOB && (
+                {client?.DOB ? formatDate(client.DOB) : 'N/A'}
+                {client?.DOB && (
                   <span className="ml-2 text-gray-500">
-                    (Age {new Date().getFullYear() - new Date(patient.DOB).getFullYear()})
+                    (Age {new Date().getFullYear() - new Date(client.DOB).getFullYear()})
                   </span>
                 )}
               </span>
             </div>
-            {patient?.pid && (
+            {client?.pid && (
               <div className="flex items-baseline gap-2">
-                <span className="text-sm font-medium text-gray-600">Patient ID:</span>
-                <span className="text-sm text-gray-800 font-mono">{patient.pid}</span>
+                <span className="text-sm font-medium text-gray-600">Client ID:</span>
+                <span className="text-sm text-gray-800 font-mono">{client.pid}</span>
               </div>
             )}
           </div>

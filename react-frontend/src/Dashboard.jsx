@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AppShell from './components/layout/AppShell';
 import Greeting from './components/dashboard/Greeting';
 import StatsGrid from './components/dashboard/StatsGrid';
 import AppointmentsList from './components/dashboard/AppointmentsList';
-import Clients from './components/Clients';
-import Reports from './components/Reports';
-import Calendar from './pages/Calendar';
-import Admin from './pages/Admin';
-import Settings from './pages/Settings';
+const Clients = lazy(() => import('./pages/Clients'));
+const Reports = lazy(() => import('./pages/Reports'));
+const Calendar = lazy(() => import('./pages/Calendar'));
+const Admin = lazy(() => import('./pages/Admin'));
+const Settings = lazy(() => import('./pages/Settings'));
 import NewClientModal from './components/client/NewClientModal';
 import AppointmentModal from './components/calendar/AppointmentModal';
 import { useAuth } from './hooks/useAuth';
@@ -96,9 +96,9 @@ function Dashboard() {
   const todaysAppointments = appointments
     .filter(appt => appt.categoryType !== 1) // Exclude availability blocks
     .map(appt => {
-      // For client appointments, show patient name; for clinic/supervision, show clinician
-      const displayName = appt.patientName
-        ? appt.patientName
+      // For client appointments, show client name; for clinic/supervision, show clinician
+      const displayName = appt.clientName
+        ? appt.clientName
         : (appt.providerFirstName
           ? `${appt.providerFirstName} ${appt.providerLastName || ''}`.trim()
           : appt.categoryName || 'Appointment');
@@ -132,11 +132,11 @@ function Dashboard() {
     setShowNewClientModal(true);
   };
 
-  const handleNewClientCreated = (patientId) => {
-    console.log('New client created with ID:', patientId);
+  const handleNewClientCreated = (clientId) => {
+    console.log('New client created with ID:', clientId);
     setShowNewClientModal(false);
     // Navigate to the new client's detail page
-    navigate(`/clients/${patientId}`);
+    navigate(`/clients/${clientId}`);
   };
 
   const handleNewAppointment = () => {
@@ -165,7 +165,7 @@ function Dashboard() {
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-mental">
-        <div className="rounded-3xl p-8" style={{ backdropFilter: 'blur(60px) saturate(180%)', background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.4) 100%)', boxShadow: '0 8px 32px rgba(107, 154, 196, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8)', border: '1px solid rgba(255, 255, 255, 0.6)' }}>
+        <div className="sanctum-glass-main p-8">
           <div className="animate-spin rounded-full h-16 w-16 mx-auto" style={{ border: '3px solid rgba(107, 154, 196, 0.3)', borderTopColor: 'rgba(107, 154, 196, 0.9)' }}></div>
           <p className="text-label mt-4 text-center">Loading dashboard...</p>
         </div>
@@ -198,7 +198,7 @@ function Dashboard() {
               <SupervisionWidget userId={user.id} isSupervisor={user?.isSupervisor} />
 
               {/* Pending Notes Card - Your Notes + Supervisor Reviews */}
-              <div className="card-main">
+              <div className="sanctum-glass-main p-6">
               {/* Your Pending Notes Section */}
               <div className={user?.isSupervisor ? 'pb-4 border-b border-gray-200 mb-4' : ''}>
                 <div className="flex items-center justify-between mb-4">
@@ -225,7 +225,7 @@ function Dashboard() {
                           <span className={`text-xs px-2 py-0.5 rounded-full ${item.type === 'draft' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
                             {item.type === 'draft' ? 'Draft' : 'Missing'}
                           </span>
-                          <span className="font-medium text-gray-800 text-sm truncate">{item.patientName}</span>
+                          <span className="font-medium text-gray-800 text-sm truncate">{item.clientName}</span>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
                           {new Date(item.serviceDate).toLocaleDateString()}
@@ -264,7 +264,7 @@ function Dashboard() {
                       </div>
                       {pendingReviews.notes?.slice(0, 3).map((note, idx) => (
                         <div key={idx} className="p-2 bg-white/60 rounded-lg border border-gray-200">
-                          <p className="font-medium text-gray-800 text-sm truncate">{note.patientName}</p>
+                          <p className="font-medium text-gray-800 text-sm truncate">{note.clientName}</p>
                           <p className="text-xs text-gray-500">
                             {note.providerName} • {new Date(note.serviceDate).toLocaleDateString()}
                           </p>
@@ -293,6 +293,7 @@ function Dashboard() {
         </>
       )}
 
+      <Suspense fallback={<div className="p-10 text-center text-gray-500">Loading component...</div>}>
       {activeNav === 'clients' && <Clients />}
 
       {activeNav === 'calendar' && <Calendar />}
@@ -303,8 +304,9 @@ function Dashboard() {
 
       {activeNav === 'settings' && <Settings />}
 
+      </Suspense>
       {activeNav !== 'dashboard' && activeNav !== 'clients' && activeNav !== 'calendar' && activeNav !== 'reports' && activeNav !== 'admin' && activeNav !== 'settings' && (
-        <div className="backdrop-blur-2xl bg-white/40 rounded-3xl shadow-2xl border border-white/50 p-8 text-center">
+        <div className="sanctum-glass-main p-8 text-center">
           <p className="text-gray-700 text-lg font-semibold">
             {activeNav.charAt(0).toUpperCase() + activeNav.slice(1)} - Coming Soon
           </p>

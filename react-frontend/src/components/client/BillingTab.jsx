@@ -12,12 +12,12 @@ function BillingTab({ data }) {
 
   useEffect(() => {
     const fetchBilling = async () => {
-      if (!data?.patient?.pid) return;
+      if (!data?.client?.pid) return;
 
       try {
         setLoading(true);
         setError(null);
-        const result = await getBilling(data.patient.pid);
+        const result = await getBilling(data.client.pid);
         setBillingData(result);
       } catch (err) {
         console.error('Error fetching billing:', err);

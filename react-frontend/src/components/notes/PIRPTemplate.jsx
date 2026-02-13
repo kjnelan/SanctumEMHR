@@ -23,22 +23,22 @@ import { getTreatmentGoals } from '../../services/NoteService';
  * Props:
  * - note: object - Current note data
  * - onChange: function(field, value) - Callback when field changes
- * - patientId: number - Patient ID for fetching goals
+ * - clientId: number - Client ID for fetching goals
  * - autoSave: function() - Trigger auto-save
  */
-function PIRPTemplate({ note, onChange, patientId, autoSave }) {
+function PIRPTemplate({ note, onChange, clientId, autoSave }) {
   const [goals, setGoals] = useState([]);
   const [loadingGoals, setLoadingGoals] = useState(true);
   const [riskPresent, setRiskPresent] = useState(note.riskPresent || false);
 
   useEffect(() => {
     loadTreatmentGoals();
-  }, [patientId]);
+  }, [clientId]);
 
   const loadTreatmentGoals = async () => {
     try {
       setLoadingGoals(true);
-      const data = await getTreatmentGoals(patientId, { status: 'active' });
+      const data = await getTreatmentGoals(clientId, { status: 'active' });
       setGoals(data.goals || []);
     } catch (err) {
       console.error('Error loading treatment goals:', err);
@@ -85,7 +85,7 @@ function PIRPTemplate({ note, onChange, patientId, autoSave }) {
           </p>
         </div>
         <DiagnosisSelector
-          patientId={patientId}
+          clientId={clientId}
           serviceDate={note.date_of_service || new Date().toISOString().split('T')[0]}
           selectedDiagnoses={note.diagnosis_codes || []}
           onChange={(diagnoses) => handleChange('diagnosis_codes', diagnoses)}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { updateDemographics, getRelatedPersons, saveRelatedPerson, deleteRelatedPerson } from '../../services/ClientService';
 import { getListOptions, getProviders } from '../../utils/api';
+import { portalAdminEnable, portalAdminResetPassword, portalAdminRevoke } from '../../services/PortalService';
 import useReferenceLists from '../../hooks/useReferenceLists';
 import { RequiredAsterisk } from '../shared/RequiredAsterisk';
 
@@ -21,7 +22,8 @@ function DemographicsTab({ data, onDataUpdate }) {
     'gender-identity',
     'marital-status',
     'client-status',
-    'ethnicity'
+    'ethnicity',
+    'race'
   ]);
 
   // Load reference lists into dropdown options when they're available
@@ -33,7 +35,8 @@ function DemographicsTab({ data, onDataUpdate }) {
         gender_identity: referenceLists['gender-identity'] || [],
         marital_status: referenceLists['marital-status'] || [],
         status: referenceLists['client-status'] || [],
-        ethnicity: referenceLists['ethnicity'] || []
+        ethnicity: referenceLists['ethnicity'] || [],
+        race: referenceLists['race'] || []
       });
     }
   }, [referenceLists, listsLoading]);
@@ -76,9 +79,9 @@ function DemographicsTab({ data, onDataUpdate }) {
   // Load guardians for minors
   useEffect(() => {
     const loadGuardians = async () => {
-      if (data && data.patient && data.patient.age < 18) {
+      if (data && data.client && data.client.age < 18) {
         try {
-          const response = await getRelatedPersons(data.patient.pid);
+          const response = await getRelatedPersons(data.client.pid);
           setGuardians(response.related_persons || []);
         } catch (err) {
           console.error('Failed to load guardians:', err);
@@ -105,52 +108,53 @@ function DemographicsTab({ data, onDataUpdate }) {
     );
   }
 
-  const { patient } = data;
+  const { client } = data;
 
   const handleEdit = () => {
-    // Initialize form data with current patient data
+    // Initialize form data with current client data
     // Only include fields that exist in the SanctumEMHR database schema
     setFormData({
       // Personal Information
-      fname: patient.fname || '',
-      mname: patient.mname || '',
-      lname: patient.lname || '',
-      preferred_name: patient.preferred_name || '',
-      DOB: patient.DOB || '',
-      sex: patient.sex || '',
-      gender_identity: patient.gender_identity || '',
-      sexual_orientation: patient.sexual_orientation || '',
-      marital_status: patient.marital_status || '',
-      ethnicity: patient.ethnicity || '',
-      ss: patient.ss || '',
+      fname: client.fname || '',
+      mname: client.mname || '',
+      lname: client.lname || '',
+      preferred_name: client.preferred_name || '',
+      DOB: client.DOB || '',
+      sex: client.sex || '',
+      gender_identity: client.gender_identity || '',
+      sexual_orientation: client.sexual_orientation || '',
+      marital_status: client.marital_status || '',
+      ethnicity: client.ethnicity || '',
+      race: client.race || '',
+      ss: client.ss || '',
 
       // Contact Information
-      street: patient.street || '',
-      street_line_2: patient.street_line_2 || '',
-      city: patient.city || '',
-      state: patient.state || '',
-      postal_code: patient.postal_code || '',
-      county: patient.county || '',
-      contact_relationship: patient.contact_relationship || '',
-      phone_contact: patient.phone_contact || '',
-      phone_home: patient.phone_home || '',
-      phone_cell: patient.phone_cell || '',
-      phone_biz: patient.phone_biz || '',
-      email: patient.email || '',
+      street: client.street || '',
+      street_line_2: client.street_line_2 || '',
+      city: client.city || '',
+      state: client.state || '',
+      postal_code: client.postal_code || '',
+      county: client.county || '',
+      contact_relationship: client.contact_relationship || '',
+      phone_contact: client.phone_contact || '',
+      phone_home: client.phone_home || '',
+      phone_cell: client.phone_cell || '',
+      phone_biz: client.phone_biz || '',
+      email: client.email || '',
 
       // Client Status
-      status: patient.status || patient.care_team_status || 'active',
+      status: client.status || client.care_team_status || 'active',
 
       // Payment Type
-      payment_type: patient.payment_type || 'insurance',
-      custom_session_fee: patient.custom_session_fee || '',
+      payment_type: client.payment_type || 'insurance',
+      custom_session_fee: client.custom_session_fee || '',
 
       // Clinician Information
-      provider_id: patient.provider_id || patient.providerID || '',
+      provider_id: client.provider_id || client.providerID || '',
 
       // Portal Settings
-      allow_patient_portal: patient.allow_patient_portal || '',
-      cmsportal_login: patient.cmsportal_login || ''
+      portal_access: client.portal_access || '',
+      portal_username: client.portal_username || ''
     });
     setIsEditing(true);
     setError(null);
@@ -200,7 +204,7 @@ function DemographicsTab({ data, onDataUpdate }) {
       }
 
       // Call API to update demographics
-      await updateDemographics(patient.pid, formData);
+      await updateDemographics(client.pid, formData);
 
       // Refresh the data
       if (onDataUpdate) {
@@ -235,7 +239,7 @@ function DemographicsTab({ data, onDataUpdate }) {
     try {
       await deleteRelatedPerson(guardian.relation_id);
       // Reload guardians
-      const response = await getRelatedPersons(patient.pid);
+      const response = await getRelatedPersons(client.pid);
       setGuardians(response.related_persons || []);
     } catch (err) {
       setError(err.message || 'Failed to delete guardian');
@@ -245,12 +249,12 @@ function DemographicsTab({ data, onDataUpdate }) {
   const handleSaveGuardian = async (guardianData) => {
     try {
       await saveRelatedPerson({
-        patient_id: patient.pid,
+        client_id: client.pid,
         person_id: editingGuardian?.id,
         ...guardianData
       });
       // Reload guardians
-      const response = await getRelatedPersons(patient.pid);
+      const response = await getRelatedPersons(client.pid);
       setGuardians(response.related_persons || []);
       setShowGuardianModal(false);
       setEditingGuardian(null);
@@ -401,6 +405,11 @@ function DemographicsTab({ data, onDataUpdate }) {
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.ethnicity]
                         : null
                     )}
+                    {renderField('Race', formData.race, 'race', 'text',
+                      dropdownOptions.race && dropdownOptions.race.length > 0
+                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.race]
+                        : null
+                    )}
                     <div className="form-field">
                       <div className="form-field-label">S.S.</div>
                       <input
@@ -415,21 +424,22 @@ function DemographicsTab({ data, onDataUpdate }) {
                   </>
                 ) : (
                   <>
-                    {renderField('First Name', patient.fname)}
-                    {renderField('Middle Name', patient.mname)}
-                    {renderField('Last Name', patient.lname)}
-                    {renderField('Preferred Name', patient.preferred_name)}
-                    {renderField('DOB', formatDate(patient.DOB))}
-                    {renderField('Legal Sex (For billing purposes ONLY)', patient.sex, null, 'text',
+                    {renderField('First Name', client.fname)}
+                    {renderField('Middle Name', client.mname)}
+                    {renderField('Last Name', client.lname)}
+                    {renderField('Preferred Name', client.preferred_name)}
+                    {renderField('DOB', formatDate(client.DOB))}
+                    {renderField('Legal Sex (For billing purposes ONLY)', client.sex, null, 'text',
                       [{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }, { value: 'other', label: 'Other' }, { value: 'unknown', label: 'Unknown' }]
                     )}
-                    {renderField('Gender Identity', patient.gender_identity_text || patient.gender_identity)}
-                    {renderField('Sexual Orientation', patient.sexual_orientation_text || patient.sexual_orientation)}
-                    {renderField('Marital Status', patient.marital_status_text || patient.marital_status)}
-                    {renderField('Ethnicity', patient.ethnicity)}
+                    {renderField('Gender Identity', client.gender_identity_text || client.gender_identity)}
+                    {renderField('Sexual Orientation', client.sexual_orientation_text || client.sexual_orientation)}
+                    {renderField('Marital Status', client.marital_status_text || client.marital_status)}
+                    {renderField('Ethnicity', client.ethnicity_text || client.ethnicity)}
+                    {renderField('Race', client.race_text || client.race)}
                     <div className="form-field">
                       <div className="form-field-label">S.S.</div>
-                      <div className="form-field-value">{patient.ss ? '***-**-' + patient.ss.slice(-4) : ''}</div>
+                      <div className="form-field-value">{client.ss ? '***-**-' + client.ss.slice(-4) : ''}</div>
                     </div>
                   </>
                 )}
@@ -438,7 +448,7 @@ function DemographicsTab({ data, onDataUpdate }) {
           </div>
 
           {/* Guardian Information Section - Only for minors */}
-          {patient.age < 18 && (
+          {client.age < 18 && (
             <div className="card-main">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="card-header">Guardian Information</h2>
@@ -514,27 +524,27 @@ function DemographicsTab({ data, onDataUpdate }) {
             <div className="card-inner">
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2">
-                  {renderField('Address', patient.street, 'street')}
+                  {renderField('Address', client.street, 'street')}
                 </div>
-                {renderField('Address Line 2', patient.street_line_2, 'street_line_2')}
-                {renderField('City', patient.city, 'city')}
-                {renderField('State', patient.state, 'state', 'text',
+                {renderField('Address Line 2', client.street_line_2, 'street_line_2')}
+                {renderField('City', client.city, 'city')}
+                {renderField('State', client.state, 'state', 'text',
                   dropdownOptions.state && dropdownOptions.state.length > 0
                     ? [{ value: '', label: 'Select...' }, ...dropdownOptions.state]
                     : null
                 )}
-                {renderField('Postal Code', patient.postal_code, 'postal_code')}
-                {renderField('County', patient.county, 'county')}
-                {renderField('Emergency Contact', patient.contact_relationship, 'contact_relationship')}
-                {renderField('Emergency Phone', patient.phone_contact, 'phone_contact', 'tel')}
-                {renderField('Home Phone', patient.phone_home, 'phone_home', 'tel')}
-                {renderField('Mobile Phone', patient.phone_cell, 'phone_cell', 'tel', null, true)}
-                {renderField('Work Phone', patient.phone_biz, 'phone_biz', 'tel')}
-                {renderField('Trusted Email', patient.email, 'email', 'email', null, true)}
-                {!isEditing && patient.additional_addresses && (
+                {renderField('Postal Code', client.postal_code, 'postal_code')}
+                {renderField('County', client.county, 'county')}
+                {renderField('Emergency Contact', client.contact_relationship, 'contact_relationship')}
+                {renderField('Emergency Phone', client.phone_contact, 'phone_contact', 'tel')}
+                {renderField('Home Phone', client.phone_home, 'phone_home', 'tel')}
+                {renderField('Mobile Phone', client.phone_cell, 'phone_cell', 'tel', null, true)}
+                {renderField('Work Phone', client.phone_biz, 'phone_biz', 'tel')}
+                {renderField('Trusted Email', client.email, 'email', 'email', null, true)}
+                {!isEditing && client.additional_addresses && (
                   <div className="col-span-2 form-field">
                     <div className="form-field-label">Additional Addresses</div>
-                    <div className="form-field-value">{patient.additional_addresses}</div>
+                    <div className="form-field-value">{client.additional_addresses}</div>
                   </div>
                 )}
               </div>
@@ -579,7 +589,7 @@ function DemographicsTab({ data, onDataUpdate }) {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {renderField('Client Status', patient.status, null, 'text',
+                  {renderField('Client Status', client.status, null, 'text',
                     [
                       { value: 'active', label: 'Active' },
                       { value: 'inactive', label: 'Inactive' },
@@ -587,17 +597,17 @@ function DemographicsTab({ data, onDataUpdate }) {
                       { value: 'deceased', label: 'Deceased' }
                     ]
                   )}
-                  {renderField('Payment Type', patient.payment_type, null, 'text',
+                  {renderField('Payment Type', client.payment_type, null, 'text',
                     [
                       { value: 'insurance', label: 'Insurance' },
                       { value: 'self-pay', label: 'Self-Pay' },
                       { value: 'pro-bono', label: 'Pro Bono' }
                     ]
                   )}
-                  {patient.payment_type === 'self-pay' && patient.custom_session_fee && (
+                  {client.payment_type === 'self-pay' && client.custom_session_fee && (
                     <div className="form-field">
                       <div className="form-field-label">Custom Session Fee</div>
-                      <div className="form-field-value">${parseFloat(patient.custom_session_fee).toFixed(2)}</div>
+                      <div className="form-field-value">${parseFloat(client.custom_session_fee).toFixed(2)}</div>
                     </div>
                   )}
                 </div>
@@ -607,28 +617,12 @@ function DemographicsTab({ data, onDataUpdate }) {
 
 
           {/* Portal Settings Section */}
-          <div className="card-main">
-            <h2 className="card-header">Portal Settings</h2>
-            <div className="card-inner">
-              <div className="grid grid-cols-2 gap-3">
-                {isEditing ? (
-                  <>
-                    {renderField('Allow Client Portal', formData.allow_patient_portal, 'allow_patient_portal', 'text', [
-                      { value: '', label: 'Select...' },
-                      { value: 'NO', label: 'NO' },
-                      { value: 'YES', label: 'YES' }
-                    ])}
-                    {renderField('CMS Portal Login', formData.cmsportal_login, 'cmsportal_login')}
-                  </>
-                ) : (
-                  <>
-                    {renderField('Allow Client Portal', patient.allow_patient_portal)}
-                    {renderField('CMS Portal Login', patient.cmsportal_login)}
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
+          <PortalSettingsCard
+            clientId={client.pid}
+            portalAccess={client.portal_access}
+            portalUsername={client.portal_username}
+            onUpdate={onDataUpdate}
+          />
 
         </div>
       </div>
@@ -860,6 +854,192 @@ function GuardianModal({ guardian, stateOptions, onSave, onCancel }) {
             </div>
           </form>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Portal Settings Card - Manages client portal access from staff side
+function PortalSettingsCard({ clientId, portalAccess, portalUsername, onUpdate }) {
+  const [showSetup, setShowSetup] = useState(false);
+  const [showReset, setShowReset] = useState(false);
+  const [username, setUsername] = useState(portalUsername || '');
+  const [tempPassword, setTempPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const isEnabled = portalAccess === 'YES' || portalAccess === '1' || portalAccess === 1;
+
+  const handleEnable = async () => {
+    if (!username.trim() || !tempPassword.trim()) {
+      setError('Username and temporary password are required');
+      return;
+    }
+    if (tempPassword.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      await portalAdminEnable(clientId, username.trim(), tempPassword);
+      setSuccess('Portal access enabled. Client can log in at /mycare with the credentials provided.');
+      setShowSetup(false);
+      setTempPassword('');
+      if (onUpdate) onUpdate();
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!tempPassword.trim() || tempPassword.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      await portalAdminResetPassword(clientId, tempPassword);
+      setSuccess('Portal password has been reset. Client will be required to change it on next login.');
+      setShowReset(false);
+      setTempPassword('');
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRevoke = async () => {
+    if (!confirm('Are you sure you want to revoke portal access for this client? They will no longer be able to log in.')) return;
+    setLoading(true);
+    setError('');
+    try {
+      await portalAdminRevoke(clientId);
+      setSuccess('Portal access has been revoked.');
+      if (onUpdate) onUpdate();
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="card-main">
+      <h2 className="card-header">Client Portal</h2>
+
+      {success && <div className="success-message">{success}</div>}
+      {error && <div className="error-message">{error}</div>}
+
+      <div className="card-inner">
+        {isEnabled ? (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="badge-sm badge-light-success">Portal Enabled</span>
+                <p className="text-sm text-gray-600 mt-2">Username: <span className="font-mono font-semibold">{portalUsername}</span></p>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setShowReset(true); setShowSetup(false); setError(''); setTempPassword(''); }}
+                className="btn-solid btn-solid-blue text-xs px-3 py-1.5"
+                disabled={loading}
+              >
+                Reset Password
+              </button>
+              <button
+                onClick={handleRevoke}
+                className="btn-solid btn-solid-gray text-xs px-3 py-1.5"
+                disabled={loading}
+              >
+                Revoke Access
+              </button>
+            </div>
+
+            {showReset && (
+              <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm font-semibold text-gray-700 mb-2">Set New Temporary Password</p>
+                <input
+                  type="text"
+                  value={tempPassword}
+                  onChange={(e) => setTempPassword(e.target.value)}
+                  placeholder="Temporary password (min 8 chars)"
+                  className="input-md mb-2"
+                />
+                <p className="text-xs text-gray-500 mb-2">Client will be required to change this on next login.</p>
+                <div className="flex gap-2">
+                  <button onClick={handleResetPassword} disabled={loading} className="btn-solid btn-solid-blue text-xs px-3 py-1.5">
+                    {loading ? 'Saving...' : 'Reset Password'}
+                  </button>
+                  <button onClick={() => setShowReset(false)} className="btn-solid btn-solid-gray text-xs px-3 py-1.5">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <span className="badge-sm badge-light-neutral">Portal Not Enabled</span>
+              <p className="text-sm text-gray-500 mt-2">Enable portal access to allow this client to view appointments and update their profile online.</p>
+            </div>
+
+            {!showSetup ? (
+              <button
+                onClick={() => { setShowSetup(true); setError(''); }}
+                className="btn-solid btn-solid-green text-xs px-3 py-1.5"
+              >
+                Enable Portal Access
+              </button>
+            ) : (
+              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-sm font-semibold text-gray-700 mb-3">Set Up Portal Credentials</p>
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600">Portal Username</label>
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="e.g. jsmith or client's email"
+                      className="input-md"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600">Temporary Password</label>
+                    <input
+                      type="text"
+                      value={tempPassword}
+                      onChange={(e) => setTempPassword(e.target.value)}
+                      placeholder="Min 8 characters"
+                      className="input-md"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Client will be required to change this on first login.</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <button onClick={handleEnable} disabled={loading} className="btn-solid btn-solid-green text-xs px-3 py-1.5">
+                    {loading ? 'Enabling...' : 'Enable Access'}
+                  </button>
+                  <button onClick={() => setShowSetup(false)} className="btn-solid btn-solid-gray text-xs px-3 py-1.5">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

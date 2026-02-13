@@ -63,7 +63,7 @@ try {
 
     error_log("Update appointment input: " . print_r($input, true));
 
-    // Validate required fields (patientId is conditionally required based on category type)
+    // Validate required fields (clientId is conditionally required based on category type)
     $required = ['appointmentId', 'providerId', 'categoryId', 'eventDate', 'startTime', 'duration'];
     foreach ($required as $field) {
         if (!isset($input[$field]) || $input[$field] === '') {
@@ -73,23 +73,23 @@ try {
 
     // Extract and validate inputs
     $appointmentId = intval($input['appointmentId']);
-    $patientId = isset($input['patientId']) && $input['patientId'] !== '' ? intval($input['patientId']) : null;
+    $clientId = isset($input['patientId']) && $input['patientId'] !== '' ? intval($input['patientId']) : null;
     $providerId = intval($input['providerId']);
     $categoryId = intval($input['categoryId']);
     $eventDate = $input['eventDate']; // YYYY-MM-DD format
     $startTime = $input['startTime']; // HH:MM:SS format
     $duration = intval($input['duration']); // Duration in minutes
 
-    // Look up category type to determine if patientId is required
+    // Look up category type to determine if clientId is required
     $categoryResult = $db->query("SELECT category_type FROM appointment_categories WHERE id = ?", [$categoryId]);
     if (!$categoryResult) {
         throw new Exception("Invalid category ID");
     }
     $categoryType = $categoryResult['category_type'];
 
-    // Client-type appointments require a patient
-    if ($categoryType === 'client' && !$patientId) {
-        throw new Exception("Client appointments require a patient to be selected");
+    // Client-type appointments require a client
+    if ($categoryType === 'client' && !$clientId) {
+        throw new Exception("Client appointments require a client to be selected");
     }
 
     // Optional fields
@@ -102,7 +102,7 @@ try {
     // CPT/Billing fields
     $cptCodeId = isset($input['cptCodeId']) && $input['cptCodeId'] ? intval($input['cptCodeId']) : null;
     $billingFee = isset($input['billingFee']) && $input['billingFee'] ? floatval($input['billingFee']) : null;
-    $patientPaymentType = $input['patientPaymentType'] ?? null;
+    $clientPaymentType = $input['patientPaymentType'] ?? null;
 
     // Attendees for clinic-type appointments (supervision, meetings, etc.)
     $attendees = isset($input['attendees']) && is_array($input['attendees']) ? $input['attendees'] : [];
@@ -175,11 +175,11 @@ try {
     // Determine fee_type based on payment type and billing fee
     $feeType = null;
     if ($billingFee !== null) {
-        if ($patientPaymentType === 'insurance') {
+        if ($clientPaymentType === 'insurance') {
             $feeType = 'insurance';
-        } elseif ($patientPaymentType === 'self-pay') {
+        } elseif ($clientPaymentType === 'self-pay') {
             $feeType = 'custom';
-        } elseif ($patientPaymentType === 'pro-bono') {
+        } elseif ($clientPaymentType === 'pro-bono') {
             $feeType = 'pro-bono';
         }
     }
@@ -209,7 +209,7 @@ try {
     $params = [
         $categoryId,
         $providerId,
-        $patientId,
+        $clientId,
         $title,
         $startDateTime->format('Y-m-d H:i:s'),
         $endDateTime->format('Y-m-d H:i:s'),
@@ -275,8 +275,8 @@ try {
             a.provider_id,
             a.room,
             c.name AS category_name,
-            cl.first_name AS patient_fname,
-            cl.last_name AS patient_lname,
+            cl.first_name AS client_fname,
+            cl.last_name AS client_lname,
             CONCAT(u.first_name, ' ', u.last_name) AS provider_name
         FROM appointments a
         LEFT JOIN appointment_categories c ON a.category_id = c.id
@@ -334,7 +334,7 @@ try {
             'title' => $updatedAppt['title'],
             'comments' => $updatedAppt['notes'],
             'patientId' => $updatedAppt['client_id'],
-            'patientName' => trim(($updatedAppt['patient_fname'] ?? '') . ' ' . ($updatedAppt['patient_lname'] ?? '')),
+            'patientName' => trim(($updatedAppt['client_fname'] ?? '') . ' ' . ($updatedAppt['client_lname'] ?? '')),
             'providerId' => $updatedAppt['provider_id'],
             'providerName' => $updatedAppt['provider_name'],
             'room' => $updatedAppt['room'],

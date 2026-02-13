@@ -90,3 +90,12 @@ export async function getClientFlowStats(startDate, endDate) {
   });
   return apiRequest(`/custom/api/reports.php?${params.toString()}`);
 }
+
+/**
+ * Get client demographics breakdown (Age, Gender, Race, Ethnicity)
+ * @returns {Promise<Object>} Demographics data
+ */
+export async function getClientDemographics() {
+  console.log('ReportService: Fetching demographic breakdown');
+  return apiRequest('/custom/api/client_demographics.php');
+}

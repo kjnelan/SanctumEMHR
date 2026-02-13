@@ -12,26 +12,26 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getPatientDiagnoses } from '../../services/NoteService';
+import { getClientDiagnoses } from '../../services/NoteService';
 import { ErrorInline } from '../ErrorInline';
 
 /**
  * Props:
- * - patientId: number - Patient ID
+ * - clientId: number - Client ID
  * - serviceDate: string - Date of service (YYYY-MM-DD)
  * - selectedDiagnoses: array - Currently selected diagnosis codes
  * - onChange: function(diagnoses) - Callback when selection changes
  */
-function DiagnosisSelector({ patientId, serviceDate, selectedDiagnoses = [], onChange }) {
+function DiagnosisSelector({ clientId, serviceDate, selectedDiagnoses = [], onChange }) {
   const [availableDiagnoses, setAvailableDiagnoses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (patientId) {
+    if (clientId) {
       loadDiagnoses();
     }
-  }, [patientId, serviceDate]);
+  }, [clientId, serviceDate]);
 
   const loadDiagnoses = async () => {
     try {
@@ -39,7 +39,7 @@ function DiagnosisSelector({ patientId, serviceDate, selectedDiagnoses = [], onC
       setError(null);
 
       // Fetch active diagnoses as of the service date
-      const data = await getPatientDiagnoses(patientId, {
+      const data = await getClientDiagnoses(clientId, {
         activeAsOf: serviceDate,
         includeRetired: false
       });
@@ -133,7 +133,7 @@ function DiagnosisSelector({ patientId, serviceDate, selectedDiagnoses = [], onC
   if (!availableDiagnoses || availableDiagnoses.length === 0) {
     return (
       <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-        ⚠️ No active diagnoses found for this patient. Please create a Diagnosis Note first.
+        ⚠️ No active diagnoses found for this client. Please create a Diagnosis Note first.
       </div>
     );
   }

@@ -4,7 +4,7 @@ function StatsGrid({ stats, onNewClient, onNewAppointment }) {
     return (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
             {/* Quick Actions Card - First position */}
-            <div className="card-main transform hover:scale-105 transition-all hover:shadow-3xl">
+            <div className="sanctum-glass-main p-6 transform hover:scale-105 transition-all hover:shadow-3xl">
                 {/* Icon + Title row */}
                 <div className="flex items-center gap-3 mb-4">
                     <div className="w-10 h-10 bg-gradient-to-br from-slate-500 to-slate-700 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
@@ -19,13 +19,13 @@ function StatsGrid({ stats, onNewClient, onNewAppointment }) {
                 <div className="space-y-2">
                     <button
                         onClick={onNewAppointment}
-                        className="w-full px-3 py-2 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors"
+                        className="btn-action p-6 bg-blue-500 hover:bg-blue-600"
                     >
                         + New Appointment
                     </button>
                     <button
                         onClick={onNewClient}
-                        className="w-full px-3 py-2 text-sm font-medium text-white bg-green-500 hover:bg-green-600 rounded-lg transition-colors"
+                        className="btn-action p-6 bg-green-500 hover:bg-green-600"
                     >
                         + Add New Client
                     </button>

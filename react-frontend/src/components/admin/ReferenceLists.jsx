@@ -50,9 +50,15 @@ function ReferenceLists() {
     },
     {
       id: 'ethnicity',
-      label: 'Ethnicity/Race',
-      title: 'Ethnicity/Race Options',
-      description: 'Manage ethnicity and race options for client demographics'
+      label: 'Ethnicity',
+      title: 'Ethnicity Options',
+      description: 'Manage ethnicity options (Hispanic/Latino origin) per OMOP CDM and HIPAA/ONC standards'
+    },
+    {
+      id: 'race',
+      label: 'Race',
+      title: 'Race Options',
+      description: 'Manage race options per OMOP CDM and HIPAA/ONC standards (OMB categories)'
     },
     {
       id: 'insurance-type',

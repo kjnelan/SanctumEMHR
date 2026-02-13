@@ -59,7 +59,7 @@ function ClinicalNotesTab({ data }) {
     return (
       <NoteTypeSelector
         onSelect={handleNoteTypeSelected}
-        patientId={data?.patient?.pid}
+        clientId={data?.client?.pid}
       />
     );
   }
@@ -67,7 +67,7 @@ function ClinicalNotesTab({ data }) {
   if (view === 'create') {
     return (
       <NoteEditor
-        patientId={data?.patient?.pid}
+        clientId={data?.client?.pid}
         noteType={selectedNoteType}
         templateFormat={selectedTemplateFormat}
         onSave={handleNoteSaved}
@@ -80,7 +80,7 @@ function ClinicalNotesTab({ data }) {
     return (
       <NoteEditor
         noteId={selectedNoteId}
-        patientId={data?.patient?.pid}
+        clientId={data?.client?.pid}
         noteType={selectedNoteType}
         onSave={handleNoteSaved}
         onClose={handleClose}
@@ -101,7 +101,7 @@ function ClinicalNotesTab({ data }) {
   // Default: List view
   return (
     <NotesList
-      patientId={data?.patient?.pid}
+      clientId={data?.client?.pid}
       onNoteClick={handleNoteClick}
       onCreateNote={handleCreateNote}
     />

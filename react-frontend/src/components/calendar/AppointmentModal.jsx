@@ -1,7 +1,7 @@
 /**
  * SanctumEMHR EMHR
  * AppointmentModal - Modal component for creating appointments
- * Features patient search, provider selection, date/time pickers
+ * Features client search, provider selection, date/time pickers
  *
  * Author: Kenneth J. Nelan
  * License: Proprietary and Confidential
@@ -16,7 +16,7 @@ import { createAppointment, updateAppointment, deleteAppointment, getAppointment
 import { searchClients } from '../../services/ClientService';
 import { getSupervisees } from '../../utils/api';
 import { FormLabel } from '../FormLabel';
-import { RequiredAsterisk } from '../RequiredAsterisk';
+import { RequiredAsterisk } from '../shared/RequiredAsterisk';
 import { ErrorMessage } from '../ErrorMessage';
 import { DangerButton } from '../DangerButton';
 import { PrimaryButton } from '../PrimaryButton';
@@ -41,8 +41,8 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
   const [recurrenceConflicts, setRecurrenceConflicts] = useState(null); // { conflicts: [], totalOccurrences: N }
 
   // Form fields
-  const [patientId, setPatientId] = useState('');
-  const [patientName, setPatientName] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [clientName, setClientName] = useState('');
   const [selectedProvider, setSelectedProvider] = useState(providerId || '');
   const [categoryId, setCategoryId] = useState('');
   const [eventDate, setEventDate] = useState(initialDate || new Date().toISOString().split('T')[0]);
@@ -59,7 +59,7 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
   // Billing/CPT fields
   const [cptCodeId, setCptCodeId] = useState('');
   const [selectedCptCode, setSelectedCptCode] = useState(null);
-  const [patientPaymentType, setPatientPaymentType] = useState(null);
+  const [clientPaymentType, setClientPaymentType] = useState(null);
 
   // Recurrence fields
   const [isRecurring, setIsRecurring] = useState(false);
@@ -77,9 +77,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
   // Dropdown data
   const [categories, setCategories] = useState([]);
   const [rooms, setRooms] = useState([]);
-  const [patientSearchResults, setPatientSearchResults] = useState([]);
-  const [showPatientDropdown, setShowPatientDropdown] = useState(false);
-  const [patientSearchQuery, setPatientSearchQuery] = useState('');
+  const [clientSearchResults, setClientSearchResults] = useState([]);
+  const [showClientDropdown, setShowClientDropdown] = useState(false);
+  const [clientSearchQuery, setClientSearchQuery] = useState('');
   const [supervisees, setSupervisees] = useState([]);
   const [selectedSupervisees, setSelectedSupervisees] = useState([]);
 
@@ -118,9 +118,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
   // Populate form when editing existing appointment
   useEffect(() => {
     if (appointment && isOpen) {
-      setPatientId(appointment.patientId || '');
-      setPatientName(appointment.patientName || '');
-      setPatientSearchQuery(appointment.patientName || '');
+      setClientId(appointment.clientId || '');
+      setClientName(appointment.clientName || '');
+      setClientSearchQuery(appointment.clientName || '');
       setSelectedProvider(appointment.providerId || '');
       setCategoryId(appointment.categoryId || '');
       setEventDate(appointment.eventDate || '');
@@ -133,18 +133,18 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
       setCancellationReason(appointment.cancellationReason || ''); // Set cancellation reason if exists
       setCptCodeId(appointment.cptCodeId || '');
 
-      // Fetch patient payment type if we have a patient
-      if (appointment.patientId) {
-        fetch(`/custom/api/get_client.php?pid=${appointment.patientId}`)
+      // Fetch client payment type if we have a client
+      if (appointment.clientId) {
+        fetch(`/custom/api/get_client.php?pid=${appointment.clientId}`)
           .then(res => res.json())
           .then(data => {
             if (data.success && data.client) {
-              setPatientPaymentType(data.client.payment_type || 'insurance');
+              setClientPaymentType(data.client.payment_type || 'insurance');
             }
           })
           .catch(err => {
-            console.error('Failed to fetch patient payment type:', err);
-            setPatientPaymentType('insurance');
+            console.error('Failed to fetch client payment type:', err);
+            setClientPaymentType('insurance');
           });
       }
 
@@ -235,43 +235,43 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
     }
   };
 
-  // Handle patient search
-  const handlePatientSearch = async (query) => {
-    setPatientSearchQuery(query);
+  // Handle client search
+  const handleClientSearch = async (query) => {
+    setClientSearchQuery(query);
 
     if (query.length < 2) {
-      setPatientSearchResults([]);
-      setShowPatientDropdown(false);
+      setClientSearchResults([]);
+      setShowClientDropdown(false);
       return;
     }
 
     try {
       const results = await searchClients(query);
-      setPatientSearchResults(results || []);
-      setShowPatientDropdown(true);
+      setClientSearchResults(results || []);
+      setShowClientDropdown(true);
     } catch (err) {
-      console.error('Patient search failed:', err);
-      setPatientSearchResults([]);
+      console.error('Client search failed:', err);
+      setClientSearchResults([]);
     }
   };
 
-  // Select patient from search results
-  const selectPatient = async (patient) => {
-    setPatientId(patient.pid);
-    setPatientName(`${patient.fname} ${patient.lname}`);
-    setPatientSearchQuery(`${patient.fname} ${patient.lname}`);
-    setShowPatientDropdown(false);
+  // Select client from search results
+  const selectClient = async (selected) => {
+    setClientId(selected.pid);
+    setClientName(`${selected.fname} ${selected.lname}`);
+    setClientSearchQuery(`${selected.fname} ${selected.lname}`);
+    setShowClientDropdown(false);
 
-    // Fetch patient's payment type for CPT requirement logic
+    // Fetch client's payment type for CPT requirement logic
     try {
-      const response = await fetch(`/custom/api/get_client.php?pid=${patient.pid}`);
+      const response = await fetch(`/custom/api/get_client.php?pid=${selected.pid}`);
       const data = await response.json();
       if (data.success && data.client) {
-        setPatientPaymentType(data.client.payment_type || 'insurance');
+        setClientPaymentType(data.client.payment_type || 'insurance');
       }
     } catch (err) {
-      console.error('Failed to fetch patient payment type:', err);
-      setPatientPaymentType('insurance'); // Default to insurance if fetch fails
+      console.error('Failed to fetch client payment type:', err);
+      setClientPaymentType('insurance'); // Default to insurance if fetch fails
     }
   };
 
@@ -284,10 +284,10 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
     setCptCodeId('');
     setSelectedCptCode(null);
 
-    // Reset patient/supervisee selections when changing category type
-    setPatientId('');
-    setPatientName('');
-    setPatientSearchQuery('');
+    // Reset client/supervisee selections when changing category type
+    setClientId('');
+    setClientName('');
+    setClientSearchQuery('');
     setSelectedSupervisees([]);
 
     // Set default duration from category (already in minutes from API)
@@ -366,8 +366,8 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
 
     // Validate based on appointment type
     if (category.categoryType === 'client') {
-      // Client appointments require patient and provider
-      if (!patientId) {
+      // Client appointments require client and provider
+      if (!clientId) {
         setError('Please select a client');
         setLoading(false);
         return;
@@ -398,9 +398,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
       }
     }
 
-    // Validate CPT code if required (insurance patients with categories that require CPT)
-    if (category && category.requiresCptSelection && patientPaymentType === 'insurance' && !cptCodeId) {
-      setError('CPT code is required for insurance patients with this appointment type');
+    // Validate CPT code if required (insurance clients with categories that require CPT)
+    if (category && category.requiresCptSelection && clientPaymentType === 'insurance' && !cptCodeId) {
+      setError('CPT code is required for insurance clients with this appointment type');
       setLoading(false);
       return;
     }
@@ -443,19 +443,19 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
         eventDate: eventDate,
         startTime: formattedTime,
         duration: parseInt(duration),
-        title: title || patientName || category.name, // Use patient name or category name as default
+        title: title || clientName || category.name, // Use client name or category name as default
         comments: comments,
         room: room,
         apptstatus: apptstatus, // Use state value for status
         cancellationReason: (apptstatus === 'cancelled' || apptstatus === 'no_show') ? cancellationReason : null,
         overrideAvailability: overrideAvailability, // Pass override flag
         // Conditional fields based on appointment type
-        ...(patientId && { patientId: parseInt(patientId) }),
+        ...(clientId && { clientId: parseInt(clientId) }),
         ...(selectedProvider && { providerId: parseInt(selectedProvider) }),
         ...(attendees.length > 0 && { attendees: attendees }),
         ...(cptCodeId && { cptCodeId: parseInt(cptCodeId) }),
         ...(selectedCptCode?.standardFee && { billingFee: selectedCptCode.standardFee }),
-        ...(patientPaymentType && { patientPaymentType: patientPaymentType })
+        ...(clientPaymentType && { clientPaymentType: clientPaymentType })
       };
 
       // Add series management data if editing a recurring series
@@ -538,12 +538,12 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
     if (!appointment) return;
 
     // Build confirmation message based on series scope
-    let confirmMessage = `Are you sure you want to delete this appointment for ${patientName}?`;
+    let confirmMessage = `Are you sure you want to delete this appointment for ${clientName}?`;
     if (isEditingRecurringSeries) {
       if (seriesScope === 'all') {
-        confirmMessage = `Are you sure you want to delete ALL occurrences in this recurring series for ${patientName}?`;
+        confirmMessage = `Are you sure you want to delete ALL occurrences in this recurring series for ${clientName}?`;
       } else if (seriesScope === 'future') {
-        confirmMessage = `Are you sure you want to delete this and all future occurrences for ${patientName}?`;
+        confirmMessage = `Are you sure you want to delete this and all future occurrences for ${clientName}?`;
       }
     }
 
@@ -586,9 +586,9 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
 
   // Reset form and close modal
   const handleClose = () => {
-    setPatientId('');
-    setPatientName('');
-    setPatientSearchQuery('');
+    setClientId('');
+    setClientName('');
+    setClientSearchQuery('');
     setCategoryId('');
     setTitle('');
     setComments('');
@@ -599,8 +599,8 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
     setSuccess(null);
     setAvailabilityConflict(null);
     setRecurrenceConflicts(null);
-    setPatientSearchResults([]);
-    setShowPatientDropdown(false);
+    setClientSearchResults([]);
+    setShowClientDropdown(false);
     // Reset recurrence fields
     setIsRecurring(false);
     setRecurDays({ mon: false, tue: false, wed: false, thu: false, fri: false, sat: false, sun: false });
@@ -912,34 +912,34 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
                     </FormLabel>
                     <input
                       type="text"
-                      value={patientSearchQuery}
-                      onChange={(e) => handlePatientSearch(e.target.value)}
+                      value={clientSearchQuery}
+                      onChange={(e) => handleClientSearch(e.target.value)}
                       placeholder="Search by name..."
                       className="input-field"
                       required
                     />
-                    {showPatientDropdown && patientSearchResults.length > 0 && (
+                    {showClientDropdown && clientSearchResults.length > 0 && (
                       <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                        {patientSearchResults.map((patient) => (
+                        {clientSearchResults.map((result) => (
                           <button
-                            key={patient.pid}
+                            key={result.pid}
                             type="button"
-                            onClick={() => selectPatient(patient)}
+                            onClick={() => selectClient(result)}
                             className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-100 last:border-b-0"
                           >
                             <div className="font-medium text-gray-900">
-                              {patient.fname} {patient.lname}
+                              {result.fname} {result.lname}
                             </div>
                             <div className="text-sm text-gray-600">
-                              DOB: {patient.DOB} • PID: {patient.pid}
+                              DOB: {result.DOB} • PID: {result.pid}
                             </div>
                           </button>
                         ))}
                       </div>
                     )}
-                    {patientName && (
+                    {clientName && (
                       <div className="mt-2 text-sm text-green-600">
-                        Selected: {patientName}
+                        Selected: {clientName}
                       </div>
                     )}
                   </div>
@@ -1060,18 +1060,18 @@ function AppointmentModal({ isOpen, onClose, onSave, initialDate, initialTime, p
             return null;
           })()}
 
-          {/* CPT Code Selection - Show when category requires it or patient has insurance */}
+          {/* CPT Code Selection - Show when category requires it or client has insurance */}
           {categoryId && (() => {
             const category = categories.find(c => c.id === parseInt(categoryId));
             const showCptDropdown = category && category.requiresCptSelection && category.linkedCptCodes && category.linkedCptCodes.length > 0;
-            const cptRequired = patientPaymentType === 'insurance';
+            const cptRequired = clientPaymentType === 'insurance';
 
             if (showCptDropdown) {
               return (
                 <div>
                   <FormLabel>
                     CPT Code {cptRequired && <RequiredAsterisk />}
-                    {!cptRequired && <span className="text-gray-500 text-xs ml-2">(Optional for {patientPaymentType})</span>}
+                    {!cptRequired && <span className="text-gray-500 text-xs ml-2">(Optional for {clientPaymentType})</span>}
                   </FormLabel>
                   <select
                     value={cptCodeId}

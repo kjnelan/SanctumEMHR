@@ -224,12 +224,12 @@ function Calendar() {
     return lastName ? `${firstName} ${lastName.charAt(0)}.` : firstName;
   };
 
-  // Format appointment display - shows "Patient / Clinician" for client appts,
+  // Format appointment display - shows "Client / Clinician" for client appts,
   // or just "Clinician" for non-client appts (supervision, clinic, etc.)
   const formatAppointmentDisplay = (apt) => {
-    if (apt.patientName) {
-      // Client appointment: show "Patient / Clinician"
-      return `${formatClientName(apt.patientName)} / ${formatClinicianName(apt)}`;
+    if (apt.clientName) {
+      // Client appointment: show "Client / Clinician"
+      return `${formatClientName(apt.clientName)} / ${formatClinicianName(apt)}`;
     }
     // Non-client appointment: show just the clinician name
     return formatClinicianName(apt);
@@ -238,8 +238,8 @@ function Calendar() {
   // Format compact appointment display for grid view (time + name)
   const formatCompactDisplay = (apt) => {
     const time = formatTime12Hour(apt.startTime).replace(' ', '');
-    if (apt.patientName) {
-      return `${time} ${formatClientName(apt.patientName)}`;
+    if (apt.clientName) {
+      return `${time} ${formatClientName(apt.clientName)}`;
     }
     // Non-client appointment: show time + category name
     return `${time} ${apt.categoryName || formatClinicianName(apt)}`;
@@ -720,7 +720,7 @@ function Calendar() {
                                           background: style.gradient,
                                           borderColor: style.borderColor
                                         }}
-                                        title={`${apt.patientName || apt.categoryName} - ${apt.categoryName}`}
+                                        title={`${apt.clientName || apt.categoryName} - ${apt.categoryName}`}
                                       >
                                         <div className={`font-semibold truncate ${style.textClass}`}>
                                           {formatCompactDisplay(apt)}

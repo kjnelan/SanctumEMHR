@@ -1,7 +1,7 @@
 <?php
 /**
  * Billing API - Session-based (MIGRATED TO SanctumEMHR)
- * Returns all billing/charges and payments for a patient
+ * Returns all billing/charges and payments for a client
  */
 
 require_once(__DIR__ . '/../init.php');
@@ -41,17 +41,17 @@ try {
         exit;
     }
 
-    // Get patient ID from query parameter
-    $patientId = $_GET['patient_id'] ?? null;
+    // Get client ID from query parameter
+    $clientId = $_GET['client_id'] ?? $_GET['patient_id'] ?? null;
 
-    if (!$patientId) {
-        error_log("Billing: No patient ID provided");
+    if (!$clientId) {
+        error_log("Billing: No client ID provided");
         http_response_code(400);
-        echo json_encode(['error' => 'Patient ID is required']);
+        echo json_encode(['error' => 'Client ID is required']);
         exit;
     }
 
-    error_log("Billing: User authenticated - " . $session->getUserId() . ", fetching billing for patient ID: " . $patientId);
+    error_log("Billing: User authenticated - " . $session->getUserId() . ", fetching billing for client ID: " . $clientId);
 
     // Initialize database
     $db = Database::getInstance();
@@ -105,7 +105,7 @@ try {
         ORDER BY bc.created_at DESC, bc.code_type, bc.code";
 
         error_log("Charges SQL: " . $chargesSql);
-        $rows = $db->queryAll($chargesSql, [$patientId]);
+        $rows = $db->queryAll($chargesSql, [$clientId]);
 
         foreach ($rows as $row) {
             // Map SanctumEMHR fields to old OpenEMR field names for compatibility
@@ -134,7 +134,7 @@ try {
             ];
             $totalCharges += floatval($row['fee']) * floatval($row['units']);
         }
-        error_log("Found " . count($charges) . " billing charges for patient");
+        error_log("Found " . count($charges) . " billing charges for client");
     } else {
         error_log("Billing charges table does not exist - billing feature not configured");
     }
@@ -159,7 +159,7 @@ try {
             ORDER BY p.payment_date DESC";
 
             error_log("Payments SQL: " . $paymentsSql);
-            $paymentRows = $db->queryAll($paymentsSql, [$patientId]);
+            $paymentRows = $db->queryAll($paymentsSql, [$clientId]);
 
             foreach ($paymentRows as $row) {
                 // Map to old format
@@ -171,7 +171,7 @@ try {
                 $payments[] = $row;
                 $totalPayments += $row['pay_amount'];
             }
-            error_log("Found " . count($payments) . " payments for patient");
+            error_log("Found " . count($payments) . " payments for client");
         } catch (Exception $e) {
             error_log("Payments query failed: " . $e->getMessage());
             // Continue without payment data
@@ -185,7 +185,7 @@ try {
 
     // Build response
     $response = [
-        'patient_id' => $patientId,
+        'patient_id' => $clientId,
         'charges' => $charges,
         'payments' => $payments,
         'summary' => [
@@ -197,7 +197,7 @@ try {
         ]
     ];
 
-    error_log("Billing: Successfully built response for patient " . $patientId);
+    error_log("Billing: Successfully built response for client " . $clientId);
     http_response_code(200);
     echo json_encode($response);
 
@@ -208,7 +208,7 @@ try {
     // Don't expose raw SQL errors to the frontend
     echo json_encode([
         'error' => 'Failed to fetch billing data',
-        'patient_id' => $patientId ?? null,
+        'patient_id' => $clientId ?? null,
         'charges' => [],
         'payments' => [],
         'summary' => [

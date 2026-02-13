@@ -1,7 +1,7 @@
 <?php
 /**
  * Create Client API - Session-based (MIGRATED TO SanctumEMHR)
- * Creates a new patient/client record with audit trail
+ * Creates a new client record with audit trail
  */
 
 // Load SanctumEMHR initialization
@@ -162,7 +162,6 @@ try {
     echo json_encode([
         'success' => true,
         'message' => 'Client created successfully',
-        'patient_id' => $clientId, // Keep old key for frontend
         'client_id' => $clientId,
         'uuid' => $uuid
     ]);

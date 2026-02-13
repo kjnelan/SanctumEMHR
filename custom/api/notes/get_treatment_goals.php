@@ -2,7 +2,7 @@
 /**
  * SanctumEMHR EMHR
  * Get Treatment Goals API - Session-based authentication (MIGRATED TO SanctumEMHR)
- * Returns treatment goals for a patient
+ * Returns treatment goals for a client
  *
  * Author: Kenneth J. Nelan
  * License: Proprietary and Confidential
@@ -45,11 +45,11 @@ try {
 
     $db = Database::getInstance();
 
-    $patientId = $_GET['patient_id'] ?? null;
+    $clientId = $_GET['client_id'] ?? $_GET['patient_id'] ?? null;
 
-    if (!$patientId) {
+    if (!$clientId) {
         http_response_code(400);
-        echo json_encode(['error' => 'Patient ID is required']);
+        echo json_encode(['error' => 'Client ID is required']);
         exit;
     }
 
@@ -74,7 +74,7 @@ try {
     LEFT JOIN users p ON p.id = g.provider_id
     WHERE g.patient_id = ?";
 
-    $params = [$patientId];
+    $params = [$clientId];
 
     if (!$includeAll && $status) {
         $sql .= " AND g.status = ?";
@@ -111,7 +111,7 @@ try {
     http_response_code(200);
     echo json_encode([
         'success' => true,
-        'patient_id' => $patientId,
+        'patient_id' => $clientId,
         'goals' => $goals,
         'grouped' => $grouped,
         'total_count' => count($goals),

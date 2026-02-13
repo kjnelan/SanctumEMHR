@@ -70,18 +70,18 @@ const getNoteTemplateType = (noteType, templateFormat = null) => {
 /**
  * Props:
  * - noteId: number - Existing note ID (for editing)
- * - patientId: number - Patient ID (required for new notes)
+ * - clientId: number - Client ID (required for new notes)
  * - appointmentId: number - Optional appointment ID
  * - noteType: string - Note type (from selector)
  * - templateFormat: string - Optional template format (BIRP, PIRP, SOAP) for progress notes
  * - onClose: function - Callback to close editor
  * - onSave: function - Callback after save
  */
-function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, templateFormat = null, onClose, onSave }) {
+function NoteEditor({ noteId = null, clientId, appointmentId = null, noteType, templateFormat = null, onClose, onSave }) {
   const mappedTemplateType = getNoteTemplateType(noteType, templateFormat);
 
   const [note, setNote] = useState({
-    patientId,
+    clientId,
     appointmentId,
     noteType,
     templateType: mappedTemplateType,
@@ -106,7 +106,7 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
   const [settings, setSettings] = useState(null);
 
   // Metadata for auto-population
-  const [patient, setPatient] = useState(null);
+  const [client, setClient] = useState(null);
   const [provider, setProvider] = useState(null);
   const [serviceInfo, setServiceInfo] = useState(null);
   const [diagnosis, setDiagnosis] = useState(null);
@@ -119,7 +119,7 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
     loadNoteData();
     loadSettings();
     loadMetadata();
-  }, [noteId, appointmentId, patientId]);
+  }, [noteId, appointmentId, clientId]);
 
   // Auto-save every 3 seconds after changes
   useEffect(() => {
@@ -152,7 +152,7 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
         // Try to load draft
         const draftParams = {};
         if (appointmentId) draftParams.appointment_id = appointmentId;
-        else if (patientId) draftParams.patient_id = patientId;
+        else if (clientId) draftParams.client_id = clientId;
 
         try {
           const draftData = await getDraft(draftParams);
@@ -172,7 +172,7 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
         }
 
         // Also check localStorage for instant recovery
-        const localDraft = localStorage.getItem(`note_draft_${patientId}_${appointmentId || 'new'}_${noteType}`);
+        const localDraft = localStorage.getItem(`note_draft_${clientId}_${appointmentId || 'new'}_${noteType}`);
         if (localDraft) {
           try {
             const parsed = JSON.parse(localDraft);
@@ -183,7 +183,7 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
             } else {
               console.log('Draft note type mismatch, skipping restore');
               // Clear the mismatched draft
-              localStorage.removeItem(`note_draft_${patientId}_${appointmentId || 'new'}_${noteType}`);
+              localStorage.removeItem(`note_draft_${clientId}_${appointmentId || 'new'}_${noteType}`);
             }
           } catch (err) {
             console.error('Failed to parse localStorage draft');
@@ -214,23 +214,23 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
 
   const loadMetadata = async () => {
     try {
-      // Fetch patient data
-      if (patientId) {
+      // Fetch client data
+      if (clientId) {
         try {
-          const patientData = await getClientDetail(patientId);
-          console.log('✅ Patient data loaded:', patientData);
-          setPatient(patientData.patient);
+          const clientData = await getClientDetail(clientId);
+          console.log('✅ Client data loaded:', clientData);
+          setClient(clientData.client);
 
-          // Get primary diagnosis from patient's problems list
-          if (patientData.problems && patientData.problems.length > 0) {
+          // Get primary diagnosis from client's problems list
+          if (clientData.problems && clientData.problems.length > 0) {
             // Use the most recent active problem as primary diagnosis
-            const primaryProblem = patientData.problems[0];
+            const primaryProblem = clientData.problems[0];
             const diagnosisText = primaryProblem.title || primaryProblem.diagnosis || null;
             setDiagnosis(diagnosisText);
             console.log('✅ Primary diagnosis loaded:', diagnosisText);
           }
         } catch (err) {
-          console.error('❌ Error loading patient data:', err);
+          console.error('❌ Error loading client data:', err);
         }
       }
 
@@ -267,14 +267,14 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
     try {
       // Save to localStorage immediately (instant recovery)
       localStorage.setItem(
-        `note_draft_${patientId}_${appointmentId || 'new'}_${note.noteType}`,
+        `note_draft_${clientId}_${appointmentId || 'new'}_${note.noteType}`,
         JSON.stringify(note)
       );
 
       // Save to server
       const draftData = {
         noteId: noteIdRef.current,
-        patientId: note.patientId,
+        clientId: note.clientId,
         appointmentId: note.appointmentId,
         noteType: note.noteType,
         serviceDate: note.serviceDate,
@@ -289,7 +289,7 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
     } finally {
       setAutoSaving(false);
     }
-  }, [note, patientId, appointmentId]);
+  }, [note, clientId, appointmentId]);
 
   const handleFieldChange = (field, value) => {
     setNote(prev => ({ ...prev, [field]: value }));
@@ -339,7 +339,7 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
       await signNote(noteIdRef.current);
 
       // Clear localStorage draft
-      localStorage.removeItem(`note_draft_${patientId}_${appointmentId || 'new'}_${note.noteType}`);
+      localStorage.removeItem(`note_draft_${clientId}_${appointmentId || 'new'}_${note.noteType}`);
 
       if (onSave) {
         onSave({ noteId: noteIdRef.current, status: 'signed' });
@@ -374,7 +374,7 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
       await deleteNote(noteIdRef.current);
 
       // Clear localStorage draft
-      localStorage.removeItem(`note_draft_${patientId}_${appointmentId || 'new'}_${note.noteType}`);
+      localStorage.removeItem(`note_draft_${clientId}_${appointmentId || 'new'}_${note.noteType}`);
 
       if (onClose) {
         onClose();
@@ -392,7 +392,7 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
     return (
       <QuickNoteForm
         noteType={noteType}
-        patientId={patientId}
+        clientId={clientId}
         appointmentId={appointmentId}
         serviceDate={note.serviceDate}
         onSave={onSave}
@@ -463,9 +463,9 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
       )}
 
       {/* Auto-populated Metadata */}
-      {(patient || provider) && (
+      {(client || provider) && (
         <NoteMetadata
-          patient={patient}
+          client={client}
           provider={provider}
           serviceInfo={serviceInfo}
           diagnosis={diagnosis}
@@ -479,7 +479,7 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
           <BIRPTemplate
             note={note}
             onChange={handleFieldChange}
-            patientId={patientId}
+            clientId={clientId}
             autoSave={triggerAutoSave}
           />
         )}
@@ -487,7 +487,7 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
           <PIRPTemplate
             note={note}
             onChange={handleFieldChange}
-            patientId={patientId}
+            clientId={clientId}
             autoSave={triggerAutoSave}
           />
         )}
@@ -495,7 +495,7 @@ function NoteEditor({ noteId = null, patientId, appointmentId = null, noteType, 
           <SOAPTemplate
             note={note}
             onChange={handleFieldChange}
-            patientId={patientId}
+            clientId={clientId}
             autoSave={triggerAutoSave}
           />
         )}

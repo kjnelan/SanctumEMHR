@@ -54,7 +54,7 @@ function EncounterDetailModal({ encounterId, onClose }) {
             <h2 className="text-2xl font-bold">Encounter Details</h2>
             {data && (
               <p className="text-blue-100 text-sm mt-1">
-                {formatDate(data.encounter.date)} • {data.encounter.patient_name}
+                {formatDate(data.encounter.date)} • {data.encounter.client_name}
               </p>
             )}
           </div>

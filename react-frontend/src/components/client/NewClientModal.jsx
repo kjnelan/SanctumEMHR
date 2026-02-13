@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createClient } from '../../services/ClientService';
 import { FormLabel } from '../FormLabel';
-import { RequiredAsterisk } from '../RequiredAsterisk';
+import { RequiredAsterisk } from '../shared/RequiredAsterisk';
 
 function NewClientModal({ onClose, onClientCreated }) {
   const [formData, setFormData] = useState({
@@ -53,8 +53,8 @@ function NewClientModal({ onClose, onClientCreated }) {
       const result = await createClient(formData);
 
       // Call callback with new client ID
-      if (onClientCreated && result.patient_id) {
-        onClientCreated(result.patient_id);
+      if (onClientCreated && result.client_id) {
+        onClientCreated(result.client_id);
       }
 
       onClose();

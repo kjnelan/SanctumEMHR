@@ -64,7 +64,7 @@ try {
 
     error_log("Create appointment input: " . print_r($input, true));
 
-    // Validate required fields (patientId is conditionally required based on category type)
+    // Validate required fields (clientId is conditionally required based on category type)
     $required = ['providerId', 'categoryId', 'eventDate', 'startTime', 'duration'];
     foreach ($required as $field) {
         if (!isset($input[$field]) || $input[$field] === '') {
@@ -73,8 +73,8 @@ try {
     }
 
     // Extract and validate inputs
-    // patientId can be null/0/empty for non-client appointments (availability blocks, supervision, etc.)
-    $patientId = isset($input['patientId']) && $input['patientId'] !== '' && $input['patientId'] !== 0 && $input['patientId'] !== '0'
+    // clientId can be null/0/empty for non-client appointments (availability blocks, supervision, etc.)
+    $clientId = isset($input['patientId']) && $input['patientId'] !== '' && $input['patientId'] !== 0 && $input['patientId'] !== '0'
         ? intval($input['patientId'])
         : null;
     $providerId = intval($input['providerId']);
@@ -90,9 +90,9 @@ try {
     }
     $categoryType = $categoryResult['category_type'];
 
-    // Client-type appointments require a patient
-    if ($categoryType === 'client' && !$patientId) {
-        throw new Exception("Client appointments require a patient to be selected");
+    // Client-type appointments require a client
+    if ($categoryType === 'client' && !$clientId) {
+        throw new Exception("Client appointments require a client to be selected");
     }
 
     // Optional fields
@@ -244,9 +244,9 @@ try {
     }
 
     // Check for conflicts with existing appointments and availability blocks
-    // Only check conflicts for patient appointments (not for availability blocks themselves)
+    // Only check conflicts for client appointments (not for availability blocks themselves)
     $conflicts = [];
-    if ($patientId > 0) {
+    if ($clientId > 0) {
         foreach ($occurrenceDates as $occurrenceDate) {
             // Calculate start and end datetime for this occurrence
             $occurrenceStartDT = new DateTime($occurrenceDate . ' ' . $startTime);
@@ -367,7 +367,7 @@ try {
         $params = [
             $categoryId,
             $providerId,
-            $patientId,
+            $clientId,
             $title,
             $occurrenceStartDT->format('Y-m-d H:i:s'),
             $occurrenceEndDT->format('Y-m-d H:i:s'),
@@ -423,8 +423,8 @@ try {
             a.provider_id,
             a.room,
             c.name AS category_name,
-            cl.first_name AS patient_fname,
-            cl.last_name AS patient_lname,
+            cl.first_name AS client_fname,
+            cl.last_name AS client_lname,
             CONCAT(u.first_name, ' ', u.last_name) AS provider_name
         FROM appointments a
         LEFT JOIN appointment_categories c ON a.category_id = c.id
@@ -487,8 +487,8 @@ try {
             'title' => $row['title'],
             'notes' => $row['notes'],
             'room' => $row['room'],
-            'patientId' => $row['client_id'],
-            'patientName' => trim(($row['patient_fname'] ?? '') . ' ' . ($row['patient_lname'] ?? '')),
+            'clientId' => $row['client_id'],
+            'clientName' => trim(($row['client_fname'] ?? '') . ' ' . ($row['client_lname'] ?? '')),
             'providerId' => $row['provider_id'],
             'providerName' => $row['provider_name'],
             'isRecurring' => $isRecurring,
@@ -500,7 +500,7 @@ try {
     // Send email notifications for client appointments (first occurrence only for recurring)
     $emailNotificationsSent = ['client' => false, 'provider' => false];
 
-    if ($patientId > 0 && !empty($createdAppointments)) {
+    if ($clientId > 0 && !empty($createdAppointments)) {
         try {
             $emailService = new EmailService($db);
 

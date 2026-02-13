@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../Modal';
 import { FormLabel } from '../FormLabel';
-import { RequiredAsterisk } from '../RequiredAsterisk';
+import { RequiredAsterisk } from '../shared/RequiredAsterisk';
 import { PrimaryButton } from '../PrimaryButton';
 import { SecondaryButton } from '../SecondaryButton';
 import { ErrorMessage } from '../ErrorMessage';
@@ -22,7 +22,7 @@ function DocumentsTab({ data }) {
     category_id: ''
   });
 
-  const clientId = data?.patient?.pid;
+  const clientId = data?.client?.pid;
 
   useEffect(() => {
     if (clientId) {
@@ -127,7 +127,7 @@ function DocumentsTab({ data }) {
 
       const formData = new FormData();
       formData.append('file', selectedFile);
-      formData.append('patient_id', clientId);
+      formData.append('client_id', clientId);
       formData.append('name', uploadForm.name || selectedFile.name);
       if (uploadForm.category_id) {
         formData.append('category_id', uploadForm.category_id);

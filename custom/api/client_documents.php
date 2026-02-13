@@ -40,14 +40,14 @@ try {
 
     // Handle POST (file upload)
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $clientId = $_POST['patient_id'] ?? null;
+        $clientId = $_POST['client_id'] ?? $_POST['patient_id'] ?? null;
         $categoryId = $_POST['category_id'] ?? null;
         $documentTitle = $_POST['name'] ?? null;
         $documentDescription = $_POST['description'] ?? '';
 
         if (!$clientId) {
             http_response_code(400);
-            echo json_encode(['error' => 'Patient ID is required']);
+            echo json_encode(['error' => 'Client ID is required']);
             exit;
         }
 
@@ -69,17 +69,17 @@ try {
         // Determine storage path - SanctumEMHR stores documents in storage/documents
         $documentsPath = dirname(__DIR__, 2) . '/storage/documents';
 
-        // Create patient-specific directory if it doesn't exist
-        $patientDir = $documentsPath . '/client_' . $clientId;
-        if (!is_dir($patientDir)) {
-            mkdir($patientDir, 0755, true);
+        // Create client-specific directory if it doesn't exist
+        $clientDir = $documentsPath . '/client_' . $clientId;
+        if (!is_dir($clientDir)) {
+            mkdir($clientDir, 0755, true);
         }
 
         // Generate unique filename to prevent overwrites
         $fileExtension = pathinfo($uploadedFileName, PATHINFO_EXTENSION);
         $baseFileName = pathinfo($uploadedFileName, PATHINFO_FILENAME);
         $uniqueFileName = $baseFileName . '_' . time() . '.' . $fileExtension;
-        $destinationPath = $patientDir . '/' . $uniqueFileName;
+        $destinationPath = $clientDir . '/' . $uniqueFileName;
 
         // Move uploaded file
         if (!move_uploaded_file($fileTmpPath, $destinationPath)) {
@@ -198,7 +198,7 @@ try {
 
     error_log("Found " . count($documents) . " documents");
 
-    // Fetch all categories for this patient
+    // Fetch all categories for this client
     $categoriesSql = "SELECT DISTINCT
         c.id,
         c.name,

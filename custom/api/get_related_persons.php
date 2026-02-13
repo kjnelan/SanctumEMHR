@@ -43,17 +43,17 @@ try {
 
     $userId = $session->getUserId();
 
-    // Get patient ID from query parameter
-    $patientId = $_GET['patient_id'] ?? null;
+    // Get client ID from query parameter (with backwards compat for patient_id)
+    $clientId = $_GET['client_id'] ?? $_GET['patient_id'] ?? null;
 
-    if (!$patientId) {
-        error_log("Get related persons: No patient_id provided");
+    if (!$clientId) {
+        error_log("Get related persons: No client_id provided");
         http_response_code(400);
-        echo json_encode(['error' => 'patient_id parameter is required']);
+        echo json_encode(['error' => 'client_id parameter is required']);
         exit;
     }
 
-    error_log("Get related persons: User $userId fetching for client: $patientId");
+    error_log("Get related persons: User $userId fetching for client: $clientId");
 
     // Initialize database
     $db = Database::getInstance();
@@ -75,10 +75,10 @@ try {
     WHERE client_id = ?
     ORDER BY relationship, last_name, first_name";
 
-    error_log("Get related persons SQL: $sql [client_id: $patientId]");
+    error_log("Get related persons SQL: $sql [client_id: $clientId]");
 
     // Execute query using Database class
-    $rows = $db->queryAll($sql, [$patientId]);
+    $rows = $db->queryAll($sql, [$clientId]);
 
     // Format related persons for frontend (keep compatible field names)
     $relatedPersons = [];

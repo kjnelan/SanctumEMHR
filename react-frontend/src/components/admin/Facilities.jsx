@@ -16,7 +16,7 @@ import { FormLabel } from '../FormLabel';
 import { GlassyTabs, GlassyTab } from '../shared/GlassyTabs';
 import { PrimaryButton } from '../PrimaryButton';
 import { SecondaryButton } from '../SecondaryButton';
-import { RequiredAsterisk } from '../RequiredAsterisk';
+import { RequiredAsterisk } from '../shared/RequiredAsterisk';
 import { ErrorMessage } from '../ErrorMessage';
 import { DangerButton } from '../DangerButton';
 
@@ -103,7 +103,7 @@ function FacilitiesTab() {
   const posCodeOptions = [
     { value: '11', label: '11: Office' },
     { value: '02', label: '02: Telehealth' },
-    { value: '10', label: '10: Telehealth (Patient Home)' },
+    { value: '10', label: '10: Telehealth (Client Home)' },
     { value: '12', label: '12: Home' },
     { value: '21', label: '21: Inpatient Hospital' },
     { value: '22', label: '22: Outpatient Hospital' },
@@ -608,7 +608,7 @@ function CounselingRoomsTab() {
       setFormError('');
 
       const method = showEditModal ? 'PUT' : 'POST';
-      const response = await fetch('/custom/api/rooms.php', {
+      const response = await fetch('/custom/api/settings_lists.php?list_id=rooms', {
         method,
         headers: {
           'Content-Type': 'application/json'
@@ -641,7 +641,7 @@ function CounselingRoomsTab() {
     }
 
     try {
-      const response = await fetch(`/custom/api/rooms.php?option_id=${optionId}`, {
+      const response = await fetch(`/custom/api/settings_lists.php?list_id=rooms&option_id=${optionId}`, {
         method: 'DELETE',
         credentials: 'include'
       });

@@ -1,0 +1,11 @@
+# SanctumEMHR Client Portal - URL Rewrite
+# Redirects all /mycare/* requests to the React hash router
+# e.g., /mycare/dashboard -> /app/#/mycare/dashboard
+
+RewriteEngine On
+
+# If requesting the directory root, redirect to portal login
+RewriteRule ^$ /app/#/mycare/login [R=302,L,NE]
+
+# If requesting a sub-path, preserve it in the hash route
+RewriteRule ^(.+)$ /app/#/mycare/$1 [R=302,L,NE]

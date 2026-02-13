@@ -1,6 +1,6 @@
 /**
  * SanctumEMHR EMHR
- * NotesList - Display list of clinical notes for a patient
+ * NotesList - Display list of clinical notes for a client
  * Supports filtering by type, status, date range
  *
  * Author: Kenneth J. Nelan
@@ -12,16 +12,16 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getPatientNotes } from '../../services/NoteService';
+import { getClientNotes } from '../../services/NoteService';
 import { ErrorInline } from '../ErrorInline';
 
 /**
  * Props:
- * - patientId: number - Patient ID
+ * - clientId: number - Client ID
  * - onNoteClick: function(noteId, isDraft) - Callback when note is clicked
  * - onCreateNote: function - Callback to create new note
  */
-function NotesList({ patientId, onNoteClick, onCreateNote }) {
+function NotesList({ clientId, onNoteClick, onCreateNote }) {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -34,14 +34,14 @@ function NotesList({ patientId, onNoteClick, onCreateNote }) {
 
   useEffect(() => {
     loadNotes();
-  }, [patientId, filters]);
+  }, [clientId, filters]);
 
   const loadNotes = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const data = await getPatientNotes(patientId, filters);
+      const data = await getClientNotes(clientId, filters);
       setNotes(data.notes || []);
     } catch (err) {
       console.error('Error loading notes:', err);

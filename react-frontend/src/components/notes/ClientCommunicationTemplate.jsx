@@ -31,7 +31,7 @@ function ClientCommunicationTemplate({ note, onChange, autoSave }) {
     { value: 'phone', label: '📞 Phone Call', icon: '📞' },
     { value: 'email', label: '📧 Email', icon: '📧' },
     { value: 'text', label: '💬 Text Message', icon: '💬' },
-    { value: 'portal', label: '🌐 Patient Portal', icon: '🌐' },
+    { value: 'portal', label: '🌐 Client Portal', icon: '🌐' },
     { value: 'voicemail', label: '🎙️ Voicemail', icon: '🎙️' }
   ];
 
