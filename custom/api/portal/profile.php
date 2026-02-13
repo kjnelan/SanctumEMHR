@@ -133,7 +133,7 @@ try {
         // Audit log
         $changedFields = array_keys(array_intersect_key($allowedFields, $input));
         $db->execute(
-            "INSERT INTO audit_log (user_id, event_type, table_name, record_id, details, created_at)
+            "INSERT INTO audit_logs (user_id, event_type, entity_type, entity_id, action_description, created_at)
              VALUES (?, 'portal_profile_update', 'clients', ?, ?, NOW())",
             [0, $clientId, 'Portal profile updated: ' . implode(', ', $changedFields)]
         );
