@@ -63,10 +63,11 @@ try {
 
     if ($isCreate) {
         // For creating new insurance, we need client_id and insurance_type
-        if (!isset($data['patient_id']) || empty($data['patient_id'])) {
-            error_log("Update insurance: Missing patient_id for new insurance");
+        // Support client_id with backwards compat for patient_id
+        if (!(isset($data['client_id']) && !empty($data['client_id'])) && !(isset($data['patient_id']) && !empty($data['patient_id']))) {
+            error_log("Update insurance: Missing client_id for new insurance");
             http_response_code(400);
-            echo json_encode(['error' => 'Patient ID is required for new insurance']);
+            echo json_encode(['error' => 'Client ID is required for new insurance']);
             exit;
         }
         if (!isset($data['type']) || empty($data['type'])) {
@@ -75,7 +76,7 @@ try {
             echo json_encode(['error' => 'Insurance type is required for new insurance']);
             exit;
         }
-        $clientId = intval($data['patient_id']);
+        $clientId = intval($data['client_id'] ?? $data['patient_id']);
         $insuranceType = $data['type'];
         error_log("Update insurance: Creating new $insuranceType insurance for client ID: " . $clientId);
     } else {

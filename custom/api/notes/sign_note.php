@@ -18,7 +18,7 @@ use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
 
 /**
- * Sync diagnosis codes from a diagnosis note to the patient's problem list
+ * Sync diagnosis codes from a diagnosis note to the client's problem list
  *
  * @param int $noteId - Clinical note ID
  * @param int $userId - User ID performing the sync
@@ -49,7 +49,7 @@ function syncDiagnosesToProblemList($noteId, $userId, $db) {
         $user = $db->query($userSql, [$userId]);
         $username = $user['username'] ?? 'unknown';
 
-        $patientId = intval($note['patient_id']);
+        $clientId = intval($note['patient_id']);
         $serviceDate = $note['service_date'];
         $syncCount = 0;
 
@@ -64,11 +64,11 @@ function syncDiagnosesToProblemList($noteId, $userId, $db) {
             }
         }
 
-        // Get all currently ACTIVE diagnoses for this patient
+        // Get all currently ACTIVE diagnoses for this client
         $activeSql = "SELECT id, code AS diagnosis, description AS title FROM diagnoses
                       WHERE patient_id = ? AND status = 'active'
                       ORDER BY diagnosis_date DESC";
-        $activeRows = $db->queryAll($activeSql, [$patientId]);
+        $activeRows = $db->queryAll($activeSql, [$clientId]);
         $activeDiagnoses = [];
         foreach ($activeRows as $row) {
             $activeDiagnoses[$row['diagnosis']] = $row;
@@ -91,7 +91,7 @@ function syncDiagnosesToProblemList($noteId, $userId, $db) {
                 $checkSql = "SELECT id, status, end_date FROM diagnoses
                             WHERE patient_id = ? AND code = ?
                             ORDER BY diagnosis_date DESC LIMIT 1";
-                $existing = $db->query($checkSql, [$patientId, $formattedCode]);
+                $existing = $db->query($checkSql, [$clientId, $formattedCode]);
 
                 if ($existing) {
                     // Reactivate previously inactive diagnosis
@@ -113,7 +113,7 @@ function syncDiagnosesToProblemList($noteId, $userId, $db) {
                     $notes = "Created from diagnosis note #{$noteId}" . ($isPrimary ? " (Primary Diagnosis)" : "");
 
                     $db->insert($insertSql, [
-                        $patientId,
+                        $clientId,
                         $formattedCode,
                         $title,
                         $serviceDate,

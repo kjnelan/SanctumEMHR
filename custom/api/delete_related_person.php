@@ -1,7 +1,7 @@
 <?php
 /**
  * Delete Related Person API - Session-based (MIGRATED TO SanctumEMHR)
- * Soft deletes a related person (guardian) relationship for a patient
+ * Soft deletes a related person (guardian) relationship for a client
  */
 
 // Load SanctumEMHR initialization

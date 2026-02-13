@@ -1,7 +1,7 @@
 <?php
 /**
- * SanctumEMHR EMHR - Get Patient Diagnoses API (MIGRATED TO SanctumEMHR)
- * Fetches active (and optionally retired) diagnoses for a patient
+ * SanctumEMHR EMHR - Get Client Diagnoses API (MIGRATED TO SanctumEMHR)
+ * Fetches active (and optionally retired) diagnoses for a client
  * Supports filtering by date (active as of a specific date)
  *
  * Author: Kenneth J. Nelan
@@ -42,36 +42,36 @@ try {
     $session->start();
 
     if (!$session->isAuthenticated()) {
-        error_log("Get patient diagnoses: Not authenticated");
+        error_log("Get client diagnoses: Not authenticated");
         http_response_code(401);
         echo json_encode(['error' => 'Not authenticated']);
         exit;
     }
 
     // Get parameters
-    $patientId = $_GET['patient_id'] ?? null;
+    $clientId = $_GET['client_id'] ?? $_GET['patient_id'] ?? null;
     $activeAsOf = $_GET['active_as_of'] ?? date('Y-m-d'); // Default to today
     $includeRetired = ($_GET['include_retired'] ?? '0') === '1';
 
-    // Validate patient ID
-    if (!$patientId || !is_numeric($patientId)) {
+    // Validate client ID
+    if (!$clientId || !is_numeric($clientId)) {
         http_response_code(400);
-        echo json_encode(['error' => 'Invalid or missing patient_id']);
+        echo json_encode(['error' => 'Invalid or missing client_id']);
         exit;
     }
 
     // Initialize database
     $db = Database::getInstance();
 
-    // Verify user has access to this patient
+    // Verify user has access to this client
     $accessCheck = $db->query(
         "SELECT id FROM clients WHERE id = ?",
-        [$patientId]
+        [$clientId]
     );
 
     if (!$accessCheck) {
         http_response_code(404);
-        echo json_encode(['error' => 'Patient not found']);
+        echo json_encode(['error' => 'Client not found']);
         exit;
     }
 
@@ -94,7 +94,7 @@ try {
             FROM diagnoses
             WHERE client_id = ?";
 
-    $params = [$patientId];
+    $params = [$clientId];
 
     if (!$includeRetired) {
         // Only include diagnoses that were active as of the specified date
@@ -148,7 +148,7 @@ try {
     ]);
 
 } catch (Exception $e) {
-    error_log("Error fetching patient diagnoses: " . $e->getMessage());
+    error_log("Error fetching client diagnoses: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'error' => 'Failed to fetch diagnoses',

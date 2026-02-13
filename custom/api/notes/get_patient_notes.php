@@ -1,8 +1,8 @@
 <?php
 /**
  * SanctumEMHR EMHR
- * Get Patient Notes API - Session-based authentication (MIGRATED TO SanctumEMHR)
- * Returns all clinical notes for a patient
+ * Get Client Notes API - Session-based authentication (MIGRATED TO SanctumEMHR)
+ * Returns all clinical notes for a client
  *
  * Author: Kenneth J. Nelan
  * License: Proprietary and Confidential
@@ -47,17 +47,17 @@ try {
     $db = Database::getInstance();
     $permissionChecker = new PermissionChecker($db);
 
-    // Get patient ID from query parameter
-    $patientId = $_GET['patient_id'] ?? null;
+    // Get client ID from query parameter
+    $clientId = $_GET['client_id'] ?? $_GET['patient_id'] ?? null;
 
-    if (!$patientId) {
+    if (!$clientId) {
         http_response_code(400);
-        echo json_encode(['error' => 'Patient ID is required']);
+        echo json_encode(['error' => 'Client ID is required']);
         exit;
     }
 
     // Check if user can access this client
-    if (!$permissionChecker->canAccessClient((int) $patientId)) {
+    if (!$permissionChecker->canAccessClient((int) $clientId)) {
         http_response_code(403);
         echo json_encode([
             'error' => 'Access denied',
@@ -67,8 +67,8 @@ try {
     }
 
     // Check permissions - social workers can only see their own case management notes
-    $canViewClinicalNotes = $permissionChecker->canViewClinicalNotes((int) $patientId);
-    $canCreateCaseNotes = $permissionChecker->canCreateCaseNotes((int) $patientId);
+    $canViewClinicalNotes = $permissionChecker->canViewClinicalNotes((int) $clientId);
+    $canCreateCaseNotes = $permissionChecker->canCreateCaseNotes((int) $clientId);
     $isSocialWorker = $permissionChecker->isSocialWorker() && !$permissionChecker->isProvider();
     $currentUserId = $session->getUserId();
 
@@ -138,7 +138,7 @@ try {
     LEFT JOIN users sup ON sup.id = n.supervisor_reviewed_by
     WHERE n.patient_id = ?";
 
-    $params = [$patientId];
+    $params = [$clientId];
 
     // Social workers can only see their own case management notes
     if ($isSocialWorker && !$canViewClinicalNotes) {
@@ -195,7 +195,7 @@ try {
     // Build response
     $response = [
         'success' => true,
-        'patient_id' => $patientId,
+        'patient_id' => $clientId,
         'notes' => $notes,
         'total_count' => count($notes),
         'filters' => [
@@ -210,10 +210,10 @@ try {
     echo json_encode($response);
 
 } catch (Exception $e) {
-    error_log("Error fetching patient notes: " . $e->getMessage());
+    error_log("Error fetching client notes: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
-        'error' => 'Failed to fetch patient notes',
+        'error' => 'Failed to fetch client notes',
         'message' => $e->getMessage()
     ]);
 }

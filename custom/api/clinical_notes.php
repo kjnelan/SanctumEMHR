@@ -57,8 +57,8 @@ try {
     $permissionChecker = new PermissionChecker($db);
 
     // Check if user can access this client
-    if (!$permissionChecker->canAccessClient((int) $patientId)) {
-        error_log("Clinical notes: Access denied for user " . $session->getUserId() . " to patient " . $patientId);
+    if (!$permissionChecker->canAccessClient((int) $clientId)) {
+        error_log("Clinical notes: Access denied for user " . $session->getUserId() . " to client " . $clientId);
         http_response_code(403);
         echo json_encode([
             'error' => 'Access denied',
@@ -68,8 +68,8 @@ try {
     }
 
     // Check permissions - social workers can only see their own case management notes
-    $canViewClinicalNotes = $permissionChecker->canViewClinicalNotes((int) $patientId);
-    $canCreateCaseNotes = $permissionChecker->canCreateCaseNotes((int) $patientId);
+    $canViewClinicalNotes = $permissionChecker->canViewClinicalNotes((int) $clientId);
+    $canCreateCaseNotes = $permissionChecker->canCreateCaseNotes((int) $clientId);
     $isSocialWorker = $permissionChecker->isSocialWorker() && !$permissionChecker->isProvider();
     $userId = $session->getUserId();
 
@@ -84,7 +84,7 @@ try {
         exit;
     }
 
-    error_log("Clinical notes: User authenticated - " . $userId . ", fetching notes for patient ID: " . $patientId);
+    error_log("Clinical notes: User authenticated - " . $userId . ", fetching notes for client ID: " . $clientId);
 
     // Build query based on user permissions
     // Social workers can only see case_management notes they created
@@ -104,7 +104,7 @@ try {
         AND n.note_type = 'case_management'
         AND n.created_by = ?
         ORDER BY n.note_date DESC, n.created_at DESC";
-        $queryParams = [$patientId, $userId];
+        $queryParams = [$clientId, $userId];
     } else {
         // Full access - show all notes
         $notesSql = "SELECT
@@ -120,7 +120,7 @@ try {
         LEFT JOIN users u ON u.id = n.created_by
         WHERE n.client_id = ?
         ORDER BY n.note_date DESC, n.created_at DESC";
-        $queryParams = [$patientId];
+        $queryParams = [$clientId];
     }
 
     error_log("Notes SQL: " . $notesSql);
@@ -142,16 +142,16 @@ try {
         ];
     }
 
-    error_log("Found " . count($notes) . " clinical notes for patient");
+    error_log("Found " . count($notes) . " clinical notes for client");
 
     // Build response
     $response = [
-        'patient_id' => $patientId,
+        'patient_id' => $clientId,
         'notes' => $notes,
         'total_count' => count($notes)
     ];
 
-    error_log("Clinical notes: Successfully built response for patient " . $patientId);
+    error_log("Clinical notes: Successfully built response for client " . $clientId);
     http_response_code(200);
     echo json_encode($response);
 

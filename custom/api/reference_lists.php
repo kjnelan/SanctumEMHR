@@ -296,7 +296,7 @@ try {
             }
 
             // TODO: Add check to prevent deletion if item is in use
-            // This would require checking various patient/client tables depending on list type
+            // This would require checking various client tables depending on list type
 
             $sql = "DELETE FROM reference_lists WHERE id = ? AND list_type = ?";
             $db->execute($sql, [$id, $listType]);
