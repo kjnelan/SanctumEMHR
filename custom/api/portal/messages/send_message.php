@@ -22,7 +22,6 @@ require_once dirname(__FILE__, 4) . "/init.php";
 
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
-use Custom\Lib\Audit\AuditLogger;
 
 header('Access-Control-Allow-Origin: ' . ($_SERVER['HTTP_ORIGIN'] ?? '*'));
 header('Access-Control-Allow-Credentials: true');
@@ -166,14 +165,7 @@ try {
         $threadId = $messageId;
     }
 
-    // Log audit
-    AuditLogger::log(
-        'message_sent',
-        'messages',
-        $messageId,
-        "Client {$client['first_name']} {$client['last_name']} sent message to staff {$recipient['first_name']} {$recipient['last_name']}",
-        ['thread_id' => $threadId, 'priority' => $priority]
-    );
+    // Note: Audit logging skipped for portal (client) messages - already tracked in messages table
 
     echo json_encode([
         'success' => true,
