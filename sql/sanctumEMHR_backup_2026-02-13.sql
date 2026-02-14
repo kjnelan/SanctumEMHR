@@ -182,7 +182,7 @@ CREATE TABLE `appointments` (
   CONSTRAINT `appointments_ibfk_4` FOREIGN KEY (`category_id`) REFERENCES `appointment_categories` (`id`) ON DELETE SET NULL,
   CONSTRAINT `appointments_ibfk_5` FOREIGN KEY (`cancelled_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `appointments_ibfk_6` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -200,8 +200,51 @@ INSERT INTO `appointments` VALUES
 (14,NULL,2,1,12,'2026-01-28 15:00:00','2026-01-28 23:00:00',480,'scheduled','',NULL,'In Office','',NULL,NULL,NULL,0,NULL,NULL,'2026-02-01 02:30:10','2026-02-01 02:30:10',NULL,NULL,NULL,'none'),
 (15,4,9,1,1,'2026-01-30 15:00:00','2026-01-30 15:50:00',50,'scheduled','conference',NULL,'Sarah Wilson','',NULL,NULL,NULL,0,NULL,NULL,'2026-02-01 18:09:55','2026-02-01 18:09:55',4,NULL,NULL,'none'),
 (16,4,9,1,1,'2026-01-27 15:00:00','2026-01-27 15:50:00',50,'scheduled','office3',NULL,'Sarah Wilson','',NULL,NULL,NULL,0,NULL,NULL,'2026-02-01 18:10:20','2026-02-01 18:10:20',4,NULL,NULL,'none'),
-(17,7,3,1,1,'2026-01-27 15:00:00','2026-01-27 15:50:00',50,'scheduled','telehealth',NULL,'Daniel Lee','',NULL,NULL,NULL,0,NULL,NULL,'2026-02-01 18:10:44','2026-02-01 18:10:44',4,NULL,NULL,'none');
+(17,7,3,1,1,'2026-01-27 15:00:00','2026-01-27 15:50:00',50,'scheduled','telehealth',NULL,'Daniel Lee','',NULL,NULL,NULL,0,NULL,NULL,'2026-02-01 18:10:44','2026-02-01 18:10:44',4,NULL,NULL,'none'),
+(18,4,10,1,1,'2026-02-09 21:00:00','2026-02-09 21:50:00',50,'scheduled','office1',NULL,'Sarah Wilson','',NULL,NULL,NULL,0,NULL,NULL,'2026-02-09 17:40:29','2026-02-09 17:40:29',4,NULL,NULL,'none'),
+(19,1,5,1,1,'2026-02-09 19:00:00','2026-02-09 20:00:00',60,'scheduled','office3',NULL,'Michael Anderson','',NULL,NULL,NULL,0,NULL,NULL,'2026-02-09 17:44:25','2026-02-09 17:44:25',5,NULL,NULL,'none'),
+(20,8,2,1,1,'2026-02-09 18:00:00','2026-02-09 19:00:00',60,'scheduled','office2',NULL,'Rachel White','',NULL,NULL,NULL,0,NULL,NULL,'2026-02-09 17:48:20','2026-02-09 17:48:20',5,NULL,NULL,'none');
 /*!40000 ALTER TABLE `appointments` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `audit_log`
+--
+
+DROP TABLE IF EXISTS `audit_log`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `audit_log` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) unsigned NOT NULL,
+  `action` varchar(100) NOT NULL COMMENT 'Action type: view_client, edit_demographics, delete_note, etc.',
+  `resource_type` varchar(50) NOT NULL COMMENT 'Resource affected: client, note, appointment, user, etc.',
+  `resource_id` bigint(20) unsigned DEFAULT NULL COMMENT 'ID of affected resource',
+  `details` text DEFAULT NULL COMMENT 'Additional context (JSON)',
+  `ip_address` varchar(45) DEFAULT NULL COMMENT 'User IP address',
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_action` (`action`),
+  KEY `idx_resource` (`resource_type`,`resource_id`),
+  KEY `idx_created_at` (`created_at`),
+  CONSTRAINT `audit_log_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Audit log for security-sensitive actions';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `audit_log`
+--
+
+LOCK TABLES `audit_log` WRITE;
+/*!40000 ALTER TABLE `audit_log` DISABLE KEYS */;
+INSERT INTO `audit_log` VALUES
+(1,2,'login_success','user',2,'{\"username\":\"admin\",\"method\":\"password\"}','172.59.99.0','2026-02-14 01:32:17'),
+(2,2,'view_client','client',1,'{\"client_name\":\"Michael Anderson\"}','172.59.99.0','2026-02-14 01:33:03'),
+(3,2,'login_success','user',2,'{\"username\":\"admin\",\"method\":\"password\"}','172.59.99.0','2026-02-14 01:51:31'),
+(4,2,'login_success','user',2,'{\"username\":\"admin\",\"method\":\"password\"}','172.59.99.0','2026-02-14 02:01:29'),
+(5,2,'login_success','user',2,'{\"username\":\"admin\",\"method\":\"password\"}','172.59.99.0','2026-02-14 02:04:53');
+/*!40000 ALTER TABLE `audit_log` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -229,7 +272,7 @@ CREATE TABLE `audit_logs` (
   KEY `idx_entity` (`entity_type`,`entity_id`),
   KEY `idx_created_at` (`created_at`),
   CONSTRAINT `audit_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=357 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=397 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -594,7 +637,47 @@ INSERT INTO `audit_logs` VALUES
 (353,2,'demographics_updated','client',3,'Demographics updated: fname, mname, lname, preferred_name, DOB, sex, gender_identity, sexual_orientation, marital_status, ethnicity, ss, street, street_line_2, city, state, postal_code, county, contact_relationship, phone_contact, phone_home, phone_cell, phone_biz, email, status, payment_type, custom_session_fee, provider_id, allow_patient_portal, cmsportal_login',NULL,NULL,NULL,NULL,'2026-02-08 13:38:13'),
 (354,2,'demographics_updated','client',5,'Demographics updated: fname, mname, lname, preferred_name, DOB, sex, gender_identity, sexual_orientation, marital_status, ethnicity, ss, street, street_line_2, city, state, postal_code, county, contact_relationship, phone_contact, phone_home, phone_cell, phone_biz, email, status, payment_type, custom_session_fee, provider_id, allow_patient_portal, cmsportal_login',NULL,NULL,NULL,NULL,'2026-02-08 13:38:38'),
 (355,2,'demographics_updated','client',8,'Demographics updated: fname, mname, lname, preferred_name, DOB, sex, gender_identity, sexual_orientation, marital_status, ethnicity, ss, street, street_line_2, city, state, postal_code, county, contact_relationship, phone_contact, phone_home, phone_cell, phone_biz, email, status, payment_type, custom_session_fee, provider_id, allow_patient_portal, cmsportal_login',NULL,NULL,NULL,NULL,'2026-02-08 13:38:59'),
-(356,2,'demographics_updated','client',4,'Demographics updated: fname, mname, lname, preferred_name, DOB, sex, gender_identity, sexual_orientation, marital_status, ethnicity, ss, street, street_line_2, city, state, postal_code, county, contact_relationship, phone_contact, phone_home, phone_cell, phone_biz, email, status, payment_type, custom_session_fee, provider_id, allow_patient_portal, cmsportal_login',NULL,NULL,NULL,NULL,'2026-02-08 13:39:29');
+(356,2,'demographics_updated','client',4,'Demographics updated: fname, mname, lname, preferred_name, DOB, sex, gender_identity, sexual_orientation, marital_status, ethnicity, ss, street, street_line_2, city, state, postal_code, county, contact_relationship, phone_contact, phone_home, phone_cell, phone_biz, email, status, payment_type, custom_session_fee, provider_id, allow_patient_portal, cmsportal_login',NULL,NULL,NULL,NULL,'2026-02-08 13:39:29'),
+(357,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-08 14:02:35'),
+(358,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-08 14:06:09'),
+(359,2,'demographics_updated','client',10,'Demographics updated: fname, mname, lname, preferred_name, DOB, sex, gender_identity, sexual_orientation, marital_status, ethnicity, ss, street, street_line_2, city, state, postal_code, county, contact_relationship, phone_contact, phone_home, phone_cell, phone_biz, email, status, payment_type, custom_session_fee, provider_id, allow_patient_portal, cmsportal_login',NULL,NULL,NULL,NULL,'2026-02-08 14:06:37'),
+(360,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-08 14:09:12'),
+(361,2,'demographics_updated','client',1,'Demographics updated: fname, mname, lname, preferred_name, DOB, sex, gender_identity, sexual_orientation, marital_status, ethnicity, race, ss, street, street_line_2, city, state, postal_code, county, contact_relationship, phone_contact, phone_home, phone_cell, phone_biz, email, status, payment_type, custom_session_fee, provider_id, allow_patient_portal, cmsportal_login',NULL,NULL,NULL,NULL,'2026-02-08 14:09:40'),
+(362,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-08 15:04:34'),
+(363,2,'demographics_updated','client',4,'Demographics updated: fname, mname, lname, preferred_name, DOB, sex, gender_identity, sexual_orientation, marital_status, ethnicity, race, ss, street, street_line_2, city, state, postal_code, county, contact_relationship, phone_contact, phone_home, phone_cell, phone_biz, email, status, payment_type, custom_session_fee, provider_id, allow_patient_portal, cmsportal_login',NULL,NULL,NULL,NULL,'2026-02-08 15:07:14'),
+(364,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-08 16:20:09'),
+(365,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-08 16:40:35'),
+(366,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-08 17:17:55'),
+(367,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-09 12:31:15'),
+(368,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-09 12:39:55'),
+(369,2,'demographics_updated','client',1,'Demographics updated: fname, mname, lname, preferred_name, DOB, sex, gender_identity, sexual_orientation, marital_status, ethnicity, race, ss, street, street_line_2, city, state, postal_code, county, contact_relationship, phone_contact, phone_home, phone_cell, phone_biz, email, status, payment_type, custom_session_fee, provider_id, allow_patient_portal, cmsportal_login',NULL,NULL,NULL,NULL,'2026-02-09 12:41:54'),
+(370,2,'login','user',2,'Successful login','74.62.87.72','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-09 16:02:06'),
+(371,2,'login','user',2,'Successful login','74.62.87.72','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-09 16:13:16'),
+(372,2,'login','user',2,'Successful login','74.62.87.72','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-09 16:16:49'),
+(373,2,'login','user',2,'Successful login','74.62.87.72','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-09 16:20:41'),
+(374,2,'login','user',2,'Successful login','74.62.87.72','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-09 16:36:18'),
+(375,2,'login','user',2,'Successful login','74.62.87.72','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-09 17:10:25'),
+(376,2,'login','user',2,'Successful login','74.62.87.72','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-09 17:14:33'),
+(377,2,'login','user',2,'Successful login','74.62.87.72','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-09 17:33:43'),
+(378,2,'login','user',2,'Successful login','74.62.87.72','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-09 18:07:22'),
+(379,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-10 12:48:53'),
+(380,2,'login','user',2,'Successful login','74.62.87.72','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-10 20:04:48'),
+(381,2,'login','user',2,'Successful login','74.62.87.72','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-10 20:17:21'),
+(382,2,'login','user',2,'Successful login','74.62.87.72','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36',NULL,NULL,'2026-02-10 23:20:25'),
+(383,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-11 12:57:22'),
+(384,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-11 13:00:59'),
+(385,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-11 23:17:08'),
+(386,2,'login','user',2,'Successful login','74.62.87.72','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-12 14:58:26'),
+(387,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-13 12:54:30'),
+(388,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-13 12:58:54'),
+(389,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-13 13:12:46'),
+(390,2,'portal_access_enabled','clients',4,'Portal access enabled by user 2, username: swilson',NULL,NULL,NULL,NULL,'2026-02-13 13:13:40'),
+(391,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-13 13:15:07'),
+(392,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-13 23:37:55'),
+(393,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-13 23:53:12'),
+(394,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-14 00:25:54'),
+(395,2,'demographics_updated','client',1,'Demographics updated: fname, mname, lname, preferred_name, DOB, sex, gender_identity, sexual_orientation, pronouns, pronouns_visibility, marital_status, ethnicity, race, ss, street, street_line_2, city, state, postal_code, county, contact_relationship, phone_contact, phone_home, phone_cell, phone_biz, email, status, payment_type, custom_session_fee, provider_id',NULL,NULL,NULL,NULL,'2026-02-14 00:26:19'),
+(396,2,'login','user',2,'Successful login','172.59.99.0','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0',NULL,NULL,'2026-02-14 01:20:11');
 /*!40000 ALTER TABLE `audit_logs` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1037,6 +1120,11 @@ CREATE TABLE `clients` (
   `race` varchar(100) DEFAULT NULL,
   `portal_access` tinyint(1) DEFAULT 0,
   `portal_username` varchar(100) DEFAULT NULL,
+  `portal_password_hash` varchar(255) DEFAULT NULL,
+  `portal_invite_token` varchar(64) DEFAULT NULL,
+  `portal_invite_expires` datetime DEFAULT NULL,
+  `portal_last_login` datetime DEFAULT NULL,
+  `portal_force_password_change` tinyint(1) DEFAULT 1,
   `intake_date` date DEFAULT NULL,
   `discharge_date` date DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
@@ -1044,18 +1132,23 @@ CREATE TABLE `clients` (
   `deleted_at` timestamp NULL DEFAULT NULL,
   `payment_type` enum('insurance','self-pay','pro-bono') DEFAULT 'insurance' COMMENT 'How client pays for services',
   `custom_session_fee` decimal(10,2) DEFAULT NULL COMMENT 'Negotiated rate for self-pay/pro-bono clients',
+  `pronouns` int(11) DEFAULT NULL COMMENT 'FK to reference_lists for pronoun preference',
+  `pronouns_visibility` enum('clinician_only','client_visible','parent_visible') DEFAULT 'clinician_only' COMMENT 'Controls who can see pronouns - critical for minor safety',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uuid` (`uuid`),
   UNIQUE KEY `portal_username` (`portal_username`),
+  UNIQUE KEY `uk_portal_invite_token` (`portal_invite_token`),
   KEY `idx_last_name` (`last_name`),
   KEY `idx_dob` (`date_of_birth`),
   KEY `idx_status` (`status`),
   KEY `idx_provider` (`primary_provider_id`),
   KEY `idx_facility` (`facility_id`),
   KEY `idx_marital_status` (`marital_status`),
+  KEY `idx_clients_pronouns` (`pronouns`),
   FULLTEXT KEY `idx_name_search` (`first_name`,`last_name`,`preferred_name`),
   CONSTRAINT `clients_ibfk_1` FOREIGN KEY (`primary_provider_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `clients_ibfk_2` FOREIGN KEY (`facility_id`) REFERENCES `facilities` (`id`) ON DELETE SET NULL
+  CONSTRAINT `clients_ibfk_2` FOREIGN KEY (`facility_id`) REFERENCES `facilities` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_clients_pronouns` FOREIGN KEY (`pronouns`) REFERENCES `reference_lists` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1066,16 +1159,16 @@ CREATE TABLE `clients` (
 LOCK TABLES `clients` WRITE;
 /*!40000 ALTER TABLE `clients` DISABLE KEYS */;
 INSERT INTO `clients` VALUES
-(1,'29950dd6-f40f-11f0-9ab0-26465fc4acb1','Michael','Anderson','James','','1985-03-15','male','11','1','30','','michael.anderson@email.test','414-555-0101','414-555-0102','',NULL,'123 Main Street','','Portland','OR','97201','','Susan Anderson','Spouse','',4,NULL,'active','English',0,'46',NULL,0,NULL,NULL,NULL,'2026-01-18 01:44:00','2026-02-08 13:25:03',NULL,'self-pay',0.00),
-(2,'2995138f-f40f-11f0-9ab0-26465fc4acb1','Emily','Martinez','Rose','','1992-07-22','female','12','2','30','','emily.martinez@email.test','555-0201','555-0202','',NULL,'456 Oak Avenue','','Portland','OR','97202','','Carlos Martinez','Father','',4,NULL,'active','English',0,'42',NULL,0,NULL,NULL,NULL,'2026-01-18 01:44:00','2026-02-08 13:37:50',NULL,'insurance',NULL),
-(3,'299515aa-f40f-11f0-9ab0-26465fc4acb1','Christopher','Taylor','','','1978-11-08','male','13','2','30','','chris.taylor@email.test','555-0301','555-0302','',NULL,'789 Pine Road','','Portland','OR','97203','','Mark Stevens','Partner','',5,NULL,'active','English',0,'48',NULL,0,NULL,NULL,NULL,'2026-01-18 01:44:00','2026-02-08 13:38:13',NULL,'insurance',NULL),
-(4,'29951705-f40f-11f0-9ab0-26465fc4acb1','Sarah','Wilson','Lynn','','1988-05-30','male','14','7','30','','sarah.wilson@email.test','555-0401','555-0402','',NULL,'321 Elm Street','','Portland','OR','97204','','David Wilson','Spouse','',5,NULL,'active','English',0,'48',NULL,0,NULL,NULL,NULL,'2026-01-18 01:44:00','2026-02-08 13:39:29',NULL,'insurance',NULL),
-(5,'29951843-f40f-11f0-9ab0-26465fc4acb1','Alex','Thompson','Jordan','','1995-09-12','male','11','8','30','','alex.thompson@email.test','555-0501','555-0502','',NULL,'654 Maple Drive','','Portland','OR','97205','','Jamie Thompson','Sibling','',6,NULL,'active','English',0,'46',NULL,0,NULL,NULL,NULL,'2026-01-18 01:44:00','2026-02-08 13:38:38',NULL,'insurance',NULL),
-(6,'2995198d-f40f-11f0-9ab0-26465fc4acb1','Jessica','Garcia','Marie','','1990-02-18','female','14','1','30','','jessica.garcia@email.test','555-0601','555-0602','',NULL,'987 Cedar Lane','','Portland','OR','97206','','Miguel Garcia','Brother','',6,NULL,'active','English',0,'48',NULL,0,NULL,NULL,NULL,'2026-01-18 01:44:00','2026-02-08 13:36:11',NULL,'self-pay',NULL),
-(7,'29951ab0-f40f-11f0-9ab0-26465fc4acb1','Daniel','Lee','Robert','','1982-12-25','male','11','1','30','','daniel.lee@email.test','555-0701','555-0702','',NULL,'147 Birch Court','','Portland','OR','97207','','Michelle Lee','Spouse','',7,NULL,'active','English',0,'46',NULL,0,NULL,NULL,NULL,'2026-01-18 01:44:00','2026-02-08 13:37:24',NULL,'insurance',NULL),
-(8,'29951be0-f40f-11f0-9ab0-26465fc4acb1','Rachel','White','Ann','','1986-08-05','female','17','4','32','','rachel.white@email.test','555-0801','555-0802','',NULL,'258 Spruce Avenue','','Portland','OR','97208','','Laura White','Partner','',7,NULL,'active','English',0,'48',NULL,0,NULL,NULL,NULL,'2026-01-18 01:44:00','2026-02-08 13:38:59',NULL,'self-pay',NULL),
-(9,'29951d12-f40f-11f0-9ab0-26465fc4acb1','Kevin','Harris','Paul','','1993-04-17','male','11','1','30','','kevin.harris@email.test','555-0901','555-0902','',NULL,'369 Willow Street','','Portland','OR','97209','','Linda Harris','Mother','',4,NULL,'active','English',0,'51',NULL,0,NULL,NULL,NULL,'2026-01-18 01:44:00','2026-02-08 13:36:51',NULL,'insurance',NULL),
-(10,'29951e36-f40f-11f0-9ab0-26465fc4acb1','Amanda','Clark','Grace','','1991-06-28','female','12','1','30','','amanda.clark@email.test','555-1001','555-1002','',NULL,'741 Ash Boulevard','','Portland','OR','97210','','James Clark','Father','',5,NULL,'active','English',0,'42',NULL,0,NULL,NULL,NULL,'2026-01-18 01:44:00','2026-02-08 13:14:31',NULL,'insurance',NULL);
+(1,'29950dd6-f40f-11f0-9ab0-26465fc4acb1','Michael','Anderson','James','','1985-03-15','male','11','1','30','','michael.anderson@email.test','414-555-0101','414-555-0102','',NULL,'123 Main Street','','Portland','OR','97201','','Susan Anderson','Spouse','',4,NULL,'active','English',0,'43','46',1,'manderson','$2y$12$RbGF5YI3/ctDuxCvUAoe4u8PdzJo67DeK8VuisFRmVzR1n7VF0It2',NULL,NULL,'2026-02-11 06:58:51',0,NULL,NULL,'2026-01-18 01:44:00','2026-02-14 00:26:19',NULL,'self-pay',0.00,23,'clinician_only'),
+(2,'2995138f-f40f-11f0-9ab0-26465fc4acb1','Emily','Martinez','Rose','','1992-07-22','female','12','2','30','','emily.martinez@email.test','555-0201','555-0202','',NULL,'456 Oak Avenue','','Portland','OR','97202','','Carlos Martinez','Father','',4,NULL,'active','English',0,'42',NULL,0,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,'2026-01-18 01:44:00','2026-02-08 13:37:50',NULL,'insurance',NULL,NULL,'clinician_only'),
+(3,'299515aa-f40f-11f0-9ab0-26465fc4acb1','Christopher','Taylor','','','1978-11-08','male','13','2','30','','chris.taylor@email.test','555-0301','555-0302','',NULL,'789 Pine Road','','Portland','OR','97203','','Mark Stevens','Partner','',5,NULL,'active','English',0,'48',NULL,0,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,'2026-01-18 01:44:00','2026-02-08 13:38:13',NULL,'insurance',NULL,NULL,'clinician_only'),
+(4,'29951705-f40f-11f0-9ab0-26465fc4acb1','Sarah','Wilson','Lynn','','1988-05-30','male','14','7','30','','sarah.wilson@email.test','555-0401','555-0402','',NULL,'321 Elm Street','','Portland','OR','97204','','David Wilson','Spouse','',5,NULL,'active','English',0,'48','',1,'swilson','$2y$12$VZtYTQx52HXHRxNIS35n.OPgSuYKqFaHtJR53BOfK62ne5A7oty8m',NULL,NULL,'2026-02-13 07:15:40',0,NULL,NULL,'2026-01-18 01:44:00','2026-02-13 13:15:55',NULL,'self-pay',NULL,NULL,'clinician_only'),
+(5,'29951843-f40f-11f0-9ab0-26465fc4acb1','Alex','Thompson','Jordan','','1995-09-12','male','11','8','30','','alex.thompson@email.test','555-0501','555-0502','',NULL,'654 Maple Drive','','Portland','OR','97205','','Jamie Thompson','Sibling','',6,NULL,'active','English',0,'46',NULL,0,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,'2026-01-18 01:44:00','2026-02-08 13:38:38',NULL,'insurance',NULL,NULL,'clinician_only'),
+(6,'2995198d-f40f-11f0-9ab0-26465fc4acb1','Jessica','Garcia','Marie','','1990-02-18','female','14','1','30','','jessica.garcia@email.test','555-0601','555-0602','',NULL,'987 Cedar Lane','','Portland','OR','97206','','Miguel Garcia','Brother','',6,NULL,'active','English',0,'48',NULL,0,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,'2026-01-18 01:44:00','2026-02-08 13:36:11',NULL,'self-pay',NULL,NULL,'clinician_only'),
+(7,'29951ab0-f40f-11f0-9ab0-26465fc4acb1','Daniel','Lee','Robert','','1982-12-25','male','11','1','30','','daniel.lee@email.test','555-0701','555-0702','',NULL,'147 Birch Court','','Portland','OR','97207','','Michelle Lee','Spouse','',7,NULL,'active','English',0,'46',NULL,0,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,'2026-01-18 01:44:00','2026-02-08 13:37:24',NULL,'insurance',NULL,NULL,'clinician_only'),
+(8,'29951be0-f40f-11f0-9ab0-26465fc4acb1','Rachel','White','Ann','','1986-08-05','female','17','4','32','','rachel.white@email.test','555-0801','555-0802','',NULL,'258 Spruce Avenue','','Portland','OR','97208','','Laura White','Partner','',7,NULL,'active','English',0,'48',NULL,0,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,'2026-01-18 01:44:00','2026-02-08 13:38:59',NULL,'self-pay',NULL,NULL,'clinician_only'),
+(9,'29951d12-f40f-11f0-9ab0-26465fc4acb1','Kevin','Harris','Paul','','1993-04-17','male','11','1','30','','kevin.harris@email.test','555-0901','555-0902','',NULL,'369 Willow Street','','Portland','OR','97209','','Linda Harris','Mother','',4,NULL,'active','English',0,'51',NULL,0,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,'2026-01-18 01:44:00','2026-02-08 13:36:51',NULL,'insurance',NULL,NULL,'clinician_only'),
+(10,'29951e36-f40f-11f0-9ab0-26465fc4acb1','Amanda','Clark','Grace','','1991-06-28','female','12','1','30','','amanda.clark@email.test','555-1001','555-1002','',NULL,'741 Ash Boulevard','','Portland','OR','97210','','James Clark','Father','',5,NULL,'active','English',0,'42',NULL,1,'aclark','$2y$12$r7s/pJU0N4GQXaC2fTLJ/.pDI0WT6iKbfYpTPjRCDytLXt8xn9jnC',NULL,NULL,'2026-02-13 18:48:12',0,NULL,NULL,'2026-01-18 01:44:00','2026-02-14 00:48:12',NULL,'insurance',NULL,NULL,'clinician_only');
 /*!40000 ALTER TABLE `clients` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1173,6 +1266,8 @@ CREATE TABLE `clinical_notes` (
   `billing_codes` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`billing_codes`)),
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `parent_note_id` bigint(20) unsigned DEFAULT NULL COMMENT 'Links addendum to parent note',
+  `is_addendum` tinyint(1) DEFAULT 0 COMMENT 'Flag indicating this is an addendum',
   PRIMARY KEY (`id`),
   UNIQUE KEY `note_uuid` (`note_uuid`),
   KEY `signed_by` (`signed_by`),
@@ -1187,11 +1282,14 @@ CREATE TABLE `clinical_notes` (
   KEY `idx_risk_present` (`risk_present`),
   KEY `idx_supervisor_review` (`supervisor_review_required`),
   KEY `idx_supervisor_reviewed_by` (`supervisor_reviewed_by`),
+  KEY `idx_clinical_notes_parent` (`parent_note_id`),
+  KEY `idx_clinical_notes_is_addendum` (`is_addendum`),
   FULLTEXT KEY `idx_content` (`subjective_legacy`,`objective_legacy`,`assessment_legacy`,`plan`),
   CONSTRAINT `clinical_notes_ibfk_1` FOREIGN KEY (`encounter_id_legacy`) REFERENCES `encounters` (`id`) ON DELETE CASCADE,
   CONSTRAINT `clinical_notes_ibfk_2` FOREIGN KEY (`client_id_legacy`) REFERENCES `clients` (`id`) ON DELETE CASCADE,
   CONSTRAINT `clinical_notes_ibfk_3` FOREIGN KEY (`provider_id_legacy`) REFERENCES `users` (`id`),
-  CONSTRAINT `clinical_notes_ibfk_4` FOREIGN KEY (`signed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+  CONSTRAINT `clinical_notes_ibfk_4` FOREIGN KEY (`signed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_clinical_notes_parent` FOREIGN KEY (`parent_note_id`) REFERENCES `clinical_notes` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1835,7 +1933,7 @@ CREATE TABLE `note_drafts` (
   KEY `idx_note` (`note_id`),
   KEY `idx_provider` (`provider_id`),
   KEY `idx_patient` (`patient_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1846,7 +1944,11 @@ LOCK TABLES `note_drafts` WRITE;
 /*!40000 ALTER TABLE `note_drafts` DISABLE KEYS */;
 INSERT INTO `note_drafts` VALUES
 (1,NULL,2,1,NULL,'{\"patientId\":1,\"appointmentId\":null,\"noteType\":\"progress\",\"templateType\":\"PIRP\",\"serviceDate\":\"2026-02-07\",\"behaviorProblem\":\"\",\"intervention\":\"\",\"response\":\"\",\"plan\":\"\",\"riskPresent\":false,\"riskAssessment\":\"\",\"interventionsSelected\":[],\"clientPresentation\":[],\"goalsAddressed\":[],\"status\":\"draft\"}','progress','2026-02-07','2026-02-07 13:42:49'),
-(2,3,2,10,NULL,'{\"patientId\":10,\"appointmentId\":null,\"noteType\":\"progress\",\"templateType\":\"PIRP\",\"serviceDate\":\"2026-02-07\",\"behaviorProblem\":\"\",\"intervention\":\"\",\"response\":\"\",\"plan\":\"\",\"riskPresent\":false,\"riskAssessment\":null,\"interventionsSelected\":[],\"clientPresentation\":[],\"goalsAddressed\":[],\"status\":\"draft\",\"id\":3,\"note_uuid\":\"216bd78d-b3bb-4e9a-82ed-6db38fcce71a\",\"patient_id\":10,\"created_by\":2,\"appointment_id\":null,\"billing_id\":null,\"note_type\":\"progress\",\"template_type\":\"PIRP\",\"service_date\":\"2026-02-07\",\"service_duration\":null,\"service_location\":null,\"behavior_problem\":\"\",\"risk_assessment\":null,\"risk_present\":false,\"goals_addressed\":[],\"interventions_selected\":[],\"client_presentation\":[],\"diagnosis_codes\":null,\"presenting_concerns\":null,\"clinical_observations\":null,\"mental_status_exam\":null,\"symptoms_reported\":null,\"symptoms_observed\":null,\"clinical_justification\":null,\"differential_diagnosis\":null,\"severity_specifiers\":null,\"functional_impairment\":null,\"duration_of_symptoms\":null,\"previous_diagnoses\":null,\"is_locked\":false,\"signed_at\":null,\"signed_by\":null,\"signature_data\":null,\"supervisor_review_required\":false,\"supervisor_review_status\":null,\"supervisor_signed_at\":null,\"supervisor_signed_by\":null,\"supervisor_comments\":null,\"parent_note_id\":null,\"is_addendum\":false,\"addendum_reason\":null,\"created_at\":\"2026-02-07 07:20:57\",\"updated_at\":\"2026-02-07 07:20:57\",\"locked_at\":null,\"last_autosave_at\":\"2026-02-07 07:20:57\",\"provider_name\":\"System Administrator\",\"signed_by_name\":null,\"supervisor_name\":null,\"patient_name\":\"Amanda Clark\",\"addenda\":[],\"createdBy\":2,\"billingId\":null,\"serviceDuration\":null,\"serviceLocation\":null,\"diagnosisCodes\":null,\"presentingConcerns\":null,\"clinicalObservations\":null,\"mentalStatusExam\":null,\"symptomsReported\":null,\"symptomsObserved\":null,\"clinicalJustification\":null,\"differentialDiagnosis\":null,\"severitySpecifiers\":null,\"functionalImpairment\":null,\"durationOfSymptoms\":null,\"previousDiagnoses\":null,\"supervisorReviewRequired\":false,\"supervisorComments\":null,\"isLocked\":false,\"signedAt\":null,\"signedBy\":null,\"createdAt\":\"2026-02-07 07:20:57\",\"updatedAt\":\"2026-02-07 07:20:57\"}','progress','2026-02-07','2026-02-07 13:45:56');
+(2,3,2,10,NULL,'{\"patientId\":10,\"appointmentId\":null,\"noteType\":\"progress\",\"templateType\":\"PIRP\",\"serviceDate\":\"2026-02-07\",\"behaviorProblem\":\"\",\"intervention\":\"\",\"response\":\"\",\"plan\":\"\",\"riskPresent\":false,\"riskAssessment\":null,\"interventionsSelected\":[],\"clientPresentation\":[],\"goalsAddressed\":[],\"status\":\"draft\",\"id\":3,\"note_uuid\":\"216bd78d-b3bb-4e9a-82ed-6db38fcce71a\",\"patient_id\":10,\"created_by\":2,\"appointment_id\":null,\"billing_id\":null,\"note_type\":\"progress\",\"template_type\":\"PIRP\",\"service_date\":\"2026-02-07\",\"service_duration\":null,\"service_location\":null,\"behavior_problem\":\"\",\"risk_assessment\":null,\"risk_present\":false,\"goals_addressed\":[],\"interventions_selected\":[],\"client_presentation\":[],\"diagnosis_codes\":null,\"presenting_concerns\":null,\"clinical_observations\":null,\"mental_status_exam\":null,\"symptoms_reported\":null,\"symptoms_observed\":null,\"clinical_justification\":null,\"differential_diagnosis\":null,\"severity_specifiers\":null,\"functional_impairment\":null,\"duration_of_symptoms\":null,\"previous_diagnoses\":null,\"is_locked\":false,\"signed_at\":null,\"signed_by\":null,\"signature_data\":null,\"supervisor_review_required\":false,\"supervisor_review_status\":null,\"supervisor_signed_at\":null,\"supervisor_signed_by\":null,\"supervisor_comments\":null,\"parent_note_id\":null,\"is_addendum\":false,\"addendum_reason\":null,\"created_at\":\"2026-02-07 07:20:57\",\"updated_at\":\"2026-02-07 07:20:57\",\"locked_at\":null,\"last_autosave_at\":\"2026-02-07 07:20:57\",\"provider_name\":\"System Administrator\",\"signed_by_name\":null,\"supervisor_name\":null,\"patient_name\":\"Amanda Clark\",\"addenda\":[],\"createdBy\":2,\"billingId\":null,\"serviceDuration\":null,\"serviceLocation\":null,\"diagnosisCodes\":null,\"presentingConcerns\":null,\"clinicalObservations\":null,\"mentalStatusExam\":null,\"symptomsReported\":null,\"symptomsObserved\":null,\"clinicalJustification\":null,\"differentialDiagnosis\":null,\"severitySpecifiers\":null,\"functionalImpairment\":null,\"durationOfSymptoms\":null,\"previousDiagnoses\":null,\"supervisorReviewRequired\":false,\"supervisorComments\":null,\"isLocked\":false,\"signedAt\":null,\"signedBy\":null,\"createdAt\":\"2026-02-07 07:20:57\",\"updatedAt\":\"2026-02-07 07:20:57\"}','progress','2026-02-07','2026-02-07 13:45:56'),
+(3,NULL,2,1,NULL,'{\"patientId\":1,\"appointmentId\":null,\"noteType\":\"diagnosis\",\"templateType\":\"Diagnosis\",\"serviceDate\":\"2026-02-10\",\"behaviorProblem\":\"\",\"intervention\":\"\",\"response\":\"\",\"plan\":\"\",\"riskPresent\":false,\"riskAssessment\":\"\",\"interventionsSelected\":[],\"clientPresentation\":[],\"goalsAddressed\":[],\"status\":\"draft\"}','diagnosis','2026-02-10','2026-02-10 23:25:35'),
+(4,NULL,2,0,NULL,'{\"clientId\":4,\"appointmentId\":null,\"noteType\":\"client_communication\",\"templateType\":\"ClientCommunication\",\"serviceDate\":\"2026-02-13\",\"behaviorProblem\":\"\",\"intervention\":\"\",\"response\":\"\",\"plan\":\"\",\"riskPresent\":false,\"riskAssessment\":\"\",\"interventionsSelected\":[],\"clientPresentation\":[],\"goalsAddressed\":[],\"status\":\"draft\",\"contactMethod\":\"email\"}','client_communication','2026-02-13','2026-02-13 14:07:39'),
+(5,NULL,2,0,NULL,'{\"clientId\":4,\"appointmentId\":null,\"noteType\":\"progress\",\"templateType\":\"PIRP\",\"serviceDate\":\"2026-02-13\",\"behaviorProblem\":\"\",\"intervention\":\"\",\"response\":\"\",\"plan\":\"\",\"riskPresent\":false,\"riskAssessment\":\"\",\"interventionsSelected\":[],\"clientPresentation\":[],\"goalsAddressed\":[],\"status\":\"draft\"}','progress','2026-02-13','2026-02-13 23:38:16'),
+(6,NULL,2,0,NULL,'{\"clientId\":4,\"appointmentId\":null,\"noteType\":\"progress\",\"templateType\":\"PIRP\",\"serviceDate\":\"2026-02-11\",\"behaviorProblem\":\"\",\"intervention\":\"\",\"response\":\"\",\"plan\":\"\",\"riskPresent\":false,\"riskAssessment\":\"\",\"interventionsSelected\":[],\"clientPresentation\":[],\"goalsAddressed\":[],\"status\":\"draft\"}','progress','2026-02-11','2026-02-13 23:38:59');
 /*!40000 ALTER TABLE `note_drafts` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1976,7 +2078,7 @@ CREATE TABLE `reference_lists` (
   KEY `idx_list_type` (`list_type`),
   KEY `idx_active` (`is_active`),
   KEY `idx_sort_order` (`sort_order`)
-) ENGINE=InnoDB AUTO_INCREMENT=111 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Reference lists for clinical and demographic data';
+) ENGINE=InnoDB AUTO_INCREMENT=123 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Reference lists for clinical and demographic data';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2024,16 +2126,16 @@ INSERT INTO `reference_lists` VALUES
 (39,'client-status','On Hold','Temporarily paused services',1,3,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
 (40,'client-status','Waitlist','Awaiting intake or services',1,4,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
 (41,'client-status','Discharged','Completed or terminated services',1,5,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
-(42,'ethnicity','Hispanic or Latino',NULL,1,1,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
-(43,'ethnicity','Not Hispanic or Latino',NULL,1,2,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
-(44,'ethnicity','American Indian or Alaska Native',NULL,1,3,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
-(45,'ethnicity','Asian',NULL,1,4,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
-(46,'ethnicity','Black or African American',NULL,1,5,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
-(47,'ethnicity','Native Hawaiian or Pacific Islander',NULL,1,6,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
-(48,'ethnicity','White',NULL,1,7,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
-(49,'ethnicity','Two or More Races',NULL,1,8,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
-(50,'ethnicity','Other',NULL,1,9,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
-(51,'ethnicity','Prefer not to say',NULL,1,10,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
+(42,'ethnicity','Hispanic or Latino',NULL,1,1,'2026-01-19 12:36:00','2026-02-13 07:30:29'),
+(43,'ethnicity','Not Hispanic or Latino',NULL,1,2,'2026-01-19 12:36:00','2026-02-13 07:30:29'),
+(44,'race','American Indian or Alaska Native',NULL,1,1,'2026-01-19 12:36:00','2026-02-13 07:30:29'),
+(45,'race','Asian',NULL,1,2,'2026-01-19 12:36:00','2026-02-13 07:30:29'),
+(46,'race','Black or African American',NULL,1,3,'2026-01-19 12:36:00','2026-02-13 07:30:29'),
+(47,'race','Native Hawaiian or Other Pacific Islander',NULL,1,4,'2026-01-19 12:36:00','2026-02-13 07:30:29'),
+(48,'race','White',NULL,1,5,'2026-01-19 12:36:00','2026-02-13 07:30:29'),
+(49,'race','Two or More Races',NULL,1,6,'2026-01-19 12:36:00','2026-02-13 07:30:29'),
+(50,'ethnicity','Other',NULL,1,3,'2026-01-19 12:36:00','2026-02-13 07:30:29'),
+(51,'ethnicity','Prefer not to say',NULL,1,5,'2026-01-19 12:36:00','2026-02-13 07:30:29'),
 (52,'insurance-type','Commercial','Private health insurance',1,1,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
 (53,'insurance-type','Medicare','Federal health insurance',1,2,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
 (54,'insurance-type','Medicaid','State health insurance',1,3,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
@@ -2087,7 +2189,11 @@ INSERT INTO `reference_lists` VALUES
 (104,'calendar-category','Case Management','Case management services',1,7,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
 (106,'calendar-category','Testing','Psychological testing',1,9,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
 (107,'calendar-category','Consultation','Consultation appointment',1,10,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
-(108,'calendar-category','Administrative','Administrative meeting',1,11,'2026-01-19 12:36:00','2026-01-19 12:36:00');
+(108,'calendar-category','Administrative','Administrative meeting',1,11,'2026-01-19 12:36:00','2026-01-19 12:36:00'),
+(111,'race','Other','Race not listed above',1,7,'2026-02-09 06:40:46','2026-02-13 07:30:29'),
+(112,'race','Unknown','Race unknown or not reported',1,8,'2026-02-09 06:40:46','2026-02-13 07:30:29'),
+(113,'race','Prefer not to say','Client declined to specify race',1,9,'2026-02-09 06:40:46','2026-02-13 07:30:29'),
+(114,'ethnicity','Unknown','Ethnicity unknown or not reported',1,4,'2026-02-09 06:40:46','2026-02-13 07:30:29');
 /*!40000 ALTER TABLE `reference_lists` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2101,6 +2207,8 @@ DROP TABLE IF EXISTS `sessions`;
 CREATE TABLE `sessions` (
   `id` varchar(255) NOT NULL,
   `user_id` bigint(20) unsigned DEFAULT NULL,
+  `session_type` enum('staff','portal') DEFAULT 'staff',
+  `client_id` int(11) DEFAULT NULL,
   `payload` longtext NOT NULL,
   `last_activity` int(11) NOT NULL,
   `ip_address` varchar(45) DEFAULT NULL,
@@ -2109,6 +2217,8 @@ CREATE TABLE `sessions` (
   PRIMARY KEY (`id`),
   KEY `idx_user` (`user_id`),
   KEY `idx_last_activity` (`last_activity`),
+  KEY `idx_client_id` (`client_id`),
+  KEY `idx_session_type` (`session_type`),
   CONSTRAINT `sessions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -2120,31 +2230,37 @@ CREATE TABLE `sessions` (
 LOCK TABLES `sessions` WRITE;
 /*!40000 ALTER TABLE `sessions` DISABLE KEYS */;
 INSERT INTO `sessions` VALUES
-('10a5pg80bft41sa0709g3du56q',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1768747860;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1768747973,'172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-01-18 14:51:00'),
-('1v910kq0hkda0g5augoc4o45st',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:0;full_name|s:20:\"System Administrator\";login_time|i:1768700471;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"admin@mindline.local\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:0;}',1768700806,'172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-01-18 01:41:11'),
-('2f4oj5obtp1iqfpmjqio5hpgi5',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770490375;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1770490381,'172.59.97.233','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/143 Version/11.1.1 Safari/605.1.15','2026-02-07 18:52:55'),
-('5u4dght369gu08q65epf9tjphe',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770557707;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1770557971,'172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-08 13:35:07'),
-('68mrnje7t4dn3u9ac3pr4ra86k',NULL,'',1769174732,'172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-01-23 13:25:32'),
-('75668oa3te0ujs8alpo71eppdm',NULL,'',1769175399,'172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-01-23 13:36:39'),
-('aalqd2k9odeqi4jn4gab5d16ga',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1769913444;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1769913545,'172.59.99.0','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-01 02:37:24'),
-('bb78f36q6hqf41drvvjhdii102',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1768848365;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1768848369,'172.59.99.0','Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36','2026-01-19 18:46:05'),
-('cjdkfm7u9b1tr3tee3v155qdst',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770395508;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1770395526,'192.168.1.80','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-06 16:31:48'),
-('d1pcp251lurpo4d51ekmss2li0',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1768848934;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1768849688,'172.59.99.0','Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36','2026-01-19 18:55:34'),
-('euptjcj2nsqr9i48efv511j4lq',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1769950857;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1769950865,'172.59.99.0','Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36','2026-02-01 13:00:57'),
-('g0nmh66igu1iac09s64gduhldn',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1769290090;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1769290187,'172.59.99.0','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-01-24 21:28:10'),
-('gf5d5kr1nab5rmuqqnjv5kplv7',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:0;full_name|s:20:\"System Administrator\";login_time|i:1768742054;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"admin@mindline.local\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:0;}',1768742060,'172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-01-18 13:14:14'),
-('grmmv8e3j2cuo4c85rmt2213a6',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770124481;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1770124716,'172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-03 13:14:41'),
-('hd0dg47ek0atfumr2aqhjnbi1h',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770035914;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1770035914,'172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-02 12:38:34'),
-('hhmh24v6p3b72nk4bqsec4fqf8',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1768837479;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1768837479,'172.59.99.0','Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36','2026-01-19 15:44:39'),
-('hj0lh9rtllm5j2l4b9k5ub320j',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770224318;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1770224319,'192.168.1.80','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-04 16:58:38'),
-('ind0bpp4j70q6ld2dekjf6179v',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770061342;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1770061342,'74.62.87.72','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-02 19:42:22'),
-('lnc9m3mubgg0v4f4tsevs5ckue',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770514586;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1770514617,'172.59.99.0','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-08 01:36:26'),
-('p26014gtlgghrk6vaushvof2iq',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770145691;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1770145710,'172.59.96.171','Mozilla/5.0 (iPhone; CPU iPhone OS 26_2_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.95 Mobile/15E148 Safari/604.1','2026-02-03 19:08:11'),
-('pucgqut5pqdt0it1drhgkj3vvn',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1769991261;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1769991611,'172.59.99.0','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-02 00:14:21'),
-('ssihpsdei0upi9pkeevrqagjoi',NULL,'',1770168743,'74.62.87.72','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36','2026-02-04 01:30:51'),
-('ta8lijjd8nsi0k9oe57jviqfpn',NULL,'',1769784286,'192.168.1.80','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-01-30 14:44:46'),
-('tcevetcivd06gcoc6aqk67o1qt',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1769784280;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1769784280,'192.168.1.80','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-01-30 14:44:40'),
-('uarbjq32tbha392i05ndn6s4jc',2,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1769432123;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1769519214,'172.59.99.0','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-01-26 12:55:23');
+('10a5pg80bft41sa0709g3du56q',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1768747860;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1768747973,'172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-01-18 14:51:00'),
+('1v910kq0hkda0g5augoc4o45st',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:0;full_name|s:20:\"System Administrator\";login_time|i:1768700471;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"admin@mindline.local\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:0;}',1768700806,'172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-01-18 01:41:11'),
+('2f4oj5obtp1iqfpmjqio5hpgi5',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770490375;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1770490381,'172.59.97.233','Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/143 Version/11.1.1 Safari/605.1.15','2026-02-07 18:52:55'),
+('68mrnje7t4dn3u9ac3pr4ra86k',NULL,'staff',NULL,'',1769174732,'172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-01-23 13:25:32'),
+('75668oa3te0ujs8alpo71eppdm',NULL,'staff',NULL,'',1769175399,'172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-01-23 13:36:39'),
+('9dc9fp92idjbo1489hsl2mcbcd',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770765625;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1770766523,'74.62.87.72','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36','2026-02-10 23:20:25'),
+('aalqd2k9odeqi4jn4gab5d16ga',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1769913444;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1769913545,'172.59.99.0','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-01 02:37:24'),
+('b6fk39h1ldl98cbkr2ipul8i81',NULL,'staff',NULL,'portal_client_id|i:4;portal_username|s:7:\"swilson\";portal_client_name|s:12:\"Sarah Wilson\";session_type|s:6:\"portal\";login_time|i:1770988540;portal_force_password_change|b:0;',1770989017,'172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-13 13:15:40'),
+('bb78f36q6hqf41drvvjhdii102',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1768848365;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1768848369,'172.59.99.0','Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36','2026-01-19 18:46:05'),
+('cjdkfm7u9b1tr3tee3v155qdst',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770395508;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1770395526,'192.168.1.80','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-06 16:31:48'),
+('d1pcp251lurpo4d51ekmss2li0',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1768848934;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1768849688,'172.59.99.0','Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36','2026-01-19 18:55:34'),
+('euptjcj2nsqr9i48efv511j4lq',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1769950857;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1769950865,'172.59.99.0','Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36','2026-02-01 13:00:57'),
+('g0nmh66igu1iac09s64gduhldn',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1769290090;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1769290187,'172.59.99.0','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-01-24 21:28:10'),
+('gf5d5kr1nab5rmuqqnjv5kplv7',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:0;full_name|s:20:\"System Administrator\";login_time|i:1768742054;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"admin@mindline.local\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:0;}',1768742060,'172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-01-18 13:14:14'),
+('grmmv8e3j2cuo4c85rmt2213a6',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770124481;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1770124716,'172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-03 13:14:41'),
+('hd0dg47ek0atfumr2aqhjnbi1h',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770035914;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1770035914,'172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-02 12:38:34'),
+('hhmh24v6p3b72nk4bqsec4fqf8',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1768837479;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1768837479,'172.59.99.0','Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36','2026-01-19 15:44:39'),
+('hj0lh9rtllm5j2l4b9k5ub320j',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770224318;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1770224319,'192.168.1.80','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-04 16:58:38'),
+('ind0bpp4j70q6ld2dekjf6179v',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770061342;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1770061342,'74.62.87.72','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-02 19:42:22'),
+('iogl4h3m9ss4ckknkc5g32c2dv',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1771034693;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1771034917,'172.59.99.0','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-14 02:04:53'),
+('jk3lhvjcm9c4i7qcqmapvcef44',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770908306;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1770908307,'74.62.87.72','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-12 14:58:26'),
+('lnc9m3mubgg0v4f4tsevs5ckue',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770514586;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1770514617,'172.59.99.0','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-08 01:36:26'),
+('p26014gtlgghrk6vaushvof2iq',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770145691;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1770145710,'172.59.96.171','Mozilla/5.0 (iPhone; CPU iPhone OS 26_2_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/144.0.7559.95 Mobile/15E148 Safari/604.1','2026-02-03 19:08:11'),
+('pucgqut5pqdt0it1drhgkj3vvn',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1769991261;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1769991611,'172.59.99.0','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-02 00:14:21'),
+('pud84rc4frnn83r8vfdbic5tjq',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|b:1;is_admin|b:1;is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1771032570;user|a:10:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";b:1;s:8:\"is_admin\";b:1;s:13:\"is_supervisor\";b:1;s:16:\"is_social_worker\";b:1;}',1771032570,'172.59.99.0','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-14 01:29:30'),
+('qf8qf2h1bsv4tvrgg2pirbmtp1',NULL,'staff',NULL,'portal_client_id|i:10;portal_username|s:6:\"aclark\";portal_client_name|s:12:\"Amanda Clark\";session_type|s:6:\"portal\";login_time|i:1771030092;portal_force_password_change|b:0;',1771030103,'172.59.99.0','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-14 00:48:12'),
+('ssihpsdei0upi9pkeevrqagjoi',NULL,'staff',NULL,'',1770168743,'74.62.87.72','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36','2026-02-04 01:30:51'),
+('ta8lijjd8nsi0k9oe57jviqfpn',NULL,'staff',NULL,'',1769784286,'192.168.1.80','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-01-30 14:44:46'),
+('tcevetcivd06gcoc6aqk67o1qt',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1769784280;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1769784280,'192.168.1.80','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-01-30 14:44:40'),
+('th4u8v9eep663n1tkdh81oa125',NULL,'staff',NULL,'is_supervisor|b:1;is_social_worker|b:1;full_name|s:20:\"System Administrator\";login_time|i:1770814731;portal_client_id|i:1;portal_username|s:9:\"manderson\";portal_client_name|s:16:\"Michael Anderson\";session_type|s:6:\"portal\";portal_force_password_change|b:0;',1770814848,'172.59.99.0','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-02-11 12:58:51'),
+('uarbjq32tbha392i05ndn6s4jc',2,'staff',NULL,'user_id|i:2;username|s:5:\"admin\";user_type|s:5:\"admin\";is_provider|i:1;full_name|s:20:\"System Administrator\";login_time|i:1769432123;user|a:7:{s:2:\"id\";i:2;s:8:\"username\";s:5:\"admin\";s:10:\"first_name\";s:6:\"System\";s:9:\"last_name\";s:13:\"Administrator\";s:5:\"email\";s:20:\"ken.nelan@sacwan.net\";s:9:\"user_type\";s:5:\"admin\";s:11:\"is_provider\";i:1;}',1769519214,'172.59.99.0','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0','2026-01-26 12:55:23');
 /*!40000 ALTER TABLE `sessions` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2605,7 +2721,7 @@ CREATE TABLE `users` (
   `middle_name` varchar(100) DEFAULT NULL,
   `title` varchar(50) DEFAULT NULL,
   `suffix` varchar(20) DEFAULT NULL,
-  `user_type` enum('admin','provider','social_worker','staff','billing') NOT NULL,
+  `user_type` enum('admin','provider','social_worker','staff','billing') NOT NULL COMMENT 'User role: admin=full access, provider=clinical, social_worker=case mgmt, staff=front desk/scheduling, billing=billing only',
   `color` varchar(7) DEFAULT NULL COMMENT 'Calendar color for this provider (hex format, e.g. #3B82F6)',
   `is_active` tinyint(1) DEFAULT 1,
   `is_provider` tinyint(1) DEFAULT 0,
@@ -2635,6 +2751,7 @@ CREATE TABLE `users` (
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deleted_at` timestamp NULL DEFAULT NULL,
   `default_modifier_id` int(11) DEFAULT NULL COMMENT 'Default billing modifier based on credentials',
+  `is_intern` tinyint(1) DEFAULT 0 COMMENT 'Intern status - supervised provider requiring review',
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`),
@@ -2651,6 +2768,7 @@ CREATE TABLE `users` (
   KEY `idx_last_failed_login` (`last_failed_login_at`),
   KEY `idx_default_modifier` (`default_modifier_id`),
   KEY `idx_is_social_worker` (`is_social_worker`),
+  KEY `idx_is_intern` (`is_intern`),
   CONSTRAINT `fk_users_facility` FOREIGN KEY (`facility_id`) REFERENCES `facilities` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_users_supervisor` FOREIGN KEY (`supervisor_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2663,16 +2781,16 @@ CREATE TABLE `users` (
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
-(2,'f83b6467-7a7e-46a2-8b96-7fb6032f2b78','admin','ken.nelan@sacwan.net','$2y$12$WWSc4u6VKL4/iaACQEc20OgXSfZX9ZGFPjDsoLINGIqTpAYlLsWTG','System','Administrator','Sanctum','MS, LPC, NCC',NULL,'admin','#cdab8f',1,1,1,1,1,NULL,'7251-125',NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,'414-477-9887',NULL,NULL,'2026-02-08 13:35:07','2026-02-04 14:38:26',0,NULL,NULL,'2026-01-18 00:48:47','2026-02-08 13:35:07',NULL,NULL),
-(3,'2fa37a93-f40d-11f0-9ab0-26465fc4acb1','sadmin','admin@mindline.test','$2y$12$hgN5Mqo973mrzO3.etcROuZPOiRT0PyGKtwI/D/eWeYpP.EYbHYK2','Sarah','Administrator',NULL,NULL,NULL,'admin','#8B5CF6',1,1,1,0,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,'2026-02-02 20:09:53',NULL,NULL,NULL,'2026-01-18 01:29:51','2026-02-02 20:09:53',NULL,NULL),
-(4,'2fa37f82-f40d-11f0-9ab0-26465fc4acb1','dsmith','jsmith@mindline.test','$2y$12$XBrP1FHTSAk44urczRdX6O.GW9rb6Qbj9giftEokue3l35p5AwUzK','Derick','Smith',NULL,NULL,NULL,'provider','#F59E0B',1,0,0,0,0,'1234567890',NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,'2026-02-02 20:12:13',0,NULL,NULL,'2026-01-18 01:29:51','2026-02-02 20:12:13',NULL,NULL),
-(5,'2fa380c3-f40d-11f0-9ab0-26465fc4acb1','mjohnson','mjohnson@mindline.test','$2y$12$PX7d0DN6fYgKEgGFtynQvuv77dT1D6oawVVO0OlyRfz66zbKkyY2y','Maria','Johnson',NULL,NULL,NULL,'provider','#EF4444',1,1,0,0,1,'1234567891',NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,'2026-02-02 20:13:11',0,NULL,NULL,'2026-01-18 01:29:51','2026-02-02 20:13:11',NULL,NULL),
-(6,'2fa381c4-f40d-11f0-9ab0-26465fc4acb1','dwilliams','dwilliams@mindline.test','$2y$12$KkIVEyKz6.vKJWbJposnIuldLcfGkjCxDJi9M1HcHmdd2dVGLgwNm','David','Williams',NULL,NULL,NULL,'provider','#EC4899',1,1,0,0,0,'1234567892',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-02-02 20:07:23',0,NULL,NULL,'2026-01-18 01:29:51','2026-02-02 20:07:23',NULL,NULL),
-(7,'2fa382c1-f40d-11f0-9ab0-26465fc4acb1','jbrown','jbrown@mindline.test','$argon2id$v=19$m=65536,t=4,p=1$TnlISGFaU1NRcGRKcEw3Nw$8TQkQvVVVQvVVVQvVVVQvVVVQvVVVQvVVVQvVVVQvVV','Jennifer','Brown',NULL,NULL,NULL,'provider','#80ffff',1,1,1,0,1,'1234567893',NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,'2026-01-18 01:29:51','2026-02-01 18:08:07','2026-01-18 13:26:33',NULL),
-(8,'2fa383b9-f40d-11f0-9ab0-26465fc4acb1','ajones','ajones@mindline.test','$2y$12$qAOY6cokrV5PgjCIdo8G.O4l/GICoKV8Rn6Ma5waHww0vZH64dSLO','Alice','Jones',NULL,NULL,NULL,'staff','#84CC16',1,1,1,0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,'2026-02-07 14:09:45','2026-02-07 14:08:50',0,NULL,NULL,'2026-01-18 01:29:51','2026-02-07 14:09:45',NULL,NULL),
-(9,'2fa384b4-f40d-11f0-9ab0-26465fc4acb1','rdavis','rdavis@mindline.test','$2y$12$9w2b3x7KEyCSsnC6okANVu3.PAnqhTlNPWPbV3cOph6ftohkQMmJW','Robert','Davis',NULL,NULL,NULL,'staff','#ff8080',1,1,0,0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,'2026-02-07 14:09:40',0,NULL,NULL,'2026-01-18 01:29:51','2026-02-07 14:09:40',NULL,NULL),
-(10,'106c0e5e-b87c-470d-a51c-10df42f44d2e','domyse','sacwan@sacwan.net','$2y$12$WpJG8MuG6gj0ejthUyc0K.c9Lj127M3DmKYtvDweaQoRHJVnhSwrW','Dom','Myse',NULL,'LPC',NULL,'staff',NULL,1,1,0,0,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,'2026-01-23 13:43:11','2026-02-02 20:09:00',0,NULL,NULL,'2026-01-23 13:42:54','2026-02-02 20:09:00',NULL,NULL),
-(11,'b6d07352-0cba-46b0-bb9c-6e2bd7cea123','mtswg','fake@email.com','$2y$12$Po5lYAC09iydgppCHjUVd.JnYlJWso8tecrBG5BdWuNzcdnCV2Aoe','Mary','ThesocialworkGoddess',NULL,'MA, LSW',NULL,'staff',NULL,1,0,0,1,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,'2026-02-07 14:07:45','2026-02-02 20:07:39',0,NULL,NULL,'2026-02-01 18:33:19','2026-02-07 14:07:45',NULL,NULL);
+(2,'f83b6467-7a7e-46a2-8b96-7fb6032f2b78','admin','ken.nelan@sacwan.net','$2y$12$WWSc4u6VKL4/iaACQEc20OgXSfZX9ZGFPjDsoLINGIqTpAYlLsWTG','System','Administrator','Sanctum','MS, LPC, NCC',NULL,'admin','#cdab8f',1,1,1,1,1,NULL,'7251-125',NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,'414-477-9887',NULL,NULL,'2026-02-14 02:04:53','2026-02-04 14:38:26',0,NULL,NULL,'2026-01-18 00:48:47','2026-02-14 02:04:53',NULL,NULL,0),
+(3,'2fa37a93-f40d-11f0-9ab0-26465fc4acb1','sadmin','admin@mindline.test','$2y$12$hgN5Mqo973mrzO3.etcROuZPOiRT0PyGKtwI/D/eWeYpP.EYbHYK2','Sarah','Administrator',NULL,NULL,NULL,'admin','#8B5CF6',1,1,1,0,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,'2026-02-02 20:09:53',NULL,NULL,NULL,'2026-01-18 01:29:51','2026-02-02 20:09:53',NULL,NULL,0),
+(4,'2fa37f82-f40d-11f0-9ab0-26465fc4acb1','dsmith','jsmith@mindline.test','$2y$12$XBrP1FHTSAk44urczRdX6O.GW9rb6Qbj9giftEokue3l35p5AwUzK','Derick','Smith',NULL,NULL,NULL,'provider','#F59E0B',1,0,0,0,0,'1234567890',NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,'2026-02-02 20:12:13',0,NULL,NULL,'2026-01-18 01:29:51','2026-02-02 20:12:13',NULL,NULL,0),
+(5,'2fa380c3-f40d-11f0-9ab0-26465fc4acb1','mjohnson','mjohnson@mindline.test','$2y$12$PX7d0DN6fYgKEgGFtynQvuv77dT1D6oawVVO0OlyRfz66zbKkyY2y','Maria','Johnson',NULL,NULL,NULL,'provider','#EF4444',1,1,0,0,1,'1234567891',NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,'2026-02-02 20:13:11',0,NULL,NULL,'2026-01-18 01:29:51','2026-02-02 20:13:11',NULL,NULL,0),
+(6,'2fa381c4-f40d-11f0-9ab0-26465fc4acb1','dwilliams','dwilliams@mindline.test','$2y$12$KkIVEyKz6.vKJWbJposnIuldLcfGkjCxDJi9M1HcHmdd2dVGLgwNm','David','Williams',NULL,NULL,NULL,'provider','#EC4899',1,1,0,0,0,'1234567892',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-02-02 20:07:23',0,NULL,NULL,'2026-01-18 01:29:51','2026-02-02 20:07:23',NULL,NULL,0),
+(7,'2fa382c1-f40d-11f0-9ab0-26465fc4acb1','jbrown','jbrown@mindline.test','$argon2id$v=19$m=65536,t=4,p=1$TnlISGFaU1NRcGRKcEw3Nw$8TQkQvVVVQvVVVQvVVVQvVVVQvVVVQvVVVQvVVVQvVV','Jennifer','Brown',NULL,NULL,NULL,'provider','#80ffff',1,1,1,0,1,'1234567893',NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,NULL,'2026-01-18 01:29:51','2026-02-01 18:08:07','2026-01-18 13:26:33',NULL,0),
+(8,'2fa383b9-f40d-11f0-9ab0-26465fc4acb1','ajones','ajones@mindline.test','$2y$12$qAOY6cokrV5PgjCIdo8G.O4l/GICoKV8Rn6Ma5waHww0vZH64dSLO','Alice','Jones',NULL,NULL,NULL,'staff','#84CC16',1,1,1,0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,'2026-02-07 14:09:45','2026-02-07 14:08:50',0,NULL,NULL,'2026-01-18 01:29:51','2026-02-07 14:09:45',NULL,NULL,0),
+(9,'2fa384b4-f40d-11f0-9ab0-26465fc4acb1','rdavis','rdavis@mindline.test','$2y$12$9w2b3x7KEyCSsnC6okANVu3.PAnqhTlNPWPbV3cOph6ftohkQMmJW','Robert','Davis',NULL,NULL,NULL,'staff','#ff8080',1,1,0,0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,NULL,'2026-02-07 14:09:40',0,NULL,NULL,'2026-01-18 01:29:51','2026-02-07 14:09:40',NULL,NULL,0),
+(10,'106c0e5e-b87c-470d-a51c-10df42f44d2e','domyse','sacwan@sacwan.net','$2y$12$WpJG8MuG6gj0ejthUyc0K.c9Lj127M3DmKYtvDweaQoRHJVnhSwrW','Dom','Myse',NULL,'LPC',NULL,'staff',NULL,1,1,0,0,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,'2026-01-23 13:43:11','2026-02-02 20:09:00',0,NULL,NULL,'2026-01-23 13:42:54','2026-02-02 20:09:00',NULL,NULL,0),
+(11,'b6d07352-0cba-46b0-bb9c-6e2bd7cea123','mtswg','fake@email.com','$2y$12$Po5lYAC09iydgppCHjUVd.JnYlJWso8tecrBG5BdWuNzcdnCV2Aoe','Mary','ThesocialworkGoddess',NULL,'MA, LSW',NULL,'staff',NULL,1,0,0,1,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,NULL,NULL,NULL,NULL,NULL,'2026-02-07 14:07:45','2026-02-02 20:07:39',0,NULL,NULL,'2026-02-01 18:33:19','2026-02-07 14:07:45',NULL,NULL,0);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -2685,4 +2803,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-08  7:56:53
+-- Dump completed on 2026-02-13 20:10:38
