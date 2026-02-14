@@ -45,16 +45,10 @@ try {
     $session = SessionManager::getInstance();
     $session->start();
 
-    if (!$session->isAuthenticated() || ($_SESSION['session_type'] ?? '') !== 'portal') {
+    $clientId = $_SESSION['portal_client_id'] ?? null;
+    if (!$clientId || ($_SESSION['session_type'] ?? '') !== 'portal') {
         http_response_code(401);
         echo json_encode(['error' => 'Not authenticated']);
-        exit;
-    }
-
-    $clientId = $_SESSION['portal_client_id'] ?? null;
-    if (!$clientId) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Invalid session']);
         exit;
     }
     $db = Database::getInstance();
