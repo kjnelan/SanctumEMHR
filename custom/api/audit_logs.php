@@ -82,7 +82,7 @@ try {
     $sql = "SELECT
                 al.id,
                 al.user_id,
-                CONCAT(u.fname, ' ', u.lname) AS user_name,
+                CONCAT(u.first_name, ' ', u.last_name) AS user_name,
                 u.username,
                 al.event_type AS action,
                 al.entity_type AS resource_type,
