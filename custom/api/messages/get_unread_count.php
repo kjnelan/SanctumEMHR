@@ -102,7 +102,12 @@ try {
 
 } catch (\Exception $e) {
     error_log("Get unread count error: " . $e->getMessage());
+    error_log("Session type: " . ($_SESSION['session_type'] ?? 'NOT SET'));
+    error_log("Is staff: " . ($isStaff ?? 'NOT SET'));
+    error_log("Client ID: " . ($clientId ?? 'NOT SET'));
+    error_log("User ID: " . ($userId ?? 'NOT SET'));
+    error_log("SQL: " . ($sql ?? 'NOT SET'));
     error_log("Stack trace: " . $e->getTraceAsString());
     http_response_code(500);
-    echo json_encode(['error' => 'Internal server error']);
+    echo json_encode(['error' => 'Internal server error', 'debug' => $e->getMessage()]);
 }
