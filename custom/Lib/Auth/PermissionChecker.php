@@ -46,7 +46,7 @@ class PermissionChecker
             return null;
         }
 
-        $sql = "SELECT id, username, user_type, is_provider, is_supervisor, is_social_worker
+        $sql = "SELECT id, username, user_type, is_provider, is_supervisor, is_social_worker, is_intern
                 FROM users WHERE id = ? AND deleted_at IS NULL LIMIT 1";
         $this->currentUser = $this->db->query($sql, [$userId]);
 
@@ -87,6 +87,33 @@ class PermissionChecker
     {
         $user = $this->getCurrentUser();
         return $user && (bool) $user['is_provider'];
+    }
+
+    /**
+     * Check if current user is a front desk staff member
+     */
+    public function isFrontDesk(): bool
+    {
+        $user = $this->getCurrentUser();
+        return $user && $user['user_type'] === 'staff';
+    }
+
+    /**
+     * Check if current user is a biller
+     */
+    public function isBiller(): bool
+    {
+        $user = $this->getCurrentUser();
+        return $user && $user['user_type'] === 'billing';
+    }
+
+    /**
+     * Check if current user is an intern (supervised provider)
+     */
+    public function isIntern(): bool
+    {
+        $user = $this->getCurrentUser();
+        return $user && (bool) $user['is_intern'];
     }
 
     /**
@@ -423,5 +450,248 @@ class PermissionChecker
             'actionText' => 'Return to Client List',
             'actionUrl' => '/app/clients'
         ];
+    }
+
+    /**
+     * ========================================
+     * NEW ROLE PERMISSIONS (Phase 1.1 RBAC)
+     * ========================================
+     */
+
+    /**
+     * Check if user can schedule appointments
+     * Front desk and providers can schedule, billers cannot
+     *
+     * @return bool True if can schedule appointments
+     */
+    public function canScheduleAppointments(): bool
+    {
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return false;
+        }
+
+        // Admins can schedule
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        // Front desk staff can schedule
+        if ($this->isFrontDesk()) {
+            return true;
+        }
+
+        // Providers can schedule
+        if ($this->isProvider()) {
+            return true;
+        }
+
+        // Social workers can schedule
+        if ($this->isSocialWorker()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if user can create new clients
+     * Admins, front desk, and providers can create clients
+     *
+     * @return bool True if can create clients
+     */
+    public function canCreateClients(): bool
+    {
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return false;
+        }
+
+        // Admins can create clients
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        // Front desk can create clients
+        if ($this->isFrontDesk()) {
+            return true;
+        }
+
+        // Providers can create clients
+        if ($this->isProvider()) {
+            return true;
+        }
+
+        // Social workers can create clients
+        if ($this->isSocialWorker()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if user can access billing features
+     * Only admins and billers
+     *
+     * @return bool True if can access billing
+     */
+    public function canAccessBilling(): bool
+    {
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return false;
+        }
+
+        // Admins can access billing
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        // Billers can access billing
+        if ($this->isBiller()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if user can view reports
+     * Most roles can view some reports, but content differs by role
+     *
+     * @return bool True if can view reports
+     */
+    public function canViewReports(): bool
+    {
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return false;
+        }
+
+        // Admins can view all reports
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        // Providers can view clinical reports
+        if ($this->isProvider()) {
+            return true;
+        }
+
+        // Supervisors can view supervisee reports
+        if ($this->isSupervisor()) {
+            return true;
+        }
+
+        // Billers can view billing reports
+        if ($this->isBiller()) {
+            return true;
+        }
+
+        // Front desk cannot view reports
+        return false;
+    }
+
+    /**
+     * Check if user can manage system settings
+     * Only admins
+     *
+     * @return bool True if can manage settings
+     */
+    public function canManageSettings(): bool
+    {
+        return $this->isAdmin();
+    }
+
+    /**
+     * Check if user can manage other users
+     * Only admins
+     *
+     * @return bool True if can manage users
+     */
+    public function canManageUsers(): bool
+    {
+        return $this->isAdmin();
+    }
+
+    /**
+     * Check if intern notes require supervisor approval
+     * Interns require supervisor sign-off before notes are finalized
+     *
+     * @return bool True if requires supervisor approval
+     */
+    public function requiresSupervisorApproval(): bool
+    {
+        return $this->isIntern();
+    }
+
+    /**
+     * Check if user can sign/finalize notes without supervision
+     * Providers can sign their own notes, interns cannot
+     *
+     * @return bool True if can self-sign notes
+     */
+    public function canSelfSignNotes(): bool
+    {
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return false;
+        }
+
+        // Admins can sign notes
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        // Providers can sign their own notes UNLESS they're interns
+        if ($this->isProvider() && !$this->isIntern()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get user's role display name for UI
+     *
+     * @return string Role display name
+     */
+    public function getRoleDisplayName(): string
+    {
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return 'Unknown';
+        }
+
+        if ($this->isAdmin()) {
+            return 'Administrator';
+        }
+
+        if ($this->isFrontDesk()) {
+            return 'Front Desk';
+        }
+
+        if ($this->isBiller()) {
+            return 'Biller';
+        }
+
+        if ($this->isIntern()) {
+            return 'Intern';
+        }
+
+        if ($this->isSocialWorker()) {
+            return 'Social Worker';
+        }
+
+        if ($this->isSupervisor() && $this->isProvider()) {
+            return 'Clinical Supervisor';
+        }
+
+        if ($this->isProvider()) {
+            return 'Provider';
+        }
+
+        return 'User';
     }
 }

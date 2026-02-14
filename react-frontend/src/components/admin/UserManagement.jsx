@@ -56,6 +56,9 @@ function UserManagement() {
     authorized: false, // Is provider
     is_supervisor: false, // Is supervisor
     is_social_worker: false, // Is social worker
+    is_intern: false, // Is intern (supervised provider)
+    is_front_desk: false, // Is front desk staff
+    is_biller: false, // Is biller
     active: true,
     calendar: false, // Is admin
     portal_user: false,
@@ -146,6 +149,9 @@ function UserManagement() {
       authorized: false,
       is_supervisor: false,
       is_social_worker: false,
+      is_intern: false,
+      is_front_desk: false,
+      is_biller: false,
       active: true,
       calendar: false,
       portal_user: false,
@@ -236,6 +242,9 @@ function UserManagement() {
         authorized: userData.authorized === '1' || userData.authorized === 1,
         is_supervisor: userData.is_supervisor === '1' || userData.is_supervisor === 1,
         is_social_worker: userData.is_social_worker === '1' || userData.is_social_worker === 1,
+        is_intern: userData.is_intern === '1' || userData.is_intern === 1,
+        is_front_desk: userData.user_type === 'staff',
+        is_biller: userData.user_type === 'billing',
         active: userData.active === '1' || userData.active === 1,
         calendar: userData.calendar === '1' || userData.calendar === 1,
         portal_user: userData.portal_user === '1' || userData.portal_user === 1,
@@ -611,19 +620,28 @@ function UserManagement() {
                   </div>
                 )}
                 {/* Role Badges - Only show if at least one is enabled */}
-                {(user.is_supervisor === '1' || user.authorized === '1' || user.calendar === '1' || user.is_social_worker === '1') && (
+                {(user.is_supervisor === '1' || user.authorized === '1' || user.calendar === '1' || user.is_social_worker === '1' || user.is_intern === '1' || user.user_type === 'staff' || user.user_type === 'billing') && (
                   <div className="flex gap-2 mt-1.5 flex-wrap">
+                    {user.calendar === '1' && (
+                      <span className="badge-outline-info text-xs">Admin</span>
+                    )}
                     {user.is_supervisor === '1' && (
                       <span className="badge-outline-warning text-xs">Supervisor</span>
                     )}
-                    {user.authorized === '1' && (
+                    {user.authorized === '1' && !user.is_intern && (
                       <span className="badge-outline-success text-xs">Provider</span>
+                    )}
+                    {user.is_intern === '1' && (
+                      <span className="badge-outline-blue text-xs">Intern</span>
                     )}
                     {user.is_social_worker === '1' && (
                       <span className="badge-outline-purple text-xs">Social Worker</span>
                     )}
-                    {user.calendar === '1' && (
-                      <span className="badge-outline-info text-xs">Admin</span>
+                    {user.user_type === 'staff' && (
+                      <span className="badge-outline-gray text-xs">Front Desk</span>
+                    )}
+                    {user.user_type === 'billing' && (
+                      <span className="badge-outline-green text-xs">Biller</span>
                     )}
                   </div>
                 )}
@@ -945,12 +963,45 @@ function UserFormModal({
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
+                    checked={formData.is_intern}
+                    onChange={(e) => onFormChange('is_intern', e.target.checked)}
+                    className="checkbox"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Intern (Supervised provider, requires approval)
+                  </span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.is_front_desk}
+                    onChange={(e) => onFormChange('is_front_desk', e.target.checked)}
+                    className="checkbox"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Front Desk (Scheduling and client creation only)
+                  </span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.is_biller}
+                    onChange={(e) => onFormChange('is_biller', e.target.checked)}
+                    className="checkbox"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Biller (Billing and financial access only)
+                  </span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
                     checked={formData.calendar}
                     onChange={(e) => onFormChange('calendar', e.target.checked)}
                     className="checkbox"
                   />
                   <span className="text-sm font-medium text-gray-700">
-                    Administrator (Access to Settings)
+                    Administrator (Full system access and settings)
                   </span>
                 </label>
                 <label className="flex items-center gap-2">

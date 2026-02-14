@@ -15,6 +15,7 @@ require_once(__DIR__ . '/../init.php');
 
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
+use Custom\Lib\Auth\PermissionChecker;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -43,6 +44,14 @@ try {
     if (!$session->isAuthenticated()) {
         http_response_code(401);
         echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    // Check reports access permission
+    $permissionChecker = new PermissionChecker();
+    if (!$permissionChecker->canViewReports()) {
+        http_response_code(403);
+        echo json_encode(['error' => 'You do not have permission to view reports. Contact your administrator if you need reports access.']);
         exit;
     }
 

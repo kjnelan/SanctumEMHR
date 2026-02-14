@@ -8,6 +8,7 @@ require_once(__DIR__ . '/../init.php');
 
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
+use Custom\Lib\Auth\PermissionChecker;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -38,6 +39,15 @@ try {
         error_log("Billing: Not authenticated");
         http_response_code(401);
         echo json_encode(['error' => 'Not authenticated']);
+        exit;
+    }
+
+    // Check billing access permission
+    $permissionChecker = new PermissionChecker();
+    if (!$permissionChecker->canAccessBilling()) {
+        error_log("Billing: User " . $session->getUserId() . " does not have billing access");
+        http_response_code(403);
+        echo json_encode(['error' => 'You do not have permission to access billing information. Contact your administrator if you need billing access.']);
         exit;
     }
 
