@@ -19,6 +19,7 @@ function DemographicsTab({ data, onDataUpdate }) {
   const { data: referenceLists, loading: listsLoading } = useReferenceLists([
     'sexual-orientation',
     'gender-identity',
+    'pronouns',
     'marital-status',
     'client-status',
     'ethnicity',
