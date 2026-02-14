@@ -10,22 +10,37 @@ function PortalLayout({ children }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const hasInitialized = useRef(false);
 
+  // Always provide context, even during loading or redirects
+  const contextValue = { client, loading };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-mental">
-        <div className="sanctum-glass-main p-8">
-          <div className="animate-spin rounded-full h-12 w-12 mx-auto" style={{ border: '3px solid rgba(107, 154, 196, 0.3)', borderTopColor: 'rgba(107, 154, 196, 0.9)' }}></div>
-          <p className="text-label mt-4 text-center">Loading...</p>
+      <PortalAuthContext.Provider value={contextValue}>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-mental">
+          <div className="sanctum-glass-main p-8">
+            <div className="animate-spin rounded-full h-12 w-12 mx-auto" style={{ border: '3px solid rgba(107, 154, 196, 0.3)', borderTopColor: 'rgba(107, 154, 196, 0.9)' }}></div>
+            <p className="text-label mt-4 text-center">Loading...</p>
+          </div>
         </div>
-      </div>
+      </PortalAuthContext.Provider>
     );
   }
 
-  if (!client) return null; // usePortalAuth handles redirect
+  if (!client) {
+    return (
+      <PortalAuthContext.Provider value={contextValue}>
+        {null}
+      </PortalAuthContext.Provider>
+    );
+  }
 
   // Force password change if required
   if (client.forcePasswordChange) {
-    return <Navigate to="/mycare/change-password" replace />;
+    return (
+      <PortalAuthContext.Provider value={contextValue}>
+        <Navigate to="/mycare/change-password" replace />
+      </PortalAuthContext.Provider>
+    );
   }
 
   const activeNav = window.location.hash?.replace('#/mycare/', '') || 'dashboard';
@@ -62,7 +77,7 @@ function PortalLayout({ children }) {
   }, []);
 
   return (
-    <PortalAuthContext.Provider value={{ client, loading }}>
+    <PortalAuthContext.Provider value={contextValue}>
       <div className="min-h-screen bg-gradient-mental">
       {/* Top Navigation */}
       <nav className="sticky top-0 z-50 px-4 py-3">
