@@ -32,7 +32,7 @@ function PortalMessages() {
       setError('');
 
       const response = await fetch(
-        '/custom/api/messages/get_inbox.php?view=inbox',
+        '/custom/api/portal/messages/get_inbox.php?view=inbox',
         {
           credentials: 'include'
         }
@@ -63,7 +63,7 @@ function PortalMessages() {
       setError('');
 
       const response = await fetch(
-        `/custom/api/messages/get_thread.php?thread_id=${threadId}`,
+        `/custom/api/portal/messages/get_thread.php?thread_id=${threadId}`,
         {
           credentials: 'include'
         }
@@ -90,7 +90,7 @@ function PortalMessages() {
   // Mark messages as read
   const markAsRead = async (messageIds) => {
     try {
-      await fetch('/custom/api/messages/mark_read.php', {
+      await fetch('/custom/api/portal/messages/mark_read.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -114,13 +114,12 @@ function PortalMessages() {
       // Get recipient info from the thread (always reply to staff provider)
       const firstMessage = threadMessages[0];
 
-      const response = await fetch('/custom/api/messages/send_message.php', {
+      const response = await fetch('/custom/api/portal/messages/send_message.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
           thread_id: selectedThread,
-          recipient_type: 'staff',
           recipient_id: client.providerId, // Reply to their provider
           body: replyBody,
           priority: 'normal'
@@ -150,12 +149,11 @@ function PortalMessages() {
     try {
       setError('');
 
-      const response = await fetch('/custom/api/messages/send_message.php', {
+      const response = await fetch('/custom/api/portal/messages/send_message.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          recipient_type: 'staff',
           recipient_id: client.providerId,
           subject: newMessageForm.subject,
           body: newMessageForm.body,
