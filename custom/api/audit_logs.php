@@ -207,6 +207,12 @@ try {
 
 } catch (\Exception $e) {
     error_log("Audit log viewer error: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
     http_response_code(500);
-    echo json_encode(['error' => 'Failed to retrieve audit logs']);
+    echo json_encode([
+        'error' => 'Failed to retrieve audit logs',
+        'message' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine()
+    ]);
 }
