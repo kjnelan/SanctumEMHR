@@ -46,13 +46,11 @@ function PortalLayout({ children }) {
       }
     };
 
-    if (client) {
-      fetchUnreadCount();
-      // Poll every 30 seconds
-      const interval = setInterval(fetchUnreadCount, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [client]);
+    fetchUnreadCount();
+    // Poll every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-mental">
