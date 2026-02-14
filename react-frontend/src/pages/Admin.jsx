@@ -23,6 +23,7 @@ import InsuranceProviders from '../components/admin/InsuranceProviders';
 import ICD10Import from './ICD10Import';
 import ClinicalSettings from '../components/admin/ClinicalSettings';
 import EmailSettings from '../components/admin/EmailSettings';
+import AuditLogViewer from '../components/admin/AuditLogViewer';
 import About from '../components/admin/About';
 
 function Admin() {
@@ -44,6 +45,7 @@ function Admin() {
       icon: '⚙️',
       sections: [
         { id: 'security', label: 'Security', available: true },
+        { id: 'audit-logs', label: 'Audit Logs', available: true },
         { id: 'appearance', label: 'Appearance', available: false },
         { id: 'features', label: 'Features', available: false },
       ]
@@ -191,6 +193,7 @@ function Admin() {
         {/* Main Settings Panel */}
         <div className="flex-1">
           {activeSection === 'security' && <SecuritySettings />}
+          {activeSection === 'audit-logs' && <AuditLogViewer />}
           {activeSection === 'calendar-settings' && <CalendarSettings />}
           {activeSection === 'reference-lists' && <ReferenceLists />}
           {activeSection === 'document-categories' && <DocumentCategories />}
@@ -205,7 +208,7 @@ function Admin() {
           {activeSection === 'about' && <About />}
 
           {/* Coming Soon for unavailable sections */}
-          {!['security', 'calendar-settings', 'reference-lists', 'document-categories', 'icd10-codes', 'clinical-settings', 'cpt-codes', 'billing-modifiers', 'insurance-providers', 'facilities', 'users', 'email-settings', 'about'].includes(activeSection) && (
+          {!['security', 'audit-logs', 'calendar-settings', 'reference-lists', 'document-categories', 'icd10-codes', 'clinical-settings', 'cpt-codes', 'billing-modifiers', 'insurance-providers', 'facilities', 'users', 'email-settings', 'about'].includes(activeSection) && (
             <div className="glass-card p-12 text-center">
               <div className="text-gray-700 text-lg font-semibold">
                 {sectionGroups.flatMap(g => g.sections).find(s => s.id === activeSection)?.label}
