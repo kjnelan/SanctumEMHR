@@ -86,6 +86,41 @@ function SummaryTab({ data }) {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column */}
         <div className="space-y-6">
+          {/* Demographics Card */}
+          <div className="card-main">
+            <h2 className="card-header">Demographics</h2>
+            <div className="bg-white/80 rounded-xl p-4 border border-gray-200">
+              <div className="space-y-3">
+                <div>
+                  <span className="field-label">DOB:</span>
+                  <div className="field-value">{formatDate(client.DOB)} (Age: {client.age || 'Unknown'})</div>
+                </div>
+                <div>
+                  <span className="field-label">Legal Sex:</span>
+                  <div className="field-value">{client.sex || 'Not provided'}</div>
+                </div>
+                {client.gender_identity_text && (
+                  <div>
+                    <span className="field-label">Gender Identity:</span>
+                    <div className="field-value">{client.gender_identity_text}</div>
+                  </div>
+                )}
+                {client.pronouns_text && (
+                  <div>
+                    <span className="field-label">Pronouns:</span>
+                    <div className="field-value">{client.pronouns_text}</div>
+                  </div>
+                )}
+                {client.sexual_orientation_text && (
+                  <div>
+                    <span className="field-label">Sexual Orientation:</span>
+                    <div className="field-value">{client.sexual_orientation_text}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Contact Information Card */}
           <div className="card-main">
             <h2 className="card-header">Contact Information</h2>
@@ -102,19 +137,6 @@ function SummaryTab({ data }) {
                 <div>
                   <span className="field-label">Home Phone:</span>
                   <div className="field-value">{client.phone_home || 'Not provided'}</div>
-                </div>
-                <div>
-                  <span className="field-label">Address:</span>
-                  <div className="field-value">
-                    {client.street && client.city ? (
-                      <>
-                        {client.street}<br />
-                        {client.city}, {client.state} {client.postal_code}
-                      </>
-                    ) : (
-                      'Not provided'
-                    )}
-                  </div>
                 </div>
                 {client.contact_relationship && (
                   <div>
@@ -261,40 +283,6 @@ function SummaryTab({ data }) {
               </div>
             ) : (
               <div className="text-muted">No recent appointments</div>
-            )}
-          </div>
-        </div>
-
-        {/* Portal Access Card */}
-        <div className="card-main">
-          <h2 className="card-header">Portal Access</h2>
-          <div className="space-y-4">
-            {client.portal_access ? (
-              <>
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <p className="alert-header text-gray-700">Portal Status</p>
-                  <span className="inline-block mt-1 px-2 py-0.5 bg-green-600 text-white text-xs font-semibold rounded">Portal Enabled</span>
-                </div>
-                {client.portal_username && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="alert-header text-gray-700 mb-1">Credentials</p>
-                    <p className="text-sm text-gray-700">Username: <span className="font-mono font-semibold">{client.portal_username}</span></p>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="alert-header text-gray-700">Portal Status</p>
-                  <p className="text-caption text-gray-600">Client Portal Not Enabled. Admin Can Enable Client Portal.</p>
-                </div>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="alert-header text-gray-700 mb-2">Credentials</p>
-                  <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                    + Create
-                  </button>
-                </div>
-              </>
             )}
           </div>
         </div>
