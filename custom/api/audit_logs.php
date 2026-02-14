@@ -84,10 +84,10 @@ try {
                 al.user_id,
                 CONCAT(u.fname, ' ', u.lname) AS user_name,
                 u.username,
-                al.action,
-                al.resource_type,
-                al.resource_id,
-                al.details,
+                al.event_type AS action,
+                al.entity_type AS resource_type,
+                al.entity_id AS resource_id,
+                al.action_description AS details,
                 al.ip_address,
                 al.created_at
             FROM audit_logs al
@@ -97,7 +97,7 @@ try {
     $params = [];
 
     if ($action) {
-        $sql .= " AND al.action = ?";
+        $sql .= " AND al.event_type = ?";
         $params[] = $action;
     }
 
@@ -107,12 +107,12 @@ try {
     }
 
     if ($resourceType) {
-        $sql .= " AND al.resource_type = ?";
+        $sql .= " AND al.entity_type = ?";
         $params[] = $resourceType;
     }
 
     if ($resourceId) {
-        $sql .= " AND al.resource_id = ?";
+        $sql .= " AND al.entity_id = ?";
         $params[] = $resourceId;
     }
 
@@ -132,12 +132,8 @@ try {
     // Execute query
     $logs = $db->queryAll($sql, $params);
 
-    // Parse JSON details
-    foreach ($logs as &$log) {
-        if ($log['details']) {
-            $log['details'] = json_decode($log['details'], true);
-        }
-    }
+    // Parse JSON for old_values and new_values if needed
+    // Note: action_description is plain text, not JSON
 
     // Get summary statistics
     $statsSql = "SELECT
@@ -165,7 +161,7 @@ try {
 
     // Get action breakdown
     $actionSql = "SELECT
-                    action,
+                    event_type AS action,
                     COUNT(*) as count
                   FROM audit_logs
                   WHERE 1=1";
@@ -182,7 +178,7 @@ try {
         $actionParams[] = $endDate;
     }
 
-    $actionSql .= " GROUP BY action ORDER BY count DESC LIMIT 20";
+    $actionSql .= " GROUP BY event_type ORDER BY count DESC LIMIT 20";
 
     $actionBreakdown = $db->queryAll($actionSql, $actionParams);
 
