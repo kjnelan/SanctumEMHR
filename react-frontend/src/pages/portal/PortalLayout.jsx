@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { usePortalAuth } from '../../hooks/usePortalAuth';
 import { portalLogout } from '../../services/PortalService';
 import { branding } from '../../config/branding';
@@ -5,6 +6,7 @@ import { Navigate } from 'react-router-dom';
 
 function PortalLayout({ children }) {
   const { client, loading } = usePortalAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
 
   if (loading) {
     return (
@@ -25,6 +27,32 @@ function PortalLayout({ children }) {
   }
 
   const activeNav = window.location.hash?.replace('#/mycare/', '') || 'dashboard';
+
+  // Fetch unread message count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await fetch('/custom/api/messages/get_unread_count.php', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setUnreadCount(data.unreadCount || 0);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch unread count:', err);
+      }
+    };
+
+    if (client) {
+      fetchUnreadCount();
+      // Poll every 30 seconds
+      const interval = setInterval(fetchUnreadCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [client]);
 
   return (
     <div className="min-h-screen bg-gradient-mental">
@@ -51,8 +79,13 @@ function PortalLayout({ children }) {
                 <a href="#/mycare/appointments" className={activeNav === 'appointments' ? 'nav-main-active' : 'nav-main-inactive'}>
                   Appointments
                 </a>
-                <a href="#/mycare/messages" className={activeNav === 'messages' ? 'nav-main-active' : 'nav-main-inactive'}>
+                <a href="#/mycare/messages" className={`relative ${activeNav === 'messages' ? 'nav-main-active' : 'nav-main-inactive'}`}>
                   Messages
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
                 </a>
                 <a href="#/mycare/profile" className={activeNav === 'profile' ? 'nav-main-active' : 'nav-main-inactive'}>
                   My Profile

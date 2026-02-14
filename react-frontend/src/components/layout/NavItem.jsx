@@ -13,9 +13,14 @@ function NavItem({ item, isActive, onClick }) {
     return (
         <button
         onClick={handleClick}
-        className={isActive ? 'nav-main-active' : 'nav-main-inactive'}
+        className={`relative ${isActive ? 'nav-main-active' : 'nav-main-inactive'}`}
         >
         {item.label}
+        {item.badge && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+            {item.badge > 99 ? '99+' : item.badge}
+          </span>
+        )}
         </button>
     );
 }

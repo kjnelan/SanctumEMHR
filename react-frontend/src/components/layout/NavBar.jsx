@@ -1,17 +1,45 @@
+import { useState, useEffect } from 'react';
 import NavItem from './NavItem';
 
 function NavBar({ activeNav, setActiveNav, user }) {
+  const [unreadCount, setUnreadCount] = useState(0);
   const hasAdminAccess =
     user?.permissions?.includes('admin') || user?.permissions?.includes('emergency_login');
 
   // Check if user is admin (for billing access)
   const isAdmin = user?.isAdmin || user?.userType === 'admin';
 
+  // Fetch unread message count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await fetch('/custom/api/messages/get_unread_count.php', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setUnreadCount(data.unreadCount || 0);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch unread count:', err);
+      }
+    };
+
+    if (user) {
+      fetchUnreadCount();
+      // Poll every 30 seconds
+      const interval = setInterval(fetchUnreadCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
   const navItems = [
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'calendar', label: 'Calendar' },
     { id: 'clients', label: 'Clients' },
-    { id: 'messages', label: 'Messages' },
+    { id: 'messages', label: 'Messages', badge: unreadCount > 0 ? unreadCount : null },
     // Billing is admin-only
     ...(isAdmin ? [{ id: 'billing', label: 'Billing' }] : []),
     { id: 'reports', label: 'Reports' },
