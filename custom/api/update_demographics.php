@@ -8,6 +8,7 @@ require_once(__DIR__ . '/../init.php');
 
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
+use Custom\Lib\Audit\AuditLogger;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -177,28 +178,11 @@ try {
 
     $db->execute($sql, $params);
 
-    // Log the update in audit log
-    $auditSql = "INSERT INTO audit_logs (
-        user_id,
-        event_type,
-        entity_type,
-        entity_id,
-        action_description,
-        created_at
-    ) VALUES (
-        ?,
-        'demographics_updated',
-        'client',
-        ?,
-        ?,
-        NOW()
-    )";
-
+    // Audit log: demographics edit
     $changedFields = array_keys(array_intersect_key($data, $allowedFields));
-    $auditDescription = "Demographics updated: " . implode(', ', $changedFields);
-
-    $db->execute($auditSql, [$userId, $clientId, $auditDescription]);
-    error_log("Update demographics: Audit trail created - " . $auditDescription);
+    $auditLogger = new AuditLogger($db, $session);
+    $auditLogger->logEditDemographics($clientId, $changedFields);
+    error_log("Update demographics: Audit trail created - " . count($changedFields) . " fields changed");
 
     // Return success
     http_response_code(200);

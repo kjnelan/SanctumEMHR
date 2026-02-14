@@ -13,6 +13,7 @@ require_once(__DIR__ . '/../init.php');
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
 use Custom\Lib\Auth\CustomAuth;
+use Custom\Lib\Audit\AuditLogger;
 
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -328,6 +329,11 @@ try {
 
             $newUserId = $result['user_id'];
 
+            // Audit log: user creation
+            $auditLogger = new AuditLogger($db, $session);
+            $userType = ($input['calendar'] ?? false) ? 'admin' : ($input['user_type'] ?? 'staff');
+            $auditLogger->logCreateUser($newUserId, $username, $userType);
+
             // Handle supervisor relationships
             if (!empty($input['supervisor_ids']) && is_array($input['supervisor_ids'])) {
                 $relationshipType = $input['relationship_type'] ?? 'direct';
@@ -544,6 +550,31 @@ try {
                 }
             }
 
+            // Audit log: user edit
+            $auditLogger = new AuditLogger($db, $session);
+            $changedFields = array_keys($fieldMap);
+
+            // Add permission changes if they occurred
+            if (isset($input['authorized'])) $changedFields[] = 'is_provider';
+            if (isset($input['active'])) $changedFields[] = 'is_active';
+            if (isset($input['is_supervisor'])) $changedFields[] = 'is_supervisor';
+            if (isset($input['is_social_worker'])) $changedFields[] = 'is_social_worker';
+            if (isset($input['calendar']) || isset($input['user_type'])) $changedFields[] = 'user_type';
+
+            $auditLogger->logEditUser($userId, $changedFields);
+
+            // Also log permission changes specifically if user_type changed
+            if (isset($input['calendar'])) {
+                $oldUserSql = "SELECT user_type FROM users WHERE id = ?";
+                $oldUser = $db->query($oldUserSql, [$userId]);
+                if ($oldUser) {
+                    $newUserType = $input['calendar'] ? 'admin' : 'staff';
+                    if ($oldUser['user_type'] !== $newUserType) {
+                        $auditLogger->logPermissionChange($userId, 'user_type', $oldUser['user_type'], $newUserType);
+                    }
+                }
+            }
+
             http_response_code(200);
             echo json_encode(['success' => true, 'message' => 'User updated successfully']);
             break;
@@ -558,8 +589,18 @@ try {
                 exit;
             }
 
+            // Get username for audit log
+            $userSql = "SELECT username FROM users WHERE id = ?";
+            $userToDelete = $db->query($userSql, [$userId]);
+
             $sql = "UPDATE users SET deleted_at = NOW(), is_active = 0 WHERE id = ?";
             $db->execute($sql, [$userId]);
+
+            // Audit log: user deactivation
+            if ($userToDelete) {
+                $auditLogger = new AuditLogger($db, $session);
+                $auditLogger->logDeactivateUser($userId, $userToDelete['username']);
+            }
 
             http_response_code(200);
             echo json_encode(['success' => true, 'message' => 'User deleted successfully']);

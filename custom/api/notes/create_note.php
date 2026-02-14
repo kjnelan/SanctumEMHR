@@ -16,6 +16,7 @@ require_once(__DIR__ . '/../../init.php');
 
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
+use Custom\Lib\Audit\AuditLogger;
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -291,6 +292,10 @@ try {
         $updateApptSql = "UPDATE appointments SET clinical_note_id = ? WHERE id = ?";
         $db->execute($updateApptSql, [$noteId, $appointmentId]);
     }
+
+    // Audit log: note creation
+    $auditLogger = new AuditLogger($db, $session);
+    $auditLogger->logCreateNote($noteId, $patientId, $noteType);
 
     // Return the created note
     $response = [

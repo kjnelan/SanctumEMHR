@@ -16,6 +16,7 @@ require_once(__DIR__ . '/../../init.php');
 
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
+use Custom\Lib\Audit\AuditLogger;
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -59,7 +60,7 @@ try {
     $noteId = intval($input['noteId']);
 
     // First, check if note exists and is not signed (Phase 4: no is_locked column)
-    $checkSql = "SELECT id, status, created_by, signed_at FROM clinical_notes WHERE id = ?";
+    $checkSql = "SELECT id, status, created_by, signed_at, patient_id FROM clinical_notes WHERE id = ?";
     $existingNote = $db->query($checkSql, [$noteId]);
 
     if (!$existingNote) {
@@ -257,6 +258,10 @@ try {
     $sql = "UPDATE clinical_notes SET " . implode(', ', $updateFields) . " WHERE id = ?";
 
     $db->execute($sql, $params);
+
+    // Audit log: note edit
+    $auditLogger = new AuditLogger($db, $session);
+    $auditLogger->logEditNote($noteId, $existingNote['patient_id'], 'note_update');
 
     $response = [
         'success' => true,

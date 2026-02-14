@@ -16,6 +16,7 @@ require_once(__DIR__ . '/../../init.php');
 
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
+use Custom\Lib\Audit\AuditLogger;
 
 /**
  * Sync diagnosis codes from a diagnosis note to the client's problem list
@@ -192,7 +193,7 @@ try {
     $signatureData = $input['signatureData'] ?? null; // Optional electronic signature details
 
     // Check if note exists and is not already signed
-    $checkSql = "SELECT id, status, created_by, supervisor_review_required, supervisor_review_status
+    $checkSql = "SELECT id, status, created_by, patient_id, supervisor_review_required, supervisor_review_status
                  FROM clinical_notes
                  WHERE id = ?";
     $note = $db->query($checkSql, [$noteId]);
@@ -225,6 +226,10 @@ try {
     ];
 
     $db->execute($signSql, $signParams);
+
+    // Audit log: note signature
+    $auditLogger = new AuditLogger($db, $session);
+    $auditLogger->logSignNote($noteId, $note['patient_id'], false);
 
     // If this is a diagnosis note, sync diagnoses to problem list
     $syncResult = syncDiagnosesToProblemList($noteId, $userId, $db);
