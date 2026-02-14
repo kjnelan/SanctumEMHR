@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import PrimaryButton from '../PrimaryButton';
 import SecondaryButton from '../SecondaryButton';
-import ErrorMessage from '../ErrorMessage';
+import { ErrorMessage } from '../ErrorMessage';
 
 function AuditLogViewer() {
   const [logs, setLogs] = useState([]);
@@ -166,7 +166,7 @@ function AuditLogViewer() {
       </div>
 
       {error && (
-        <ErrorMessage message={error} />
+        <ErrorMessage>{error}</ErrorMessage>
       )}
 
       {/* Statistics Cards */}
