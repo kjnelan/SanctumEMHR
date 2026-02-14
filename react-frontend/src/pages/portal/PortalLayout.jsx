@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePortalAuth } from '../../hooks/usePortalAuth';
 import { portalLogout } from '../../services/PortalService';
 import { branding } from '../../config/branding';
@@ -7,6 +7,7 @@ import { Navigate } from 'react-router-dom';
 function PortalLayout({ children }) {
   const { client, loading } = usePortalAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const hasInitialized = useRef(false);
 
   if (loading) {
     return (
@@ -30,6 +31,12 @@ function PortalLayout({ children }) {
 
   // Fetch unread message count
   useEffect(() => {
+    // Guard against multiple initializations
+    if (hasInitialized.current) {
+      return;
+    }
+    hasInitialized.current = true;
+
     const fetchUnreadCount = async () => {
       try {
         const response = await fetch('/custom/api/portal/messages/get_unread_count.php', {
@@ -50,6 +57,7 @@ function PortalLayout({ children }) {
     // Poll every 30 seconds
     const interval = setInterval(fetchUnreadCount, 30000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
