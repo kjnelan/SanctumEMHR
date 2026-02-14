@@ -9,6 +9,7 @@ const Reports = lazy(() => import('./pages/Reports'));
 const Calendar = lazy(() => import('./pages/Calendar'));
 const Admin = lazy(() => import('./pages/Admin'));
 const Settings = lazy(() => import('./pages/Settings'));
+const Messages = lazy(() => import('./pages/Messages'));
 import NewClientModal from './components/client/NewClientModal';
 import AppointmentModal from './components/calendar/AppointmentModal';
 import { useAuth } from './hooks/useAuth';
@@ -298,6 +299,8 @@ function Dashboard() {
 
       {activeNav === 'calendar' && <Calendar />}
 
+      {activeNav === 'messages' && <Messages />}
+
       {activeNav === 'reports' && <Reports />}
 
       {activeNav === 'admin' && <Admin />}
@@ -305,7 +308,7 @@ function Dashboard() {
       {activeNav === 'settings' && <Settings />}
 
       </Suspense>
-      {activeNav !== 'dashboard' && activeNav !== 'clients' && activeNav !== 'calendar' && activeNav !== 'reports' && activeNav !== 'admin' && activeNav !== 'settings' && (
+      {activeNav !== 'dashboard' && activeNav !== 'clients' && activeNav !== 'calendar' && activeNav !== 'messages' && activeNav !== 'reports' && activeNav !== 'admin' && activeNav !== 'settings' && (
         <div className="sanctum-glass-main p-8 text-center">
           <p className="text-gray-700 text-lg font-semibold">
             {activeNav.charAt(0).toUpperCase() + activeNav.slice(1)} - Coming Soon

@@ -51,6 +51,9 @@ function PortalLayout({ children }) {
                 <a href="#/mycare/appointments" className={activeNav === 'appointments' ? 'nav-main-active' : 'nav-main-inactive'}>
                   Appointments
                 </a>
+                <a href="#/mycare/messages" className={activeNav === 'messages' ? 'nav-main-active' : 'nav-main-inactive'}>
+                  Messages
+                </a>
                 <a href="#/mycare/profile" className={activeNav === 'profile' ? 'nav-main-active' : 'nav-main-inactive'}>
                   My Profile
                 </a>
@@ -83,6 +86,9 @@ function PortalLayout({ children }) {
               </a>
               <a href="#/mycare/appointments" className={`flex-1 text-center text-sm py-2 rounded-lg font-semibold ${activeNav === 'appointments' ? 'nav-main-active' : 'nav-main-inactive'}`}>
                 Appointments
+              </a>
+              <a href="#/mycare/messages" className={`flex-1 text-center text-sm py-2 rounded-lg font-semibold ${activeNav === 'messages' ? 'nav-main-active' : 'nav-main-inactive'}`}>
+                Messages
               </a>
               <a href="#/mycare/profile" className={`flex-1 text-center text-sm py-2 rounded-lg font-semibold ${activeNav === 'profile' ? 'nav-main-active' : 'nav-main-inactive'}`}>
                 Profile

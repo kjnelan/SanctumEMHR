@@ -12,6 +12,7 @@ const PortalLogin = lazy(() => import('./pages/portal/PortalLogin'));
 const PortalChangePassword = lazy(() => import('./pages/portal/PortalChangePassword'));
 const PortalDashboard = lazy(() => import('./pages/portal/PortalDashboard'));
 const PortalAppointments = lazy(() => import('./pages/portal/PortalAppointments'));
+const PortalMessages = lazy(() => import('./pages/portal/PortalMessages'));
 const PortalProfile = lazy(() => import('./pages/portal/PortalProfile'));
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
           <Route path="/mycare/change-password" element={<PortalChangePassword />} />
           <Route path="/mycare/dashboard" element={<PortalDashboard />} />
           <Route path="/mycare/appointments" element={<PortalAppointments />} />
+          <Route path="/mycare/messages" element={<PortalMessages />} />
           <Route path="/mycare/profile" element={<PortalProfile />} />
           <Route path="/mycare" element={<Navigate to="/mycare/login" replace />} />
 
