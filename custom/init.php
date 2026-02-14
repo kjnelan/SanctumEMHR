@@ -39,6 +39,7 @@ require_once $libDir . '/Session/SessionManager.php';
 require_once $libDir . '/Services/SettingsService.php';
 require_once $libDir . '/Services/UserService.php';
 require_once $libDir . '/Services/EmailService.php';
+require_once $libDir . '/Audit/AuditLogger.php';
 
 // Helper function to get current logged-in user ID from session
 function getCurrentUserId() {
