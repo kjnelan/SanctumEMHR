@@ -2,45 +2,29 @@ import { useState, useEffect, useRef } from 'react';
 import { usePortalAuth } from '../../hooks/usePortalAuth';
 import { portalLogout } from '../../services/PortalService';
 import { branding } from '../../config/branding';
-import { Navigate, Outlet } from 'react-router-dom';
-import PortalAuthContext from '../../contexts/PortalAuthContext';
+import { Navigate } from 'react-router-dom';
 
-function PortalLayout() {
+function PortalLayout({ children }) {
   const { client, loading } = usePortalAuth();
   const [unreadCount, setUnreadCount] = useState(0);
   const hasInitialized = useRef(false);
 
-  // Always provide context, even during loading or redirects
-  const contextValue = { client, loading };
-
   if (loading) {
     return (
-      <PortalAuthContext.Provider value={contextValue}>
-        <div className="min-h-screen flex items-center justify-center bg-gradient-mental">
-          <div className="sanctum-glass-main p-8">
-            <div className="animate-spin rounded-full h-12 w-12 mx-auto" style={{ border: '3px solid rgba(107, 154, 196, 0.3)', borderTopColor: 'rgba(107, 154, 196, 0.9)' }}></div>
-            <p className="text-label mt-4 text-center">Loading...</p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-mental">
+        <div className="sanctum-glass-main p-8">
+          <div className="animate-spin rounded-full h-12 w-12 mx-auto" style={{ border: '3px solid rgba(107, 154, 196, 0.3)', borderTopColor: 'rgba(107, 154, 196, 0.9)' }}></div>
+          <p className="text-label mt-4 text-center">Loading...</p>
         </div>
-      </PortalAuthContext.Provider>
+      </div>
     );
   }
 
-  if (!client) {
-    return (
-      <PortalAuthContext.Provider value={contextValue}>
-        {null}
-      </PortalAuthContext.Provider>
-    );
-  }
+  if (!client) return null;
 
   // Force password change if required
   if (client.forcePasswordChange) {
-    return (
-      <PortalAuthContext.Provider value={contextValue}>
-        <Navigate to="/mycare/change-password" replace />
-      </PortalAuthContext.Provider>
-    );
+    return <Navigate to="/mycare/change-password" replace />;
   }
 
   const activeNav = window.location.hash?.replace('#/mycare/', '') || 'dashboard';
@@ -77,8 +61,7 @@ function PortalLayout() {
   }, []);
 
   return (
-    <PortalAuthContext.Provider value={contextValue}>
-      <div className="min-h-screen bg-gradient-mental">
+    <div className="min-h-screen bg-gradient-mental">
       {/* Top Navigation */}
       <nav className="sticky top-0 z-50 px-4 py-3">
         <div className="max-w-6xl mx-auto">
@@ -156,7 +139,7 @@ function PortalLayout() {
 
       {/* Page Content */}
       <main className="max-w-6xl mx-auto px-4 py-6">
-        <Outlet />
+        {children}
       </main>
 
       {/* Footer */}
@@ -165,8 +148,7 @@ function PortalLayout() {
           &copy; {new Date().getFullYear()} {branding.companyName}. All rights reserved.
         </p>
       </footer>
-      </div>
-    </PortalAuthContext.Provider>
+    </div>
   );
 }
 
