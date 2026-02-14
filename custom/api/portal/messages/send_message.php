@@ -146,7 +146,7 @@ try {
         created_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
-    $db->execute($insertSql, [
+    $messageId = $db->insert($insertSql, [
         $uuid,
         'client',
         $clientId,
@@ -159,8 +159,6 @@ try {
         $threadId,
         'sent'
     ]);
-
-    $messageId = $db->lastInsertId();
 
     // If this is a new thread (no thread_id), set this message as the thread root
     if (!$threadId) {
