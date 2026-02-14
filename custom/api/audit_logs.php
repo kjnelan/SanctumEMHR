@@ -90,7 +90,7 @@ try {
                 al.details,
                 al.ip_address,
                 al.created_at
-            FROM audit_log al
+            FROM audit_logs al
             LEFT JOIN users u ON u.id = al.user_id
             WHERE 1=1";
 
@@ -146,7 +146,7 @@ try {
                     COUNT(DISTINCT DATE(created_at)) as days_with_activity,
                     MIN(created_at) as first_event,
                     MAX(created_at) as last_event
-                 FROM audit_log
+                 FROM audit_logs
                  WHERE 1=1";
 
     $statsParams = [];
@@ -167,7 +167,7 @@ try {
     $actionSql = "SELECT
                     action,
                     COUNT(*) as count
-                  FROM audit_log
+                  FROM audit_logs
                   WHERE 1=1";
 
     $actionParams = [];
