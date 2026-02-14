@@ -9,28 +9,11 @@ function PortalLayout({ children }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const hasInitialized = useRef(false);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-mental">
-        <div className="sanctum-glass-main p-8">
-          <div className="animate-spin rounded-full h-12 w-12 mx-auto" style={{ border: '3px solid rgba(107, 154, 196, 0.3)', borderTopColor: 'rgba(107, 154, 196, 0.9)' }}></div>
-          <p className="text-label mt-4 text-center">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!client) return null;
-
-  // Force password change if required
-  if (client.forcePasswordChange) {
-    return <Navigate to="/mycare/change-password" replace />;
-  }
-
-  const activeNav = window.location.hash?.replace('#/mycare/', '') || 'dashboard';
-
-  // Fetch unread message count
+  // Fetch unread message count - must be before early returns (Rules of Hooks)
   useEffect(() => {
+    // Only fetch if we have a client
+    if (!client) return;
+
     // Guard against multiple initializations
     if (hasInitialized.current) {
       return;
@@ -58,7 +41,27 @@ function PortalLayout({ children }) {
     const interval = setInterval(fetchUnreadCount, 30000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [client]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-mental">
+        <div className="sanctum-glass-main p-8">
+          <div className="animate-spin rounded-full h-12 w-12 mx-auto" style={{ border: '3px solid rgba(107, 154, 196, 0.3)', borderTopColor: 'rgba(107, 154, 196, 0.9)' }}></div>
+          <p className="text-label mt-4 text-center">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!client) return null;
+
+  // Force password change if required
+  if (client.forcePasswordChange) {
+    return <Navigate to="/mycare/change-password" replace />;
+  }
+
+  const activeNav = window.location.hash?.replace('#/mycare/', '') || 'dashboard';
 
   return (
     <div className="min-h-screen bg-gradient-mental">
