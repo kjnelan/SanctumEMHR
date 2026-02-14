@@ -95,10 +95,6 @@ function SummaryTab({ data }) {
                   <span className="field-label">DOB:</span>
                   <div className="field-value">{formatDate(client.DOB)} (Age: {client.age || 'Unknown'})</div>
                 </div>
-                <div>
-                  <span className="field-label">Legal Sex:</span>
-                  <div className="field-value">{client.sex || 'Not provided'}</div>
-                </div>
                 {client.gender_identity_text && (
                   <div>
                     <span className="field-label">Gender Identity:</span>

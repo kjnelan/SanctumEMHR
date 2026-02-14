@@ -387,52 +387,6 @@ function DemographicsTab({ data, onDataUpdate }) {
                         ? [{ value: '', label: 'Select...' }, ...dropdownOptions.sex]
                         : [{ value: '', label: 'Select...' }, { value: 'Male', label: 'Male' }, { value: 'Female', label: 'Female' }]
                     )}
-                    {renderField('Gender Identity', formData.gender_identity, 'gender_identity', 'text',
-                      dropdownOptions.gender_identity && dropdownOptions.gender_identity.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.gender_identity]
-                        : null
-                    )}
-                    {renderField('Sexual Orientation', formData.sexual_orientation, 'sexual_orientation', 'text',
-                      dropdownOptions.sexual_orientation && dropdownOptions.sexual_orientation.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.sexual_orientation]
-                        : null
-                    )}
-                    {renderField('Pronouns', formData.pronouns, 'pronouns', 'text',
-                      dropdownOptions.pronouns && dropdownOptions.pronouns.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.pronouns]
-                        : null
-                    )}
-                    {client.age < 18 && (
-                      <div className="form-field">
-                        <div className="form-field-label">Share Pronouns with Guardians?</div>
-                        <select
-                          value={formData.pronouns_visibility || 'clinician_only'}
-                          onChange={(e) => handleChange('pronouns_visibility', e.target.value)}
-                          className="input-md"
-                        >
-                          <option value="clinician_only">No - Clinicians only (safe default)</option>
-                          <option value="parent_visible">Yes - Visible to guardians</option>
-                        </select>
-                        <div className="text-xs text-gray-600 mt-1">
-                          For safety, pronouns are hidden from guardians by default. Client can consent to share.
-                        </div>
-                      </div>
-                    )}
-                    {renderField('Marital Status', formData.marital_status, 'marital_status', 'text',
-                      dropdownOptions.marital_status && dropdownOptions.marital_status.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.marital_status]
-                        : null
-                    )}
-                    {renderField('Ethnicity', formData.ethnicity, 'ethnicity', 'text',
-                      dropdownOptions.ethnicity && dropdownOptions.ethnicity.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.ethnicity]
-                        : null
-                    )}
-                    {renderField('Race', formData.race, 'race', 'text',
-                      dropdownOptions.race && dropdownOptions.race.length > 0
-                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.race]
-                        : null
-                    )}
                     <div className="form-field">
                       <div className="form-field-label">S.S.</div>
                       <input
@@ -455,22 +409,6 @@ function DemographicsTab({ data, onDataUpdate }) {
                     {renderField('Legal Sex (For billing purposes ONLY)', client.sex, null, 'text',
                       [{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }, { value: 'other', label: 'Other' }, { value: 'unknown', label: 'Unknown' }]
                     )}
-                    {renderField('Gender Identity', client.gender_identity_text || client.gender_identity)}
-                    {renderField('Sexual Orientation', client.sexual_orientation_text || client.sexual_orientation)}
-                    {renderField('Pronouns', client.pronouns_text || client.pronouns)}
-                    {client.age < 18 && client.pronouns_visibility && (
-                      <div className="form-field">
-                        <div className="form-field-label">Pronoun Visibility (Minor)</div>
-                        <div className="form-field-value">
-                          {client.pronouns_visibility === 'parent_visible'
-                            ? '✓ Shared with guardians'
-                            : '🔒 Clinicians only (protected)'}
-                        </div>
-                      </div>
-                    )}
-                    {renderField('Marital Status', client.marital_status_text || client.marital_status)}
-                    {renderField('Ethnicity', client.ethnicity_text || client.ethnicity)}
-                    {renderField('Race', client.race_text || client.race)}
                     <div className="form-field">
                       <div className="form-field-label">S.S.</div>
                       <div className="form-field-value">{client.ss ? '***-**-' + client.ss.slice(-4) : ''}</div>
@@ -646,6 +584,84 @@ function DemographicsTab({ data, onDataUpdate }) {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Demographics Section */}
+          <div className="card-main">
+            <h2 className="card-header">Demographics</h2>
+            <div className="card-inner">
+              <div className="grid grid-cols-2 gap-3">
+                {isEditing ? (
+                  <>
+                    {renderField('Gender Identity', formData.gender_identity, 'gender_identity', 'text',
+                      dropdownOptions.gender_identity && dropdownOptions.gender_identity.length > 0
+                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.gender_identity]
+                        : null
+                    )}
+                    {renderField('Sexual Orientation', formData.sexual_orientation, 'sexual_orientation', 'text',
+                      dropdownOptions.sexual_orientation && dropdownOptions.sexual_orientation.length > 0
+                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.sexual_orientation]
+                        : null
+                    )}
+                    {renderField('Pronouns', formData.pronouns, 'pronouns', 'text',
+                      dropdownOptions.pronouns && dropdownOptions.pronouns.length > 0
+                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.pronouns]
+                        : null
+                    )}
+                    {client.age < 18 && (
+                      <div className="form-field">
+                        <div className="form-field-label">Share Pronouns with Guardians?</div>
+                        <select
+                          value={formData.pronouns_visibility || 'clinician_only'}
+                          onChange={(e) => handleChange('pronouns_visibility', e.target.value)}
+                          className="input-md"
+                        >
+                          <option value="clinician_only">No - Clinicians only (safe default)</option>
+                          <option value="parent_visible">Yes - Visible to guardians</option>
+                        </select>
+                        <div className="text-xs text-gray-600 mt-1">
+                          For safety, pronouns are hidden from guardians by default. Client can consent to share.
+                        </div>
+                      </div>
+                    )}
+                    {renderField('Marital Status', formData.marital_status, 'marital_status', 'text',
+                      dropdownOptions.marital_status && dropdownOptions.marital_status.length > 0
+                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.marital_status]
+                        : null
+                    )}
+                    {renderField('Ethnicity', formData.ethnicity, 'ethnicity', 'text',
+                      dropdownOptions.ethnicity && dropdownOptions.ethnicity.length > 0
+                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.ethnicity]
+                        : null
+                    )}
+                    {renderField('Race', formData.race, 'race', 'text',
+                      dropdownOptions.race && dropdownOptions.race.length > 0
+                        ? [{ value: '', label: 'Select...' }, ...dropdownOptions.race]
+                        : null
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {renderField('Gender Identity', client.gender_identity_text || client.gender_identity)}
+                    {renderField('Sexual Orientation', client.sexual_orientation_text || client.sexual_orientation)}
+                    {renderField('Pronouns', client.pronouns_text || client.pronouns)}
+                    {client.age < 18 && client.pronouns_visibility && (
+                      <div className="form-field">
+                        <div className="form-field-label">Pronoun Visibility (Minor)</div>
+                        <div className="form-field-value">
+                          {client.pronouns_visibility === 'parent_visible'
+                            ? '✓ Shared with guardians'
+                            : '🔒 Clinicians only (protected)'}
+                        </div>
+                      </div>
+                    )}
+                    {renderField('Marital Status', client.marital_status_text || client.marital_status)}
+                    {renderField('Ethnicity', client.ethnicity_text || client.ethnicity)}
+                    {renderField('Race', client.race_text || client.race)}
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
