@@ -4,6 +4,7 @@ import { SecondaryButton } from '../components/SecondaryButton';
 import { Modal } from '../components/Modal';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { useAuth } from '../hooks/useAuth';
+import { searchClients } from '../services/ClientService';
 
 function Messages() {
   const { user } = useAuth();
@@ -26,6 +27,12 @@ function Messages() {
     body: '',
     priority: 'normal'
   });
+
+  // Recipient search state
+  const [recipientSearchQuery, setRecipientSearchQuery] = useState('');
+  const [recipientSearchResults, setRecipientSearchResults] = useState([]);
+  const [showRecipientDropdown, setShowRecipientDropdown] = useState(false);
+  const [selectedRecipientName, setSelectedRecipientName] = useState('');
 
   // Fetch inbox/sent messages
   const fetchMessages = async () => {
@@ -150,6 +157,69 @@ function Messages() {
     }
   };
 
+  // Handle recipient search
+  const handleRecipientSearch = async (query) => {
+    setRecipientSearchQuery(query);
+
+    if (query.length < 2) {
+      setRecipientSearchResults([]);
+      setShowRecipientDropdown(false);
+      return;
+    }
+
+    try {
+      if (newMessageForm.recipientType === 'client') {
+        // Search clients
+        const results = await searchClients(query);
+        setRecipientSearchResults(results || []);
+        setShowRecipientDropdown(true);
+      } else {
+        // Search staff/providers
+        const response = await fetch('/custom/api/get_providers.php', {
+          credentials: 'include'
+        });
+        const data = await response.json();
+
+        // Filter providers by search query
+        const filtered = (data.providers || []).filter(p =>
+          p.label.toLowerCase().includes(query.toLowerCase())
+        );
+        setRecipientSearchResults(filtered);
+        setShowRecipientDropdown(true);
+      }
+    } catch (err) {
+      console.error('Recipient search failed:', err);
+      setRecipientSearchResults([]);
+    }
+  };
+
+  // Select recipient
+  const selectRecipient = (recipient) => {
+    if (newMessageForm.recipientType === 'client') {
+      setNewMessageForm({ ...newMessageForm, recipientId: recipient.pid });
+      setSelectedRecipientName(`${recipient.fname} ${recipient.lname}`);
+      setRecipientSearchQuery(`${recipient.fname} ${recipient.lname}`);
+    } else {
+      setNewMessageForm({ ...newMessageForm, recipientId: recipient.value });
+      setSelectedRecipientName(recipient.label);
+      setRecipientSearchQuery(recipient.label);
+    }
+    setShowRecipientDropdown(false);
+  };
+
+  // Reset recipient when type changes
+  const handleRecipientTypeChange = (newType) => {
+    setNewMessageForm({
+      ...newMessageForm,
+      recipientType: newType,
+      recipientId: ''
+    });
+    setRecipientSearchQuery('');
+    setSelectedRecipientName('');
+    setRecipientSearchResults([]);
+    setShowRecipientDropdown(false);
+  };
+
   // Send new message
   const handleSendNewMessage = async (e) => {
     e.preventDefault();
@@ -174,6 +244,9 @@ function Messages() {
           body: '',
           priority: 'normal'
         });
+        setRecipientSearchQuery('');
+        setSelectedRecipientName('');
+        setRecipientSearchResults([]);
         fetchMessages();
       } else {
         setError(data.error || 'Failed to send message');
@@ -396,7 +469,7 @@ function Messages() {
               </label>
               <select
                 value={newMessageForm.recipientType}
-                onChange={(e) => setNewMessageForm({ ...newMessageForm, recipientType: e.target.value })}
+                onChange={(e) => handleRecipientTypeChange(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
                 <option value="client">Client</option>
@@ -404,17 +477,45 @@ function Messages() {
               </select>
             </div>
 
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Recipient ID
+                {newMessageForm.recipientType === 'client' ? 'Select Client' : 'Select Staff'}
               </label>
               <input
-                type="number"
-                value={newMessageForm.recipientId}
-                onChange={(e) => setNewMessageForm({ ...newMessageForm, recipientId: e.target.value })}
+                type="text"
+                value={recipientSearchQuery}
+                onChange={(e) => handleRecipientSearch(e.target.value)}
+                placeholder={`Search ${newMessageForm.recipientType === 'client' ? 'client' : 'staff'} by name...`}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 required
               />
+              {showRecipientDropdown && recipientSearchResults.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {recipientSearchResults.map((result) => (
+                    <button
+                      key={newMessageForm.recipientType === 'client' ? result.pid : result.value}
+                      type="button"
+                      onClick={() => selectRecipient(result)}
+                      className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-100 last:border-b-0"
+                    >
+                      {newMessageForm.recipientType === 'client' ? (
+                        <>
+                          <div className="font-medium text-gray-900">
+                            {result.fname} {result.lname}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            DOB: {result.DOB} • PID: {result.pid}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="font-medium text-gray-900">
+                          {result.label}
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>
