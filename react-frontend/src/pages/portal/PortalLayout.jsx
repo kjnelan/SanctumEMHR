@@ -2,10 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { usePortalAuth } from '../../hooks/usePortalAuth';
 import { portalLogout } from '../../services/PortalService';
 import { branding } from '../../config/branding';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import PortalAuthContext from '../../contexts/PortalAuthContext';
 
-function PortalLayout({ children }) {
+function PortalLayout() {
   const { client, loading } = usePortalAuth();
   const [unreadCount, setUnreadCount] = useState(0);
   const hasInitialized = useRef(false);
@@ -156,7 +156,7 @@ function PortalLayout({ children }) {
 
       {/* Page Content */}
       <main className="max-w-6xl mx-auto px-4 py-6">
-        {children}
+        <Outlet />
       </main>
 
       {/* Footer */}
