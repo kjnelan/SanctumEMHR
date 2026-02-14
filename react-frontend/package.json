@@ -11,6 +11,7 @@
     "deploy": "rm -rf ../app/* && npm run build && cp -r dist/* /var/www/html/sacwan.org/sacwanmed.sacwan.org/app/ && chown -hR www-data: /var/www/html/sacwan.org/sacwanmed.sacwan.org/"
   },
   "dependencies": {
+    "lucide-react": "^0.564.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.11.0"
@@ -30,5 +31,4 @@
     "tailwindcss": "^4.1.18",
     "vite": "^7.2.4"
   }
-
 }

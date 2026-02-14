@@ -47,7 +47,8 @@ export function usePortalAuth() {
     }
 
     checkSession();
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - navigate is stable but eslint doesn't know that
 
   return { client, loading };
 }
