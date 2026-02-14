@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import PrimaryButton from '../components/PrimaryButton';
-import SecondaryButton from '../components/SecondaryButton';
-import Modal from '../components/Modal';
-import ErrorMessage from '../components/ErrorMessage';
+import { PrimaryButton } from '../components/PrimaryButton';
+import { SecondaryButton } from '../components/SecondaryButton';
+import { Modal } from '../components/Modal';
+import { ErrorMessage } from '../components/ErrorMessage';
 import { useAuth } from '../hooks/useAuth';
 
 function Messages() {
@@ -381,83 +381,83 @@ function Messages() {
 
       {/* New Message Modal */}
       {showNewMessage && (
-        <Modal onClose={() => setShowNewMessage(false)}>
-          <Modal.Header>
-            <h2 className="text-xl font-bold text-gray-800">New Message</h2>
-          </Modal.Header>
-          <Modal.Body>
-            <form onSubmit={handleSendNewMessage} className="space-y-4">
-              {error && <ErrorMessage>{error}</ErrorMessage>}
+        <Modal
+          isOpen={showNewMessage}
+          onClose={() => setShowNewMessage(false)}
+          title="New Message"
+          size="md"
+        >
+          <form onSubmit={handleSendNewMessage} className="space-y-4">
+            {error && <ErrorMessage>{error}</ErrorMessage>}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Recipient Type
-                </label>
-                <select
-                  value={newMessageForm.recipientType}
-                  onChange={(e) => setNewMessageForm({ ...newMessageForm, recipientType: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="client">Client</option>
-                  <option value="staff">Staff</option>
-                </select>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Recipient Type
+              </label>
+              <select
+                value={newMessageForm.recipientType}
+                onChange={(e) => setNewMessageForm({ ...newMessageForm, recipientType: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="client">Client</option>
+                <option value="staff">Staff</option>
+              </select>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Recipient ID
-                </label>
-                <input
-                  type="number"
-                  value={newMessageForm.recipientId}
-                  onChange={(e) => setNewMessageForm({ ...newMessageForm, recipientId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Recipient ID
+              </label>
+              <input
+                type="number"
+                value={newMessageForm.recipientId}
+                onChange={(e) => setNewMessageForm({ ...newMessageForm, recipientId: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Subject
-                </label>
-                <input
-                  type="text"
-                  value={newMessageForm.subject}
-                  onChange={(e) => setNewMessageForm({ ...newMessageForm, subject: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Subject
+              </label>
+              <input
+                type="text"
+                value={newMessageForm.subject}
+                onChange={(e) => setNewMessageForm({ ...newMessageForm, subject: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Message
-                </label>
-                <textarea
-                  value={newMessageForm.body}
-                  onChange={(e) => setNewMessageForm({ ...newMessageForm, body: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
-                  rows="6"
-                  required
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Message
+              </label>
+              <textarea
+                value={newMessageForm.body}
+                onChange={(e) => setNewMessageForm({ ...newMessageForm, body: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
+                rows="6"
+                required
+              />
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Priority
-                </label>
-                <select
-                  value={newMessageForm.priority}
-                  onChange={(e) => setNewMessageForm({ ...newMessageForm, priority: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="normal">Normal</option>
-                  <option value="high">High</option>
-                  <option value="urgent">Urgent</option>
-                </select>
-              </div>
-            </form>
-          </Modal.Body>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Priority
+              </label>
+              <select
+                value={newMessageForm.priority}
+                onChange={(e) => setNewMessageForm({ ...newMessageForm, priority: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="normal">Normal</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
+          </form>
           <Modal.Footer>
             <SecondaryButton onClick={() => setShowNewMessage(false)}>
               Cancel
