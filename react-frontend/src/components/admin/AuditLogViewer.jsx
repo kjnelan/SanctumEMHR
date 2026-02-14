@@ -7,7 +7,6 @@ import { useState, useEffect } from 'react';
 import PrimaryButton from '../PrimaryButton';
 import SecondaryButton from '../SecondaryButton';
 import ErrorMessage from '../ErrorMessage';
-import SectionHeader from '../SectionHeader';
 
 function AuditLogViewer() {
   const [logs, setLogs] = useState([]);
@@ -160,10 +159,11 @@ function AuditLogViewer() {
 
   return (
     <div className="space-y-6">
-      <SectionHeader
-        title="Audit Log Viewer"
-        subtitle="HIPAA-compliant audit trail of all system activities"
-      />
+      {/* Header */}
+      <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200 p-6">
+        <h2 className="text-2xl font-bold text-gray-900">Audit Log Viewer</h2>
+        <p className="text-gray-600 mt-1">HIPAA-compliant audit trail of all system activities</p>
+      </div>
 
       {error && (
         <ErrorMessage message={error} />
