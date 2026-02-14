@@ -4,10 +4,10 @@ import { PrimaryButton } from '../../components/PrimaryButton';
 import { SecondaryButton } from '../../components/SecondaryButton';
 import { Modal } from '../../components/Modal';
 import { ErrorMessage } from '../../components/ErrorMessage';
-import { usePortalAuth } from '../../hooks/usePortalAuth';
+import { usePortalAuthContext } from '../../contexts/PortalAuthContext';
 
 function PortalMessages() {
-  const { client } = usePortalAuth();
+  const { client } = usePortalAuthContext();
   const [messages, setMessages] = useState([]);
   const [selectedThread, setSelectedThread] = useState(null);
   const [threadMessages, setThreadMessages] = useState([]);

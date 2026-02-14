@@ -3,6 +3,7 @@ import { usePortalAuth } from '../../hooks/usePortalAuth';
 import { portalLogout } from '../../services/PortalService';
 import { branding } from '../../config/branding';
 import { Navigate } from 'react-router-dom';
+import PortalAuthContext from '../../contexts/PortalAuthContext';
 
 function PortalLayout({ children }) {
   const { client, loading } = usePortalAuth();
@@ -61,7 +62,8 @@ function PortalLayout({ children }) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-mental">
+    <PortalAuthContext.Provider value={{ client, loading }}>
+      <div className="min-h-screen bg-gradient-mental">
       {/* Top Navigation */}
       <nav className="sticky top-0 z-50 px-4 py-3">
         <div className="max-w-6xl mx-auto">
@@ -148,7 +150,8 @@ function PortalLayout({ children }) {
           &copy; {new Date().getFullYear()} {branding.companyName}. All rights reserved.
         </p>
       </footer>
-    </div>
+      </div>
+    </PortalAuthContext.Provider>
   );
 }
 

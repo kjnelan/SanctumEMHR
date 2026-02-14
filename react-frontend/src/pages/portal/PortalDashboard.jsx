@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { usePortalAuth } from '../../hooks/usePortalAuth';
+import { usePortalAuthContext } from '../../contexts/PortalAuthContext';
 import { portalGetAppointments } from '../../services/PortalService';
 import PortalLayout from './PortalLayout';
 
 function PortalDashboard() {
-  const { client } = usePortalAuth();
+  const { client } = usePortalAuthContext();
   const [upcomingAppts, setUpcomingAppts] = useState([]);
   const [loadingAppts, setLoadingAppts] = useState(true);
 
