@@ -18,6 +18,7 @@ use Custom\Lib\Database\Database;
 use Custom\Lib\Auth\CustomAuth;
 use Custom\Lib\Session\SessionManager;
 use Custom\Lib\Services\UserService;
+use Custom\Lib\Audit\AuditLogger;
 
 // CORS headers
 header('Access-Control-Allow-Origin: ' . ($_SERVER['HTTP_ORIGIN'] ?? '*'));
@@ -72,6 +73,11 @@ try {
         if ($userCheck['locked_until'] && strtotime($userCheck['locked_until']) > time()) {
             $lockUntil = date('g:i A', strtotime($userCheck['locked_until']));
             error_log("Login attempt for locked account: $username (locked until {$userCheck['locked_until']})");
+
+            // Audit log: attempted login to locked account
+            $auditLogger = new AuditLogger($db);
+            $auditLogger->logLoginFailure($username, 'account_locked');
+
             http_response_code(403);
             echo json_encode([
                 'error' => 'Account locked',
@@ -84,6 +90,11 @@ try {
         // Check if account is inactive
         if (!$userCheck['is_active']) {
             error_log("Login attempt for inactive account: $username");
+
+            // Audit log: attempted login to inactive account
+            $auditLogger = new AuditLogger($db);
+            $auditLogger->logLoginFailure($username, 'account_inactive');
+
             http_response_code(403);
             echo json_encode([
                 'error' => 'Account inactive',
@@ -108,6 +119,10 @@ try {
 
     // Login successful - set session
     $session->login($user);
+
+    // Audit log: successful login
+    $auditLogger = new AuditLogger($db, $session);
+    $auditLogger->logLoginSuccess($user['id'], $username);
 
     // Get full user details for response
     $userDetails = $userService->getUserWithFormattedName($user['id']);

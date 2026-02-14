@@ -9,6 +9,7 @@ require_once(__DIR__ . '/../init.php');
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
 use Custom\Lib\Auth\PermissionChecker;
+use Custom\Lib\Audit\AuditLogger;
 
 // Set JSON header
 header('Content-Type: application/json');
@@ -175,6 +176,11 @@ try {
     }
 
     error_log("Client detail: Found client " . $client['fname'] . " " . $client['lname']);
+
+    // Audit log: chart access
+    $auditLogger = new AuditLogger($db, $session);
+    $clientName = $client['fname'] . " " . $client['lname'];
+    $auditLogger->logViewClient((int) $clientId, $clientName);
 
     // Fetch employer data - mapped to SanctumEMHR schema
     $employerSql = "SELECT

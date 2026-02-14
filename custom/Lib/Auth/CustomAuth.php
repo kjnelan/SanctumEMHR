@@ -5,6 +5,7 @@ namespace Custom\Lib\Auth;
 use Custom\Lib\Database\Database;
 use Custom\Lib\Session\SessionManager;
 use Custom\Lib\Services\SettingsService;
+use Custom\Lib\Audit\AuditLogger;
 
 /**
  * Custom Authentication Class for SanctumEMHR
@@ -310,12 +311,14 @@ class CustomAuth
         // Check if we need to lock the account
         $user = $this->getUserById($userId);
         $maxAttempts = $this->getMaxLoginAttempts();
+
+        $auditLogger = new AuditLogger($this->db, $this->session);
+
         if ($user['failed_login_attempts'] >= $maxAttempts) {
             $this->lockAccount($userId);
-            $this->logFailedLogin($userId, $username, "Account locked due to $maxAttempts failed login attempts");
+            $auditLogger->logAccountLocked($userId, $username);
         } else {
-            $remainingAttempts = $maxAttempts - $user['failed_login_attempts'];
-            $this->logFailedLogin($userId, $username, "Invalid password ($remainingAttempts attempts remaining)");
+            $auditLogger->logLoginFailure($username, 'invalid_password');
         }
     }
 
@@ -336,8 +339,7 @@ class CustomAuth
                 WHERE id = ?";
         $this->db->execute($sql, [$userId]);
 
-        // Log successful login
-        $this->logAudit($userId, 'login', 'user', $userId, 'Successful login');
+        // Audit logging handled in login.php after session is created
     }
 
     /**
