@@ -42,13 +42,18 @@ try {
     $session->start();
 
     // Check for client/portal authentication
-    if (!$session->isAuthenticated() || ($_SESSION['session_type'] ?? '') !== 'client') {
+    if (!$session->isAuthenticated() || ($_SESSION['session_type'] ?? '') !== 'portal') {
         http_response_code(401);
         echo json_encode(['error' => 'Not authenticated']);
         exit;
     }
 
-    $clientId = $session->getUserId(); // For client sessions, this is the client_id
+    $clientId = $_SESSION['portal_client_id'] ?? null;
+    if (!$clientId) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Invalid session']);
+        exit;
+    }
     $db = Database::getInstance();
 
     // Query parameters
